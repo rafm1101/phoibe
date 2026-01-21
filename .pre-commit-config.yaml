@@ -1,0 +1,55 @@
+default_language_version:
+    python: python3.13
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.12.0
+    hooks:
+      - id: black
+        files: (iris|tests)
+
+  - repo: https://github.com/ambv/black
+    rev: 25.12.0
+    hooks:
+      - id: black-jupyter
+
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.2
+    hooks:
+      - id: nbstripout
+
+  - repo: https://github.com/pycqa/isort
+    rev: 7.0.0
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: v2.14
+    hooks:
+      - id: vulture
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [pandas-stubs, types-PyYAML, types-requests, types-python-dateutil]
+        exclude: tests/conftest.py
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=775"]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.3.0
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - Flake8-pyproject
+
+  - repo: https://github.com/jshwi/docsig
+    rev: v0.72.0
+    hooks:
+      - id: docsig
+        files: "iris/"

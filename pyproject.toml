@@ -1,0 +1,55 @@
+[project]
+name = "phoibe"
+version = "0.1.0"
+description = "Repository holding high level functions"
+authors = [{ name = "MR", email = "<raffmatth@gmail.com>" }]
+readme = "README.md"
+requires-python = ">=3.13, <3.14"
+
+[tool.poetry.dependencies]
+numpy = "^2.4.1"
+ergaleiothiki = { git = "git@github.com:rafm1101/ergaleiothiki.git", tag = "0.1.0" }
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+pre-commit = "^3.8.0"
+pdoc = "^14.7.0"
+pytest-cov = "^4.1.0"
+pytest-xdist = "^3.8.0"
+ipykernel = "^6.31"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+ipykernel = "^6.31"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "supplemental"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.vulture]
+min_confidence = 80
+paths = ['.']
+exclude = ['**/cachedir/*', '**/.venv/*']
+sort_by_size = true
+verbose = false
+
+[tool.black]
+line-length = 120
+
+[tool.flake8]
+max-line-length = 120
+per-file-ignores = """
+    __init__.py:F401
+    tests/integration/conftest.py:E402
+"""
+
+[tool.isort]
+profile = "black"
+force_single_line = "true"
+line_length = 120
