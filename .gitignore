@@ -1,0 +1,45 @@
+# logging
+*.log
+
+# output artifacts
+*.pdf
+
+# directories
+__pycache__
+
+# pytest artifacts
+.coverage
+
+# data
+*.zip
+*.xml
+*.dt2
+
+# latex artifacts
+ls-R
+*.aux
+*.out
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.nav
+*.snm
+
+# bibtex artifacts
+*.bbl
+*.blg
+
+# other artifacts
+*.fls
+*.fdb_latexmk
+*.vrb
+*.xdv
+*.run.xml
+*.bcf
+_build/
+latex.out/
+tmp/
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
