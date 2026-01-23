@@ -14,6 +14,21 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
 
 ## Observed code sweets and sours
 
+### Setup
+
+1. Atm, the package is not registered in some registry. Instead tag the package _from main_:
+
+```bash
+git tag -a <version> -m "<message>"
+git push origin <version>
+```
+2. Side effect: There is currently no version resolution. Increase versions manually until further notice.
+3. Side effect: **Poetry** uses a package that bugs this tagging. Ensure to configure:
+
+```bash
+poetry config system-git-client true
+```
+
 ### Environment
 
 <!--
