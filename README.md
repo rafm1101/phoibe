@@ -43,6 +43,9 @@ poetry config system-git-client true
    - `flake8` does not like ellipses on the same line as the function definition. Resolve (ignore) by `# noqa: E704`. Needs to follow `mypy` ignores.
 2. Function signature not correctly identified by `mypy`. Resolve (ignore) by `# type: ignore [call-arg]`.
 3. `docsig`: To skip checks on docstrings _temporarily_, use the directive `# docsig: disable`.
+4. Slices: `flake8` mentions `E203 whitespace before ':'`, which `black` enforces according to PEP8.
+   - Inline: `# noqa: E203`.
+   - `pyproject.toml`: `ignore = E203`? Todo: Find general solution.
 
 ## Structure
 
