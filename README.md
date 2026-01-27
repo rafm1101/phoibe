@@ -8,11 +8,32 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
 
 ### Actual
 
+- `artificial_data`: Collection of articial 2D-fields for demonstration.
 - `geography`: 
+  - `complexity`: Assessment of terrain complexity.
+    - `rix`: Ruggedness index computation.
+    - `sampler`: Sample from 2D-fields.
 
 ### Guidelines
 
 ## Observed code sweets and sours
+
+### Setup
+
+1. Atm, the package is not registered in some registry. Instead tag the package _from main_:
+
+```bash
+git tag -a <version> -m "<message>"
+git push origin <version>
+```
+2. Side effect: There is currently no version resolution. Increase versions manually until further notice.
+3. Side effect: **Poetry** uses a package that bugs this tagging. Ensure to configure:
+
+```bash
+poetry config system-git-client true
+```
+
+4. Side effect: Non-existing dependency resolution of own package version is due to an adjustment in the near future.
 
 ### Environment
 
@@ -28,6 +49,9 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
    - `flake8` does not like ellipses on the same line as the function definition. Resolve (ignore) by `# noqa: E704`. Needs to follow `mypy` ignores.
 2. Function signature not correctly identified by `mypy`. Resolve (ignore) by `# type: ignore [call-arg]`.
 3. `docsig`: To skip checks on docstrings _temporarily_, use the directive `# docsig: disable`.
+4. Slices: `flake8` mentions `E203 whitespace before ':'`, which `black` enforces according to PEP8.
+   - Inline: `# noqa: E203`.
+   - `pyproject.toml`: `ignore = E203`? Todo: Find general solution.
 
 ## Structure
 
