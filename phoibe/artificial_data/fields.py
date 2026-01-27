@@ -53,7 +53,6 @@ def make_eggbox_field(nx: int, ny: int, dx: float, dy: float, freq_x: float, fre
     xarray.DataArray
         2D periodic field with coordinates ('x', 'y') and dimension order ('y', 'x').
     """
-
     x = np.arange(-nx, nx) * dx
     y = np.arange(-ny, ny) * dy
     xx, yy = np.meshgrid(x, y)
@@ -84,7 +83,6 @@ def make_radial_wave_field(nx: int, ny: int, dx: float, dy: float, freq: float) 
     xarray.DataArray
         2D scalar field with angular periodicity and coordinates ('x', 'y').
     """
-
     x = np.arange(-nx, nx) * dx
     y = np.arange(-ny, ny) * dy
     xx, yy = np.meshgrid(x, y)
