@@ -10,6 +10,62 @@ from phoibe.geography.complexity.rix import RayGeometry
 from phoibe.geography.complexity.rix import RegularRayProfile
 
 
+@dataclasses.dataclass(frozen=True)
+class Location:
+    easting: float
+    northing: float
+
+
+@pytest.fixture
+def origin():
+    return Location(easting=0.0, northing=0.0)
+
+
+@pytest.fixture
+def ray_north(origin):
+    ray = RayGeometry.from_compass_regular(location=origin, theta=0.0, R_km=1.0, dr_km=0.1)
+    return ray
+
+
+class LinearSampler:
+    def sample(self, xs, ys):
+        return np.linspace(0.0, 10.0, len(xs))
+
+
+class FlatSampler:
+    def __init__(self, value):
+        self.value = value
+
+    def sample(self, xs, ys):
+        return np.full(len(xs), self.value)
+
+
+@pytest.fixture
+def linear_sampler():
+    return LinearSampler()
+
+
+@pytest.fixture
+def flat_sampler():
+    return FlatSampler(value=5.0)
+
+
+@pytest.fixture
+def make_discrete_profile(ray_north):
+    def _make(sampler):
+        return RegularRayProfile(ray=ray_north, sampler=sampler, nan_policy=NaNPolicy.ERROR)
+
+    return _make
+
+
+@pytest.fixture
+def make_levelcrossing_profile(ray_north):
+    def _make(sampler):
+        return LevelCrossingRayProfile(ray=ray_north, sampler=sampler, levels=[0, 5, 10], nan_policy=NaNPolicy.ERROR)
+
+    return _make
+
+
 class RayProfileContract:
     """Contracts for any `RayProfile` and any profile."""
 
@@ -60,67 +116,6 @@ class RayProfileContractLinearProfile(RayProfileContract):
 
     def test_rix_is_positive_given_linear_profile(self, profile):
         assert profile.rix(slope_critical=0.009) > 0
-
-
-@dataclasses.dataclass(frozen=True)
-class Location:
-    easting: float
-    northing: float
-
-
-@pytest.fixture
-def dummy_location():
-    return Location(easting=-2.5, northing=-7.4)
-
-
-@pytest.fixture
-def origin():
-    return Location(easting=0.0, northing=0.0)
-
-
-@pytest.fixture
-def ray_north():
-    ray = RayGeometry.from_compass_regular(location=Location(easting=0.0, northing=0.0), theta=0.0, R_km=1.0, dr_km=0.1)
-    return ray
-
-
-class LinearSampler:
-    def sample(self, xs, ys):
-        return np.linspace(0.0, 10.0, len(xs))
-
-
-class FlatSampler:
-    def __init__(self, value):
-        self.value = value
-
-    def sample(self, xs, ys):
-        return np.full(len(xs), self.value)
-
-
-@pytest.fixture
-def linear_sampler():
-    return LinearSampler()
-
-
-@pytest.fixture
-def flat_sampler():
-    return FlatSampler(value=5.0)
-
-
-@pytest.fixture
-def make_discrete_profile(ray_north):
-    def _make(sampler):
-        return RegularRayProfile(ray=ray_north, sampler=sampler, nan_policy=NaNPolicy.ERROR)
-
-    return _make
-
-
-@pytest.fixture
-def make_levelcrossing_profile(ray_north):
-    def _make(sampler):
-        return LevelCrossingRayProfile(ray=ray_north, sampler=sampler, levels=[0, 5, 10], nan_policy=NaNPolicy.ERROR)
-
-    return _make
 
 
 class TestDiscreteRayProfileFlat(RayProfileContractFlatProfile):

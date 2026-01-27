@@ -25,19 +25,23 @@ class NaNPolicy(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class RayGeometry:
-    """Ray with sampling grid translating internal ray geometry to the 2D world."""
+    """Geometric representation of a ray embedded in 2D world.
+
+    A `RayGeometry` defines a directed ray originating from `location` in direction `theta`, and provides
+    its supporting points as distances from the origin `r_m` together with their respective coordinates in
+    the 2D world given by `xs` and `ys`.
+    """
 
     location: LocationCCS
-    """Root of the ray."""
+    """Origin of the ray in world coordinates."""
     theta: float
-    """Direction of the ray [°] with 0° facing North."""
+    """Direction of the ray [°] with 0° facing North and angles increasing clockwise."""
     r_m: NDArray[np.floating]
+    """Strictly increasing distances [m] from ray origin. Each entry corresponds to one supporting point."""
     xs: NDArray[np.floating]
+    """X coordinates of the ray supporting points in the world space."""
     ys: NDArray[np.floating]
-    # R_km: float
-    # """Length of the ray [km]."""
-    # dr_km: float
-    # """Stepsize of gridpoints [km]."""
+    """Y coordinates of the ray supporting points in the world space."""
 
     def __post_init__(self):
         pass
@@ -77,9 +81,19 @@ class RayGeometry:
 
 
 class RayProfile(abc.ABC):
+    """Profile of a scalar field along a ray.
+
+    A `RayProfile` represents values of a scalar field sampled along a geometric ray, and provides derived quantities:
+    Slopes per segment, segement lengths, steep segments, rix metric.
+    -
+    """
+
     ray: RayGeometry
-    z: NDArray[np.floating]
+    """Underlying geometric ray defining the spatial path of the profile. Expected to be strictly increasing."""
     r_m: NDArray[np.floating]
+    """Distances [m] from the ray origin at which the field is evaluated. Must be strictly increasing."""
+    z: NDArray[np.floating]
+    """Sampled scalar field values along the ray. Each value corresponds to the same index in `r_m`."""
 
     def __post_init__(self):
         self._build_profile()
@@ -95,10 +109,12 @@ class RayProfile(abc.ABC):
 
     @property
     def segment_lengths(self) -> NDArray[np.floating]:
+        """Physical length [m] of each profile segment."""
         return np.diff(self.r_m)
 
     @property
     def slopes(self) -> NDArray[np.floating]:
+        """Slope of the profile between consecutive supporting points."""
         if len(self.z) < 2:
             return np.array([np.nan], dtype=float)
         dz = np.diff(self.z)
@@ -108,6 +124,7 @@ class RayProfile(abc.ABC):
         return dz / dr
 
     def rix(self, slope_critical: float) -> float:
+        """Ruggedness index along the ray."""
         slopes = self.slopes
         if len(self.segment_lengths) == 0:
             return np.nan
@@ -122,6 +139,7 @@ class RayProfile(abc.ABC):
             return steep_length / total_length
 
     def steep_mask(self, slope_critical: float) -> NDArray[np.bool_]:
+        """Boolean mask indicating segments steeper than a critical slope."""
         if np.isnan(self.slopes).all():
             return np.zeros_like(self.slopes, dtype=bool)
         return np.abs(self.slopes) > slope_critical
@@ -145,11 +163,13 @@ class RayProfile(abc.ABC):
         return runs
 
     def steep_segment_indices(self, slope_critical: float) -> list[tuple[int, int]]:
+        """Return the indices [start, stop) of intervals of contiguous steep segments."""
         mask = self.steep_mask(slope_critical=slope_critical)
         runs = self._get_true_runs(mask=mask)
         return runs
 
     def steep_ray_segments(self, slope_critical: float):
+        """Geometric representation of contiguous steep segments."""
         segments = []
         for start, stop in self.steep_segment_indices(slope_critical=slope_critical):
             xs = self.ray_segments.xs[start : stop + 1]  # noqa: E203
@@ -161,9 +181,17 @@ class RayProfile(abc.ABC):
 
 @dataclasses.dataclass
 class RegularRayProfile(RayProfile):
+    """Ray profile sampled on a regular, ray-aligned grid.
+
+    The profile is sampled at the regularly spaced supporting points w/o any additional resampling or interpolation.
+    """
+
     ray: RayGeometry
+    """Reference geometry of the ray. Used for profile discretization and geometric output."""
     sampler: FieldSampler
+    """Sampler used to evaluate the field along the ray geometry."""
     nan_policy: NaNPolicy
+    """Policy controlling how NaN values in the sampled profile are handled."""
     z: NDArray[np.floating] = dataclasses.field(init=False)
     r_m: NDArray[np.floating] = dataclasses.field(init=False)
 
@@ -173,6 +201,14 @@ class RegularRayProfile(RayProfile):
         self._apply_nan_policy()
 
     def _apply_nan_policy(self):
+        """Apply NaN handling policy to the sampled profile.
+
+        Notes
+        -----
+        1. ERROR: Raise if any NaNs are found.
+        2. TRUNCATE: Cut profile at the first NaN.
+        3. MASK: Keep NaNs as is.
+        """
         if not np.isnan(self.z).any():
             return
 
@@ -199,10 +235,22 @@ class RegularRayProfile(RayProfile):
 
 @dataclasses.dataclass(frozen=True)
 class LevelCrossingRayProfile(RayProfile):
+    """Ray profile sampled at level crossings of the sampled field.
+
+    The profile is first sampled on the regular ray, and then resampled such that supporting points
+    occur at intersections of the profilewith specified level values.
+
+    Plateaus on specified levels are preserved by supporting point at the edges of the flat segment.
+    """
+
     ray: RayGeometry
+    """Reference geometry of the ray. Used for profile discretization only."""
     sampler: FieldSampler
+    """Sampler used to evaluate the field along the ray geometry."""
     nan_policy: NaNPolicy
+    """Policy controlling how NaN values in the sampled profile are handled."""
     levels: NDArray[np.floating]
+    """Scalar values at which level crossings are computed. Need to be ordered."""
     z: NDArray[np.floating] = dataclasses.field(init=False)
     r_m: NDArray[np.floating] = dataclasses.field(init=False)
     _z: NDArray[np.floating] = dataclasses.field(init=False)
@@ -215,7 +263,6 @@ class LevelCrossingRayProfile(RayProfile):
     def _build_profile(self):
         object.__setattr__(self, "_r_m", self.ray.r_m)
         object.__setattr__(self, "_z", self.sampler.sample(xs=self.ray.xs, ys=self.ray.ys))
-        # self._apply_nan_policy()
         r_m_crossing, z_crossing = self._compute_level_crossings(self._z, self._r_m, self.levels)
         object.__setattr__(self, "z", z_crossing)
         object.__setattr__(self, "r_m", r_m_crossing)
@@ -224,6 +271,14 @@ class LevelCrossingRayProfile(RayProfile):
             raise ValueError("Points are too close to each other or not ordered: %s.", self.r_m)
 
     def _apply_nan_policy(self):
+        """Apply NaN handling policy to the sampled profile.
+
+        Notes
+        -----
+        1. ERROR: Raise if any NaNs are found.
+        2. TRUNCATE: Cut profile at the first NaN.
+        3. MASK: Keep NaNs as is.
+        """
         if not np.isnan(self.z).any():
             return
 
@@ -245,6 +300,15 @@ class LevelCrossingRayProfile(RayProfile):
 
     @staticmethod
     def _compute_level_crossings(z: NDArray[np.floating], r: NDArray[np.floating], levels: NDArray[np.floating]):
+        """Compute supporting points at level crossings along a ray profile.
+
+        Notes
+        -----
+        1. First and last point are always includes-
+        2. For monotone segments, one supporting point is inserted for each crossed level.
+        3. Zero-length segments are removed.
+        4. Plateaus are preserved by keeping their end points.
+        """
         levels_ = np.asarray(levels, dtype=float)
         r_crossings, z_crossings = [r[0]], [z[0]]
         for index, r_current in enumerate(r[:-1]):

@@ -1,12 +1,8 @@
 import dataclasses
 
-import numpy as np
 import pytest
-import xarray
 
 from phoibe.geography.complexity.rix import RayGeometry
-
-# from phoibe.geography.complexity.sampler import FieldSampler
 
 
 @dataclasses.dataclass(frozen=True)
@@ -23,15 +19,6 @@ def dummy_location():
 @pytest.fixture
 def origin():
     return Location(easting=0.0, northing=0.0)
-
-
-@pytest.fixture
-def planar_field():
-    x = np.arange(-100, 100)
-    y = np.arange(-100, 100)
-    xx, yy = np.meshgrid(x, y)
-    z = 0.5 * xx
-    return xarray.DataArray(data=z, coords={"x": x, "y": y}, dims=("y", "x"), name="field")
 
 
 @pytest.fixture

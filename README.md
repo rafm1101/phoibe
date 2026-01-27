@@ -33,6 +33,8 @@ git push origin <version>
 poetry config system-git-client true
 ```
 
+4. Side effect: Non-existing dependency resolution of own package version is due to an adjustment in the near future.
+
 ### Environment
 
 <!--
