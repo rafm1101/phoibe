@@ -20,20 +20,24 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
 
 ### Setup
 
-1. Atm, the package is not registered in some registry. Instead tag the package _from main_:
+1. Atm, the package is registered in a locally hosted registry. Tag the package _from main_:
 
 ```bash
 git tag -a <version> -m "<message>"
 git push origin <version>
 ```
-2. Side effect: There is currently no version resolution. Increase versions manually until further notice.
-3. Side effect: **Poetry** uses a package that bugs this tagging. Ensure to configure:
+2. Build the package from this tag.
+
+```bash
+poetry build
+```
+3. Move files to `nemea-index/docs/simple/<package>/<version>/.
+4. Update index files.
+5. [Possibly obsolete] Side effect: **Poetry** uses a package that bugs this tagging. Ensure to configure:
 
 ```bash
 poetry config system-git-client true
 ```
-
-4. Side effect: Non-existing dependency resolution of own package version is due to an adjustment in the near future.
 
 ### Environment
 
@@ -65,3 +69,5 @@ poetry config system-git-client true
    - Example: `perdix.LocationGCSFactory` and `atlas._earth._compute_square_around_center`.
 
 ### Objects
+
+1. Avoid overloading objects. Differentiate jobs of representing something and jobs of doing something, see e.g. RIX.
