@@ -3,10 +3,10 @@ import logging
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix import NaNPolicy
-from phoibe.geography.complexity.rix import RayGeometry
-from phoibe.geography.complexity.rix import RayProfile
-from phoibe.geography.complexity.rix import RegularRayProfile
+from phoibe.geography.complexity.rix.rays import NaNPolicy
+from phoibe.geography.complexity.rix.rays import RayGeometry
+from phoibe.geography.complexity.rix.rays import RayProfile
+from phoibe.geography.complexity.rix.rays import RegularRayProfile
 
 # from phoibe.geography.complexity.rix import compute_radial_rix
 

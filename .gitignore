@@ -4,6 +4,9 @@
 # output artifacts
 *.pdf
 
+# package build artifacts
+dist
+
 # directories
 __pycache__
 

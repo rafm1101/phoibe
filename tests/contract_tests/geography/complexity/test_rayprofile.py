@@ -4,10 +4,10 @@ import numpy as np
 import pytest
 import shapely
 
-from phoibe.geography.complexity.rix import LevelCrossingRayProfile
-from phoibe.geography.complexity.rix import NaNPolicy
-from phoibe.geography.complexity.rix import RayGeometry
-from phoibe.geography.complexity.rix import RegularRayProfile
+from phoibe.geography.complexity.rix.rays import LevelCrossingRayProfile
+from phoibe.geography.complexity.rix.rays import NaNPolicy
+from phoibe.geography.complexity.rix.rays import RayGeometry
+from phoibe.geography.complexity.rix.rays import RegularRayProfile
 
 
 @dataclasses.dataclass(frozen=True)
