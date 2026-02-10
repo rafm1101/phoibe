@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import xarray
 
-from phoibe.geography.complexity.rix.sampler import FieldSampler
-from phoibe.geography.complexity.rix.sampler import RegularGridXYSampler
+from phoibe.geography.complexity.rix.fieldsampler import FieldSampler
+from phoibe.geography.complexity.rix.fieldsampler import RegularGridXYSampler
 
 
 def test_field_sampler_is_abstract():

@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from phoibe.geography.complexity.rix.rays import RayGeometry
+from phoibe.geography.complexity.rix.geometry import RayGeometry
 
 
 @dataclasses.dataclass(frozen=True)
