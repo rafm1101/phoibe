@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from phoibe.geography.complexity.rix import RayGeometry
+from phoibe.geography.complexity.rix.geometry import RayGeometry
 
 
 @dataclasses.dataclass(frozen=True)
@@ -19,6 +19,12 @@ def dummy_location():
 @pytest.fixture
 def origin():
     return Location(easting=0.0, northing=0.0)
+
+
+@pytest.fixture
+def ray_north(origin):
+    ray = RayGeometry.from_compass_regular(location=origin, theta=0.0, R_km=1.0, dr_km=0.1)
+    return ray
 
 
 @pytest.fixture

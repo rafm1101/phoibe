@@ -1,6 +1,6 @@
 [project]
 name = "phoibe"
-version = "0.1.0"
+version = "0.2.0"
 description = "Repository holding high level functions"
 authors = [{ name = "MR", email = "<raffmatth@gmail.com>" }]
 readme = "README.md"

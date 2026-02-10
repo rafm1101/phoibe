@@ -1,6 +1,6 @@
-import abc
 import logging
 from typing import Literal
+from typing import Protocol
 
 import numpy as np
 import scipy.interpolate
@@ -12,8 +12,7 @@ LOGGER = logging.getLogger(__name__)
 INTERPOLATION_METHODS = Literal["linear", "nearest"]
 
 
-class FieldSampler(abc.ABC):
-    @abc.abstractmethod
+class FieldSampler(Protocol):
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> NDArray[np.floating]:
         """Sample field values along a path.
 
@@ -31,7 +30,7 @@ class FieldSampler(abc.ABC):
         raise NotImplementedError
 
 
-class RegularGridXYSampler(FieldSampler):
+class RegularGridXYSampler:
     """Sample from a 2D field on a regular xy grid."""
 
     da: xarray.DataArray

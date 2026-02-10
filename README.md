@@ -12,7 +12,6 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
 - `geography`: 
   - `complexity`: Assessment of terrain complexity.
     - `rix`: Ruggedness index computation.
-    - `sampler`: Sample from 2D-fields.
 
 ### Guidelines
 
