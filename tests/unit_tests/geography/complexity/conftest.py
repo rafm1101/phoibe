@@ -22,6 +22,12 @@ def origin():
 
 
 @pytest.fixture
+def ray_north(origin):
+    ray = RayGeometry.from_compass_regular(location=origin, theta=0.0, R_km=1.0, dr_km=0.1)
+    return ray
+
+
+@pytest.fixture
 def ray_1km_100m(dummy_location):
     return RayGeometry.from_compass_regular(location=dummy_location, theta=0.0, R_km=1.0, dr_km=0.1)
 

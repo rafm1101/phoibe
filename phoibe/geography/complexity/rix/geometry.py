@@ -19,6 +19,13 @@ class RayGeometry:
     A `RayGeometry` defines a directed ray originating from `location` in direction `theta`, and provides
     its supporting points as distances from the origin `r_m` together with their respective coordinates in
     the 2D world given by `xs` and `ys`.
+
+    Creation
+    --------
+    from_compass_regular
+        Create a regular grid starting from `location` in direction `theta` spacing `dr_km` of length `R_km`.
+    from_compass
+        Create any grid starting from `location` in direction `theta` given in increasing sequence of distances `r_m`.
     """
 
     location: LocationCCS
@@ -39,6 +46,24 @@ class RayGeometry:
 
     @classmethod
     def from_compass_regular(cls, location, theta, R_km, dr_km):
+        """Generate `RayGeometry` as a equidistant grid.
+
+        Parameters
+        ----------
+        location
+            Origin of the ray in real world Cartesian coordinates.
+        theta
+            Direction of the ray [°] with 0° facing North and angles increasing clockwise.
+        R_km
+            Length [km] of the ray.
+        dr_km
+            Stepsize [km] of the grid.
+
+        Returns
+        -------
+        RayGeometry
+            Immutable representation of the regular grid starting at `location` and heading in direction `theta`.
+        """
         _validate_notna_finite(R_km, "R_km")
         _validate_non_negative(R_km, "R_km")
         _validate_notna_finite(dr_km, "dr_km")
@@ -58,6 +83,22 @@ class RayGeometry:
 
     @classmethod
     def from_compass(cls, location, theta, r_m):
+        """Generate `RayGeometry` as any grid.
+
+        Parameters
+        ----------
+        location
+            Origin of the ray in real world Cartesian coordinates.
+        theta
+            Direction of the ray [°] with 0° facing North and angles increasing clockwise.
+        r_m
+            Gridpoint distances [m] from the origin. Must be strictly increasing.
+
+        Returns
+        -------
+        RayGeometry
+            Immutable representation of the regular grid starting at `location` and heading in direction `theta`.
+        """
         return cls._from_compass_r_m(location, theta, r_m)
 
     @classmethod

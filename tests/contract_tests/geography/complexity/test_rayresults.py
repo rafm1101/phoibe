@@ -3,8 +3,6 @@ import pytest
 
 from phoibe.geography.complexity.rix.results import RayResult
 
-# from .conftest import DummySampler
-
 
 class RayResultContract:
     """Contracts that any RayResult must satisfy."""
@@ -117,7 +115,7 @@ class RadialRixResultContract:
     def test_verify_lengths_consistent(self, radial_result):
         assert len(radial_result.angles) == radial_result.n_rays
         assert len(radial_result.rays) == radial_result.n_rays
-        assert len(radial_result.directional_stats()) == radial_result.n_rays
+        assert len(radial_result.ruggednesses) == radial_result.n_rays
 
     def test_angles_are_sorted(self, radial_result):
         angles = radial_result.angles
@@ -136,8 +134,8 @@ class RadialRixResultContract:
     def test_verify_rix_in_valid_range(self, radial_result):
         rix = radial_result.rix
         assert np.isnan(rix) or (0.0 <= rix <= 1.0)
-        directional_rix = radial_result.directional_stats()
-        assert np.all((directional_rix >= 0.0) & (directional_rix <= 1.0))
+        ruggednesses = radial_result.ruggednesses
+        assert np.all((ruggednesses >= 0.0) & (ruggednesses <= 1.0))
 
     def test_verify_describe_returns_dict(self, radial_result):
         description = radial_result.describe()
@@ -153,23 +151,6 @@ class RadialRixResultContractFlatProfile(RadialRixResultContract):
         assert np.isclose(radial_result.rix, 0.0)
         directional_rix = radial_result.directional_stats()
         assert np.allclose(directional_rix, 0.0)
-
-
-# class TestRadialRixResultFlatProfile(RadialRixResultContractFlatProfile):
-#     @pytest.fixture
-#     def radial_result(self, make_radial_result):
-#         return make_radial_result(n_angles=8, slope_critical=0.0, sampler_factory=lambda: DummySampler(z=[5.0] * 11))
-
-
-# class TestRadialRixResultLinearProfile(RadialRixResultContract):
-#     @pytest.fixture
-#     def radial_result(self, make_radial_result):
-#         return make_radial_result(
-#             n_angles=8, slope_critical=0.05, sampler_factory=lambda: DummySampler(z=np.linspace(0, 10, 11))
-#         )
-
-#     def test_verify_rix_is_positive(self, radial_result):
-#         assert radial_result.rix > 0
 
 
 class TestRadialRixResultMultipleAngles(RadialRixResultContract):

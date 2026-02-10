@@ -33,7 +33,7 @@ class RayProfileContract:
         assert isinstance(analyse.segment_lengths(profile), np.ndarray)
         assert isinstance(analyse.steep_ray_segments(profile, 1.0), list)
         assert isinstance(analyse.steep_mask(profile, 1.0), np.ndarray)
-        assert isinstance(analyse.rix(profile, 1.0), float)
+        assert isinstance(analyse.ruggedness(profile, 1.0), float)
 
     def test_verify_lengths_are_consistent(self, profile):
         slopes = analyse.slopes(profile)
@@ -52,12 +52,12 @@ class RayProfileContract:
         assert np.all(dr > 0)
         dz = np.diff(profile.z)
         assert np.allclose(analyse.slopes(profile), dz / dr)
-        ruggedness = analyse.rix(profile, 0.3)
+        ruggedness = analyse.ruggedness(profile, 0.3)
         assert np.isnan(ruggedness) or (0.0 <= ruggedness <= 1.0)
 
     def test_rix_is_decreasing_given_critical_slope(self, profile):
-        ruggedness_value_low = analyse.rix(profile, 0.1)
-        ruggedness_value_high = analyse.rix(profile, 10.0)
+        ruggedness_value_low = analyse.ruggedness(profile, 0.1)
+        ruggedness_value_high = analyse.ruggedness(profile, 10.0)
         assert ruggedness_value_low >= ruggedness_value_high
 
 
@@ -65,7 +65,7 @@ class RayProfileContractFlatProfile(RayProfileContract):
     """Contracts for any `RayProfile` and flat profiles."""
 
     def test_rix_is_zero_given_flat_profile(self, profile):
-        assert np.isclose(analyse.rix(profile, 0.0), 0.0)
+        assert np.isclose(analyse.ruggedness(profile, 0.0), 0.0)
 
     def test_no_segments_given_flat_profile(self, profile):
         assert len(analyse.steep_ray_segments(profile, 1.0)) == 0
@@ -75,7 +75,7 @@ class RayProfileContractLinearProfile(RayProfileContract):
     """Contracts for any `RayProfile` and non-flat profiles."""
 
     def test_rix_is_positive_given_linear_profile(self, profile):
-        assert analyse.rix(profile, 0.009) > 0
+        assert analyse.ruggedness(profile, 0.009) > 0
 
 
 class TestRayProfileRegularFlat(RayProfileContractFlatProfile):

@@ -1,5 +1,3 @@
-import dataclasses
-
 import numpy as np
 import pytest
 import shapely.geometry
@@ -11,28 +9,12 @@ from phoibe.geography.complexity.rix.results import RadialRixResult
 from phoibe.geography.complexity.rix.results import RayResult
 
 
-@dataclasses.dataclass(frozen=True)
-class Location:
-    easting: float
-    northing: float
-
-
 class DummySampler:
     def __init__(self, z):
         self._z = np.asarray(z, dtype=float)
 
     def sample(self, xs, ys):
         return self._z.copy()
-
-
-def _make_ray_result(z_values, slope_critical=0.3, theta=0.0):
-    """Helper to create minimal RayResult for unit testing."""
-    origin = Location(easting=0.0, northing=0.0)
-    ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=0.1)
-    sampler = DummySampler(z=z_values)
-    profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
-
-    return RayResult(profile=profile, slope_critical=slope_critical)
 
 
 @pytest.fixture
@@ -46,24 +28,6 @@ def ray_result(request, origin):
     sampler = DummySampler(z=z_values)
     profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=nan_policy)
     return RayResult(profile=profile, slope_critical=slope_critical)
-
-
-def _make_radial_result(n_rays=8, z_values=None, slope_critical=0.3):
-    """Helper to create RadialRixResult for testing."""
-    if z_values is None:
-        z_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
-    origin = Location(easting=0.0, northing=0.0)
-    angles = np.linspace(0, 360, n_rays, endpoint=False)
-
-    ray_results = []
-    for theta in angles:
-        ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=0.1)
-        sampler = DummySampler(z=z_values)
-        profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
-        ray_results.append(RayResult(profile=profile, slope_critical=slope_critical))
-
-    return RadialRixResult(rays=tuple(ray_results))
 
 
 @pytest.fixture
@@ -195,9 +159,9 @@ def test_radial_result_retrieves_correct_ray(radial_result):
 
 @pytest.mark.parametrize("radial_result", [(8, [0, 1, 2], 0.5, 0.3)], indirect=["radial_result"])
 def test_radial_result_directional_stats_order(radial_result):
-    directional_ruggedness = radial_result.directional_stats()
+    ruggednesses = radial_result.ruggednesses
     angles = radial_result.angles
-    for angle, ruggedness in zip(angles, directional_ruggedness):
+    for angle, ruggedness in zip(angles, ruggednesses):
         ray = radial_result.ray(angle)
         assert np.isclose(ruggedness, ray.ruggedness)
 

@@ -71,7 +71,7 @@ def test_ray_profile_returns_correct_intermediate_values_given_valid_profile(
 
     mask = analyse.steep_mask(ray_profile, critical_slope)
     assert np.all(mask == expected_mask)
-    ruggedness = analyse.rix(ray_profile, critical_slope)
+    ruggedness = analyse.ruggedness(ray_profile, critical_slope)
     assert np.isclose(ruggedness, expected_rix)
 
 
@@ -102,7 +102,7 @@ def test_ray_profile_returns_correct_intermediate_values(
 
     mask = analyse.steep_mask(ray_profile, critical_slope)
     assert np.all(mask == expected_mask)
-    ruggedness = analyse.rix(ray_profile, critical_slope)
+    ruggedness = analyse.ruggedness(ray_profile, critical_slope)
     assert np.isclose(ruggedness, expected_rix)
 
 
@@ -142,7 +142,7 @@ def test_profile_analysis_with_nan_handling(
     mask = analyse.steep_mask(profile, critical_slope)
     assert np.all(mask == expected_mask)
 
-    ruggedness = analyse.rix(profile, critical_slope)
+    ruggedness = analyse.ruggedness(profile, critical_slope)
     assert np.isclose(ruggedness, expected_rix)
 
 
