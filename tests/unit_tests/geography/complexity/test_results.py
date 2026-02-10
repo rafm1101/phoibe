@@ -6,7 +6,7 @@ import shapely.geometry
 
 from phoibe.geography.complexity.rix.profiles import NaNPolicy
 from phoibe.geography.complexity.rix.profiles import RayGeometry
-from phoibe.geography.complexity.rix.profiles import RegularRayProfile
+from phoibe.geography.complexity.rix.profiles import RayProfile
 from phoibe.geography.complexity.rix.results import RadialRixResult
 from phoibe.geography.complexity.rix.results import RayResult
 
@@ -30,7 +30,7 @@ def _make_ray_result(z_values, slope_critical=0.3, theta=0.0):
     origin = Location(easting=0.0, northing=0.0)
     ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=0.1)
     sampler = DummySampler(z=z_values)
-    profile = RegularRayProfile.create(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
+    profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
 
     return RayResult(profile=profile, slope_critical=slope_critical)
 
@@ -44,7 +44,7 @@ def ray_result(request, origin):
     slope_critical = request.param[4]
     ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=dr_km)
     sampler = DummySampler(z=z_values)
-    profile = RegularRayProfile.create(ray=ray, sampler=sampler, nan_policy=nan_policy)
+    profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=nan_policy)
     return RayResult(profile=profile, slope_critical=slope_critical)
 
 
@@ -60,7 +60,7 @@ def _make_radial_result(n_rays=8, z_values=None, slope_critical=0.3):
     for theta in angles:
         ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=0.1)
         sampler = DummySampler(z=z_values)
-        profile = RegularRayProfile.create(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
+        profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
         ray_results.append(RayResult(profile=profile, slope_critical=slope_critical))
 
     return RadialRixResult(rays=tuple(ray_results))
@@ -78,7 +78,7 @@ def radial_result(request, origin):
     for theta in angles:
         ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=dr_km)
         sampler = DummySampler(z=z_values)
-        profile = RegularRayProfile.create(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
+        profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
         ray_results.append(RayResult(profile=profile, slope_critical=slope_critical))
 
     return RadialRixResult(rays=tuple(ray_results))

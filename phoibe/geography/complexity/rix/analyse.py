@@ -9,7 +9,6 @@ from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
 from .profiles import NaNPolicy
 from .profiles import RayProfile
-from .profiles import RegularRayProfile
 from .results import RadialRixResult
 from .results import RayResult
 
@@ -47,7 +46,7 @@ def compute_radial_rix(
 
     for theta in angles:
         ray = RayGeometry.from_compass_regular(location=location_ccs, theta=theta, R_km=R_km, dr_km=dr_km)
-        ray_profile = RegularRayProfile.create(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
+        ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
         results.append(RayResult(profile=ray_profile, slope_critical=slope_critical))
 
     return RadialRixResult(rays=tuple(results))

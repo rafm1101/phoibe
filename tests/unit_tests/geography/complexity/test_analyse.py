@@ -5,7 +5,7 @@ import pytest
 
 from phoibe.geography.complexity.rix import analyse
 from phoibe.geography.complexity.rix.geometry import RayGeometry
-from phoibe.geography.complexity.rix.profiles import RegularRayProfile
+from phoibe.geography.complexity.rix.profiles import RayProfile
 
 # from phoibe.geography.complexity.rix import compute_radial_rix
 
@@ -32,7 +32,7 @@ def dummy_profile(request, ray_north):
     ray = ray_north
     r_m = np.asarray(request.param[0])
     z = np.asarray(request.param[1])
-    return RegularRayProfile(ray_=ray, r_m=r_m, z=z)
+    return RayProfile(ray_=ray, r_m=r_m, z=z)
 
 
 @pytest.mark.parametrize(
@@ -205,7 +205,7 @@ def test_steep_mask_with_all_nan_slopes(dummy_profile):
 #     indirect=["ray_01km", "dummy_sampler"],
 # )
 # def test_ray_profile_contracts_lengths(ray_01km, dummy_sampler, nan_policy, expected_n_slopes):
-#     ray_profile = RegularRayProfile(ray_01km, dummy_sampler, nan_policy)
+#     ray_profile = RayProfile(ray_01km, dummy_sampler, nan_policy)
 #     assert len(ray_profile.slopes) == expected_n_slopes
 
 
@@ -224,7 +224,7 @@ def test_steep_mask_with_all_nan_slopes(dummy_profile):
 # def test_ray_profile_returns_correct_intermediate_values_given_valid_profile(
 #     ray_01km, profile_sampler, nan_policy, critical_slope, expected_mask, expected_rix
 # ):
-#     ray_profile = RegularRayProfile(ray_01km, profile_sampler, nan_policy)
+#     ray_profile = RayProfile(ray_01km, profile_sampler, nan_policy)
 #     assert np.allclose(ray_profile.slopes, [0.1, 0.0, 0.0, -0.1, 0.0, 0.0, 0.2, 0.0, -0.1, -0.1])
 
 #     mask = ray_profile.steep_mask(critical_slope)
@@ -253,7 +253,7 @@ def test_steep_mask_with_all_nan_slopes(dummy_profile):
 # def test_ray_profile_returns_correct_intermediate_values(
 #     ray_01km, invalid_profile_sampler, nan_policy, critical_slope, expected_slopes, expected_mask, expected_rix
 # ):
-#     ray_profile = RegularRayProfile(ray_01km, invalid_profile_sampler, nan_policy)
+#     ray_profile = RayProfile(ray_01km, invalid_profile_sampler, nan_policy)
 #     assert np.allclose(ray_profile.slopes, expected_slopes, equal_nan=True)
 
 #     mask = ray_profile.steep_mask(critical_slope)

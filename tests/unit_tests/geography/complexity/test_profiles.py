@@ -4,7 +4,7 @@ import pytest
 from phoibe.geography.complexity.rix import analyse
 from phoibe.geography.complexity.rix.profiles import NaNPolicy
 from phoibe.geography.complexity.rix.profiles import RayProfile
-from phoibe.geography.complexity.rix.profiles import RegularRayProfile
+from phoibe.geography.complexity.rix.profiles import _compute_level_crossings
 
 
 class DummySampler:
@@ -43,7 +43,7 @@ def invalid_profile_sampler(request):
     indirect=["ray_01km", "dummy_sampler"],
 )
 def test_ray_profile_contracts_lengths(ray_01km, dummy_sampler, nan_policy, expected_n_slopes):
-    ray_profile = RegularRayProfile.create(ray_01km, dummy_sampler, nan_policy)
+    ray_profile = RayProfile.create_regular(ray_01km, dummy_sampler, nan_policy)
     slope_values = analyse.slopes(ray_profile)
     assert len(slope_values) == expected_n_slopes
     assert len(ray_profile.r_m) == expected_n_slopes + 1
@@ -65,7 +65,7 @@ def test_ray_profile_contracts_lengths(ray_01km, dummy_sampler, nan_policy, expe
 def test_ray_profile_returns_correct_intermediate_values_given_valid_profile(
     ray_01km, profile_sampler, nan_policy, critical_slope, expected_mask, expected_rix
 ):
-    ray_profile = RegularRayProfile.create(ray_01km, profile_sampler, nan_policy)
+    ray_profile = RayProfile.create_regular(ray_01km, profile_sampler, nan_policy)
     slope_values = analyse.slopes(ray_profile)
     assert np.allclose(slope_values, [0.1, 0.0, 0.0, -0.1, 0.0, 0.0, 0.2, 0.0, -0.1, -0.1])
 
@@ -96,7 +96,7 @@ def test_ray_profile_returns_correct_intermediate_values_given_valid_profile(
 def test_ray_profile_returns_correct_intermediate_values(
     ray_01km, invalid_profile_sampler, nan_policy, critical_slope, expected_slopes, expected_mask, expected_rix
 ):
-    ray_profile = RegularRayProfile.create(ray_01km, invalid_profile_sampler, nan_policy)
+    ray_profile = RayProfile.create_regular(ray_01km, invalid_profile_sampler, nan_policy)
     slope_values = analyse.slopes(ray_profile)
     assert np.allclose(slope_values, expected_slopes, equal_nan=True)
 
@@ -135,7 +135,7 @@ def test_ray_profile_returns_correct_intermediate_values(
 def test_profile_analysis_with_nan_handling(
     ray_01km, invalid_profile_sampler, nan_policy, critical_slope, expected_slopes, expected_mask, expected_rix
 ):
-    profile = RegularRayProfile.create(ray=ray_01km, sampler=invalid_profile_sampler, nan_policy=nan_policy)
+    profile = RayProfile.create_regular(ray=ray_01km, sampler=invalid_profile_sampler, nan_policy=nan_policy)
     slope_arr = analyse.slopes(profile)
     assert np.allclose(slope_arr, expected_slopes, equal_nan=True)
 
@@ -158,3 +158,22 @@ class DummyProfile(RayProfile):
     @property
     def segment_lengths(self):
         return self._segment_lengths
+
+
+@pytest.mark.parametrize(
+    "z, r, levels, expected_z, expected_r",
+    [
+        ([0, 10], [0, 10], [0, 3, 7.5, 10], [0, 3, 7.5, 10], [0, 3, 7.5, 10]),
+        ([10, 0], [0, 10], [0, 3, 7.5, 10], [10, 7.5, 3, 0], [0, 2.5, 7, 10]),
+        ([0, 10, 15], [0, 4, 10], [0, 5, 10, 12, 18], [0, 5, 10, 12, 15], [0, 2, 4, 6.4, 10]),
+        ([0, 10, 0], [0, 5, 10], [0, 4, 8, 12], [0, 4, 8, 8, 4, 0], [0, 2, 4, 6, 8, 10]),
+        ([0, 10, 10, 10, 0], [0, 10, 20, 30, 40], [0, 10], [0, 10, 10, 10, 0], [0, 10, 20, 30, 40]),
+        ([0, 8, 5, 8, 0], [0, 10, 20, 30, 40], [0, 10], [0, 0], [0, 40]),
+        ([0, 20, 20, 20, 0], [0, 10, 20, 30, 40], [0, 10], [0, 10, 10, 0], [0, 5, 35, 40]),
+    ],
+)
+def test_compute_level_crossings_returns_valid_level_crossings(z, r, levels, expected_z, expected_r):
+    r_crossings, z_crossings = _compute_level_crossings(z=z, r=r, levels=levels)
+
+    assert np.allclose(r_crossings, expected_r)
+    assert np.allclose(z_crossings, expected_z)
