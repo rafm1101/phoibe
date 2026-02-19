@@ -6,17 +6,19 @@
 
 ### Major components by task
 
-1. Orchestrator
-2. Rule registry and validation rules
-   1. Rule registry
-   2. Validation rules
+1. Orchestrate:
+   1. Validator
+2. Register rules and rule to validate:
+   1. Rule registry.
+   2. Validation rule.
 3. I/O:
-   1. Input
-   2. Report
-   3. Logging
-4. Configuration
+   1. Input.
+   2. Report.
+   3. Logging.
+4. Configure:
    1. Layer configuration
-5. Variable detector
+5. Detector column keys:
+   1. Variable detector.
 
 ### Major components in structure
 
@@ -41,4 +43,20 @@
 
 ## Usage
 
-## Creating and registering new rules
+### Programmatic usage
+
+### Configuration
+
+### Report: Output format
+
+## Extending the system: Creating and registering new rules
+
+## Logging system: Log outputs
+
+### Console
+
+### File
+
+### JSON audit log
+
+### Logging patterns
