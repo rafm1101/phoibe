@@ -1,5 +1,7 @@
 # logging
 *.log
+*.logs
+logs/
 
 # output artifacts
 *.pdf

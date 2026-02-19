@@ -48,7 +48,7 @@ class DataLoader(typing.Protocol):
         ...
 
 
-class SignalDetector(typing.Protocol):
+class VariableDetector(typing.Protocol):
     """Protocol for detecting variable-to-column mappings in dataframes.
 
     Implementations must detect which dataframe column corresponds to expected variables.
