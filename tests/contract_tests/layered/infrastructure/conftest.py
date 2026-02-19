@@ -16,7 +16,7 @@ def sample_reports():
     for i in range(3):
         turbine_id = f"WEA_{i+1:02d}"
 
-        check_results = [
+        rule_execution_results = [
             RuleExecutionResult(
                 rule_name="signal_timestamp",
                 status=Status.PASSED,
@@ -52,7 +52,7 @@ def sample_reports():
                 modified_at=datetime.datetime(2024, 1, 1, 9, 0, 0),
             ),
             detected_variables={"timestamp": "Zeitstempel", "wind_speed": "ws_gondel"},
-            rule_execution_results=check_results,
+            rule_execution_results=rule_execution_results,
         )
 
         reports.append(report)
