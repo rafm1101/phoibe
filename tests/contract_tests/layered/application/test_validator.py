@@ -129,7 +129,7 @@ class TestLayerValidatorContract:
 
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({})
-        validator = LayerValidator("raw", data_loader, variable_detector, [CaptureRule()])
+        validator = LayerValidator("raw", data_loader, variable_detector, [CaptureRule(points=13)])
         validator.validate(sample_data_file, "WEA 01")
         assert received_df is not None
         assert isinstance(received_df, pd.DataFrame)
@@ -150,7 +150,7 @@ class TestLayerValidatorContract:
 
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({"timestamp": [r"zeit"]})
-        validator = LayerValidator("raw", data_loader, variable_detector, [CaptureRule()])
+        validator = LayerValidator("raw", data_loader, variable_detector, [CaptureRule(points=13)])
         validator.validate(sample_data_file, "WEA 01")
         assert received_context is not None
         assert isinstance(received_context, ValidationContext)
@@ -173,7 +173,9 @@ class TestLayerValidatorContract:
 
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({})
-        validator = LayerValidator("raw", data_loader, variable_detector, [CrashingRule(), MockRule("survivor")])
+        validator = LayerValidator(
+            "raw", data_loader, variable_detector, [CrashingRule(points=13), MockRule("survivor")]
+        )
         result = validator.validate(sample_data_file, "WEA 01")
         assert len(result.rule_execution_results) == 2
         crasher_result = next(record for record in result.rule_execution_results if record.rule_name == "crasher")

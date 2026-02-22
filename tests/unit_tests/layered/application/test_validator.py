@@ -144,7 +144,7 @@ class TestLayerValidatorErrorRecovery:
             def execute(self, df, context):
                 raise ValueError("Invalid value")
 
-        validator = LayerValidator("raw", mock_loader, mock_detector, [ValueErrorRule()])
+        validator = LayerValidator("raw", mock_loader, mock_detector, [ValueErrorRule(points=13)])
         report = validator.validate("test.csv", "WEA 01")
         assert report.rule_execution_results[0].status == Status.ERROR
         assert "Invalid value" in report.rule_execution_results[0].message
@@ -158,7 +158,7 @@ class TestLayerValidatorErrorRecovery:
             def execute(self, df, context):
                 raise KeyError("missing_column")
 
-        validator = LayerValidator("raw", mock_loader, mock_detector, [KeyErrorRule()])
+        validator = LayerValidator("raw", mock_loader, mock_detector, [KeyErrorRule(points=13)])
         report = validator.validate("test.csv", "WEA 01")
         assert report.rule_execution_results[0].status == Status.ERROR
         assert "missing_column" in report.rule_execution_results[0].message
@@ -172,7 +172,7 @@ class TestLayerValidatorErrorRecovery:
             def execute(self, df, context):
                 raise AttributeError("missing attribute")
 
-        validator = LayerValidator("raw", mock_loader, mock_detector, [AttrErrorRule()])
+        validator = LayerValidator("raw", mock_loader, mock_detector, [AttrErrorRule(points=13)])
         report = validator.validate("test.csv", "WEA 01")
         assert report.rule_execution_results[0].status == Status.ERROR
 

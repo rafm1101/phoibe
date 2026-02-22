@@ -1,8 +1,12 @@
 # Phoibe
 
-## Overview
+## Summary
 
 Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_, _bright_ and _prophet_. She received control of the Oracle of Delphi from Themis before gifting it to her grandson Apollo. She collects high-level tools for tasks that occur in the data science workflow. Typically, these high-level tools require additional dependencies which are not desired in `ergaleiothiki`.
+
+Tools comprise:
+- The **complexity assessment of terrain** for wind energy projects measuring the steepness along rays. Follows TR6Rev12.
+- A **data validation framework** following a progressive issue detection and transformation approach subdivided into layers for (more than just) scada data. 
 
 ## Structure
 
