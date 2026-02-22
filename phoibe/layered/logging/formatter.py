@@ -6,7 +6,7 @@ import logging
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured log record logging."""
 
-    EXTRA_FIELDS = ["turbine_id", "rule_name", "check_name", "status", "duration_ms", "run_id", "layer", "file_path"]
+    EXTRA_FIELDS = ["turbine_id", "rule_name", "status", "duration_ms", "run_id", "layer", "file_path"]
     """Accepted optional fields."""
 
     def format(self, record: logging.LogRecord) -> str:

@@ -34,7 +34,7 @@ class TestRuleRegistryContract:
             def execute(self, df, context):
                 pass
 
-        instance = TestRule()
+        instance = TestRule(points=13)
         assert instance.name == "test_rule"
 
     def test_register_multiple_rules(self):

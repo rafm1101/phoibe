@@ -1,5 +1,8 @@
 # Geography
 
+## Summary
+
+Tools for assessing different aspects of geospatial data.
 
 ## Structure
 

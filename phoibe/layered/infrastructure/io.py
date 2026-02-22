@@ -126,7 +126,7 @@ class YAMLReportRepository:
 
         report = {
             "run_metadata": self._create_metadata(reported),
-            "turbines": {item.turbine_id: self._diagnostic_to_dict(item) for item in reported},
+            "turbines": {item.turbine_id: self._report_to_dict(item) for item in reported},
         }
 
         with open(output_path, "w", encoding="utf-8") as filestream:
@@ -142,15 +142,15 @@ class YAMLReportRepository:
             "errors": sum(1 for item in reported if item.overall_status == Status.ERROR),
         }
 
-    def _diagnostic_to_dict(self, reported: LayerReport) -> dict:
+    def _report_to_dict(self, reported: LayerReport) -> dict:
         return {
             "turbine_id": reported.turbine_id,
             "timestamp": reported.timestamp.isoformat(),
             "layer": reported.layer_name,
             "file_info": {
-                "filename": reported.file_metadata.filename,
-                "size_mb": reported.file_metadata.size_mb,
-                "format": reported.file_metadata.format,
+                "filename": str(reported.file_metadata.filename),
+                "size_mb": float(reported.file_metadata.size_mb),
+                "format": str(reported.file_metadata.format),
                 "modified": reported.file_metadata.modified_at.isoformat(),
             },
             "detected_variables": reported.detected_variables,
