@@ -27,11 +27,11 @@ def generate_wtg_scada(A=10, k=2, time: Time = DEFAULT_TIME, wtg_type: WtgType =
     wind_speed = _generate_weibull_timeseries(A=A, k=k, n_steps=len(index), delta_t=600, theta=1 / 7200)
     df = pd.DataFrame(data={"wind_speed": wind_speed}, index=index)
 
-    power = _wind_speed_to_power(wind_speeds=df["wind_speed"].to_numpy(dtype=np.floating), wtg_type=wtg_type)
+    power = _wind_speed_to_power(wind_speeds=df["wind_speed"].to_numpy(), wtg_type=wtg_type)
     df["power"] = power[:, 1]
 
-    df["rotor_speed"] = _wind_speed_to_rotor_speed(df["wind_speed"].to_numpy(dtype=np.floating), wtg_type=wtg_type)
-    df["pitch_angle"] = _wind_speed_to_pitch_angle(df["wind_speed"].to_numpy(dtype=np.floating), wtg_type=wtg_type)
+    df["rotor_speed"] = _wind_speed_to_rotor_speed(df["wind_speed"].to_numpy(), wtg_type=wtg_type)
+    df["pitch_angle"] = _wind_speed_to_pitch_angle(df["wind_speed"].to_numpy(), wtg_type=wtg_type)
     return df
 
 
