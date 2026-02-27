@@ -56,6 +56,47 @@ class RuleExecutionResultBuilder:
             details=details or {},
         )
 
+    def warning(
+        self,
+        required: typing.Any,
+        actual: typing.Any,
+        points: int | None = None,
+        message: str = "",
+        details: dict | None = None,
+    ) -> RuleExecutionResult:
+        """Create a WARNING result.
+
+        Parameters
+        ----------
+        required
+            Expected value.
+        actual
+            Actual value.
+        points
+            Points achieved.
+        message
+            Optional success message.
+        details
+            Optional additional details.
+
+        Returns
+        -------
+        RuleExecutionResult
+            Status WARNING.
+        """
+        points_achieved = points if points is not None else self.points
+        return RuleExecutionResult(
+            rule_name=self.rule_name,
+            status=Status.WARNING,
+            severity=self.severity,
+            required=required,
+            actual=actual,
+            points_max=self.points,
+            points_achieved=points_achieved,
+            message=message,
+            details=details or {},
+        )
+
     def failed(
         self, required: typing.Any, actual: typing.Any, message: str = "", details: dict | None = None
     ) -> RuleExecutionResult:

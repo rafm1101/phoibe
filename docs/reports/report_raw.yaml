@@ -1,0 +1,125 @@
+run_metadata:
+  timestamp: '2026-02-27T19:07:34.748549'
+  total_turbines: 1
+  passed: 0
+  failed: 0
+  warnings: 1
+  errors: 0
+turbines:
+  WEA 01:
+    turbine_id: WEA 01
+    timestamp: '2026-02-27T19:07:27.774518'
+    layer: raw
+    file_info:
+      filename: in_memory_data
+      size_mb: 1.98
+      format: in_memory
+      modified: '2026-02-27T19:07:27.690767'
+    detected_variables:
+      power_kw: power
+      wind_speed: wind_speed
+      wind_speed_max: null
+      datetime: datetime
+      date: datetime
+      time: datetime
+    rules:
+    - name: variable_power_kw
+      status: passed
+      severity: critical
+      required: Variable 'power_kw' detected
+      actual: Detected as 'power'
+      points: 10/10
+      message: Variable 'power_kw' found
+      details:
+        column_name: power
+    - name: temporal_attributes
+      status: warning
+      severity: info
+      required: ''
+      actual: ''
+      points: 8/10
+      message: ''
+      details:
+        start: '2027-01-01T00:00:00'
+        end: '2027-12-31T23:50:00'
+        tzinfo: None
+        n_dates: 51857
+        has_duplicates: false
+        is_sorted: true
+        frequency: 0 days 00:10:00
+        oversampling: []
+    - name: data_gaps
+      status: passed
+      severity: info
+      required: ''
+      actual: ''
+      points: 10/10
+      message: ''
+      details:
+        gap_count: 35
+        gap_length_total: 5 days 03:00:00
+        gap_length_mean: 0 days 03:30:51.428571
+        gap_length_max: 0 days 04:30:00
+    - name: availability
+      status: passed
+      severity: info
+      required: 90.00%
+      actual: 98.66%
+      points: 10/10
+      message: Data availability promising.
+      details:
+        availability_data: 0.987
+        availability_hours:
+          0: 0.991
+          1: 0.986
+          2: 0.984
+          3: 0.983
+          4: 0.982
+          5: 0.989
+          6: 0.987
+          7: 0.988
+          8: 0.981
+          9: 0.981
+          10: 0.979
+          11: 0.98
+          12: 0.988
+          13: 0.985
+          14: 0.988
+          15: 0.985
+          16: 0.982
+          17: 0.988
+          18: 0.99
+          19: 0.996
+          20: 0.994
+          21: 0.993
+          22: 0.989
+          23: 0.989
+        availability_days:
+          Montag: 0.988
+          Dienstag: 0.979
+          Mittwoch: 0.977
+          Donnerstag: 0.992
+          Freitag: 0.991
+          Samstag: 0.986
+          Sonntag: 0.993
+        availability_months:
+          Januar: 0.99
+          Februar: 0.985
+          März: 0.993
+          April: 0.997
+          Mai: 0.991
+          Juni: 0.97
+          Juli: 0.977
+          August: 0.986
+          September: 0.997
+          Oktober: 0.98
+          November: 0.983
+          Dezember: 0.991
+    scoring:
+      achieved: 38
+      max: 40
+      percentage: 95.0
+      status: warning
+    summary:
+      critical_failures: 0
+      warnings: 1
