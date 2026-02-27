@@ -169,6 +169,7 @@ class DataGaps(ValidationRule):
         delta_index_counts = delta_index_counts.sort_index()
         mode = delta_index_counts.index[int(delta_index_counts.argmax())]
         delta_index_counts_conditioned = delta_index_counts[delta_index_counts.index > mode]
+        delta_index_counts_conditioned.index = delta_index_counts_conditioned.index - pd.Timedelta("00:10:00")
         return delta_index_counts_conditioned
 
     def _describe_gaps(self, delta: pd.Series) -> tuple[int, pd.Timedelta, pd.Timedelta, pd.Timedelta]:
@@ -192,7 +193,7 @@ class AvailabilityRule(ValidationRule):
         points: int = 10,
         logger: logging.Logger | None = None,
     ):
-        super().__init__(points, Severity.INFO, logger)
+        super().__init__(points, Severity.CRITICAL, logger)
         self.good_threshold = good_threshold
         self.acceptable_threshold = acceptable_threshold
         self.locale = locale
