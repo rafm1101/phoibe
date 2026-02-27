@@ -1,0 +1,44 @@
+run_metadata:
+  timestamp: '2026-02-27T23:36:32.797879'
+  total_turbines: 1
+  passed: 1
+  failed: 0
+  warnings: 0
+  errors: 0
+turbines:
+  WEA 01:
+    turbine_id: WEA 01
+    timestamp: '2026-02-27T23:34:00.550801'
+    layer: bronze
+    file_info:
+      filename: in_memory_data
+      size_mb: 1.55
+      format: in_memory
+      modified: '2026-02-27T23:34:00.545959'
+    detected_variables:
+      power_kw: power_kw
+      wind_speed: wind_speed
+      wind_speed_max: null
+      datetime: datetime
+      date: datetime
+      time: datetime
+    rules:
+    - name: ranges
+      status: passed
+      severity: info
+      required: ''
+      actual: ''
+      points: 10/10
+      message: ''
+      details:
+        checked:
+          wind_speed: 24
+        skipped: []
+    scoring:
+      achieved: 10
+      max: 10
+      percentage: 100.0
+      status: passed
+    summary:
+      critical_failures: 0
+      warnings: 0
