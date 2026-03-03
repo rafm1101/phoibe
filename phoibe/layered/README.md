@@ -39,7 +39,7 @@ A modular, extensible validation framework following a progressive issue detecti
 1. Extensibility: Add new rules directly.
 1. Error-handling: Log steps, degrade gracefully.
 
-### Layers
+### Components
 
 1. `application` - application layer:
    - `validator`: Orchestrator `LayerValidator`.
@@ -64,11 +64,69 @@ A modular, extensible validation framework following a progressive issue detecti
 
 ### Programmatic usage
 
+Data that is available in memory:
+
+```python
+validator_raw = ValidatorFactory().create_from_memory(config=config_raw, data=data)
+report_raw = validator_raw.validate(file_path=".", turbine_id="WEA 01")
+```
+
 ### Configuration
+
+```python
+RULES_RAW = [
+    {"name": "required_variable", "params": {"variable_name": "power_kw"}},
+    {"name": "temporal_attributes", "params": {}},
+    {"name": "data_gaps", "params": {"good_threshold": 0.03, "acceptable_threshold": 0.1}},
+    {"name": "availability", "params": {"good_threshold": 0.9, "acceptable_threshold": 0.8, "locale": "de_DE"}},
+]
+```
 
 ### Report: Output format
 
 ## Extending the system: Creating and registering new rules
+
+A validation rule should provide a `name` property and an `execute` method that returns a `RuleExecutionResult`.
+
+```python
+@RuleRegistry.register("curtailments_power")
+class CurtailmentRule(ValidationRule):
+
+    def __init__(
+        self,
+        wind_speed_threshold: float = 14.0,
+        prominence_threshold: float = 1e-7,
+        points: int = 10,
+        severity: Severity = Severity.INFO,
+        logger: logging.Logger | None = None,
+    ):
+        super().__init__(points, severity, logger)
+        self.wind_speed_threshold = wind_speed_threshold
+        self.prominence_threshold = prominence_threshold
+
+    @property
+    def name(self):
+        return "curtailments_power"
+
+    def execute(self, df: pd.DataFrame, context: ValidationContext) -> RuleExecutionResult:
+        power_key = context.get_column_key("power_kw")
+        windspeed_key = context.get_column_key("wind_speed")
+        if power_key is None:
+            return self.result_builder.not_checked("Power variable not detected.")
+        if windspeed_key is None:
+            return self.result_builder.not_checked("Wind speed variable not detected.")
+
+        ...
+        details = {
+            "n_curtailments": int(np.sum(peaks_prominent)),
+            "n_candidates_detected": n_candidates,
+            "power": [round(float(power), 1) for power in peak_powers],
+            "height": [round(float(density), 6) for density in peak_densities],
+            "ignored_below": round(float(first_non_peak_density), 6),
+        }
+        message = f"Found {details['n_curtailments']} full load levels."
+        return self.result_builder.passed(required="", actual="", message=message, details=details)
+```
 
 ## Logging system: Log outputs
 

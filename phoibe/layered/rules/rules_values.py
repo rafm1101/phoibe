@@ -15,7 +15,15 @@ from phoibe.layered.rules.rule import ValidationRule
 
 @RuleRegistry.register("ranges")
 class RangeRule(ValidationRule):
-    """Validate ranges of variables."""
+    """Validate ranges of variables.
+
+    `RangeRule` validates for each requested variable the provided range, and counts the outliers.
+
+    Parameters
+    ----------
+    variable_ranges
+        Dictionary providing for each variable to be checked a tuple of the respective range bounds.
+    """
 
     def __init__(
         self,
@@ -68,8 +76,19 @@ class RangeRule(ValidationRule):
 
 
 @RuleRegistry.register("essential_ranges")
-class EssentialRanges(ValidationRule):
-    """Determine essential ranges of variables."""
+class EssentialRange(ValidationRule):
+    """Determine essential ranges of variables.
+
+    The heuristic to determine essential ranges or essential minimum and maximum, respectively, consists in
+    choosing the shortest inverval containing at least a percentage of `proportion` data points.
+
+    Parameters
+    ----------
+    variable_names
+        A list of all variable names to be checked.
+    proportion
+        The amount of points that make up the essential part.
+    """
 
     def __init__(
         self,
@@ -85,10 +104,10 @@ class EssentialRanges(ValidationRule):
 
     @property
     def name(self):
-        return "essential_ranges"
+        return "essential_range"
 
     def execute(self, df: pd.DataFrame, context: ValidationContext) -> RuleExecutionResult:
-        """Verify the range properties of variables.
+        """Determine the range properties of variables.
 
         Parameters
         ----------

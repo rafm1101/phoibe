@@ -5,14 +5,14 @@ import pytest
 from phoibe.layered.application.context import ValidationContext
 from phoibe.layered.core.entities import Severity
 from phoibe.layered.core.entities import Status
-from phoibe.layered.rules.rules_values import EssentialRanges
+from phoibe.layered.rules.rules_values import EssentialRange
 
 
 class TestEssentialRanges:
 
     @pytest.fixture
     def rule(self):
-        return EssentialRanges(variable_names=["power_kw", "wind_speed", "temperature"], proportion=0.995, points=10)
+        return EssentialRange(variable_names=["power_kw", "wind_speed", "temperature"], proportion=0.995, points=10)
 
     @pytest.fixture
     def context_with_variables(self):
@@ -257,12 +257,12 @@ class TestEssentialRanges:
         assert "temperature" in result.details["checked"]
 
     def test_accepts_custom_proportion(self):
-        rule = EssentialRanges(variable_names=["power_kw"], proportion=0.99)
+        rule = EssentialRange(variable_names=["power_kw"], proportion=0.99)
 
         assert rule.proportion == 0.99
 
     def test_accepts_single_variable(self):
-        rule = EssentialRanges(variable_names=["power_kw"])
+        rule = EssentialRange(variable_names=["power_kw"])
         context = ValidationContext(layer_name="test", detected_variables={"power_kw": "Power"}, turbine_id="WEA_01")
         df = pd.DataFrame({"Power": [1000, 1500, 2000]})
         result = rule.execute(df, context)
@@ -271,12 +271,12 @@ class TestEssentialRanges:
         assert len(result.details["checked"]) == 1
 
     def test_accepts_many_variables(self):
-        rule = EssentialRanges(variable_names=[f"var_{i}" for i in range(10)])
+        rule = EssentialRange(variable_names=[f"var_{i}" for i in range(10)])
 
         assert len(rule.variable_names) == 10
 
     def test_handles_empty_variable_names(self):
-        rule = EssentialRanges(variable_names=[])
+        rule = EssentialRange(variable_names=[])
         context = ValidationContext(layer_name="test", detected_variables={}, turbine_id="WEA_01")
         df = pd.DataFrame({"col": [1, 2, 3]})
         result = rule.execute(df, context)
@@ -287,6 +287,6 @@ class TestEssentialRanges:
         assert rule.severity == Severity.INFO
 
     def test_accepts_custom_points(self):
-        rule = EssentialRanges(variable_names=["power_kw"], points=20)
+        rule = EssentialRange(variable_names=["power_kw"], points=20)
 
         assert rule.points == 20

@@ -122,11 +122,28 @@ class TemporalAttributes(ValidationRule):
 class DataGaps(ValidationRule):
     """Validate data completeness by addressing gaps.
 
-    Determine:
-    - Number of gaps.
-    - Total length of all gaps.
-    - Mean length of all gaps.
-    - Length of the longest gap.
+    The heuristic relies on determining the frequency as the mode of the distribution of the timedeltas
+    of subsequent timestamps.
+    Any timedelta larger than the frequency defines a gap, and its length is the excess relative to the frequency.
+
+    Parameters
+    ----------
+    good_threshold
+        The proportion of the length of all gaps relative to the entire period for being considered as good.
+    acceptable_threshold
+        The proportion of the length of all gaps relative to the entire period for being considered as acceptable.
+
+    Notes
+    -----
+    1. The heuristic requires the actual frequency to dominate that distribution of timedeltas.
+    2. The length of a gap is the delta of its defining bounds minus the frequency. This ensures that each missing
+       timestamp contributes one amount of frequency to the gap length.
+    3. `DataGaps` determines:
+       - Number of gaps.
+       - Total length of all gaps.
+       - Mean length of all gaps.
+       - Length of the longest gap.
+    4. See also `AvailabilityRule` for the same heuristic.
     """
 
     def __init__(
@@ -209,7 +226,29 @@ class DataGaps(ValidationRule):
 
 @RuleRegistry.register("availability")
 class AvailabilityRule(ValidationRule):
-    """Assess the availability of timestamps globally and hourly, daily, monthly."""
+    """Assess the availability of timestamps globally and hourly, daily, monthly.
+
+    The heuristic relies on determining the frequency as the mode of the distribution of the timedeltas
+    of subsequent timestamps.
+
+    Parameters
+    ----------
+    good_threshold
+        The proportion of timestamps relative to the entire period for being considered as good.
+    acceptable_threshold
+        The proportion of timestamps relative to the entire period for being considered as acceptable.
+
+    Notes
+    -----
+    1. The heuristic requires the actual frequency to dominate that distribution of timedeltas (to determine
+       what make the timeseries complete in the entire period).
+    2. `AvailabilityRule` determines availabilities as proportions:
+       - Globally.
+       - Hourly for each hour of the day.
+       - Daily for each day of a week.
+       - Monthly for each month of a year.
+    3. See also `DataGaps` for the same heuristic.
+    """
 
     def __init__(
         self,

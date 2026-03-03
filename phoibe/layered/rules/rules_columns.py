@@ -14,6 +14,11 @@ class RequiredVariableRule(ValidationRule):
     """Validate the presence of required variables in the data.
 
     Primer validation rule. Downstream rules may not be executed due to missing variables.
+
+    Parameters
+    ----------
+    variable_name
+        Name of the required variable.
     """
 
     def __init__(
