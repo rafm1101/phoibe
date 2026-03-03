@@ -1,20 +1,20 @@
 run_metadata:
-  timestamp: '2026-02-27T23:36:32.797879'
+  timestamp: '2026-03-03T21:29:29.699708'
   total_turbines: 1
-  passed: 1
+  passed: 0
   failed: 0
-  warnings: 0
+  warnings: 1
   errors: 0
 turbines:
   WEA 01:
     turbine_id: WEA 01
-    timestamp: '2026-02-27T23:34:00.550801'
+    timestamp: '2026-03-03T21:29:27.992837'
     layer: bronze
     file_info:
       filename: in_memory_data
-      size_mb: 1.55
+      size_mb: 1.56
       format: in_memory
-      modified: '2026-02-27T23:34:00.545959'
+      modified: '2026-03-03T21:29:27.925096'
     detected_variables:
       power_kw: power_kw
       wind_speed: wind_speed
@@ -29,16 +29,53 @@ turbines:
       required: ''
       actual: ''
       points: 10/10
-      message: ''
+      message: Checked ranges of 1 variables.
+      details:
+        n_out_of_range:
+          wind_speed: 15
+        skipped: []
+    - name: essential_ranges
+      status: warning
+      severity: info
+      required: ''
+      actual: ''
+      points: 5/10
+      message: Checked essential ranges of 2/4 variables.
       details:
         checked:
-          wind_speed: 24
-        skipped: []
-    scoring:
-      achieved: 10
-      max: 10
-      percentage: 100.0
+          wind_speed:
+          - 0.41808752291597245
+          - 20.771261177204384
+          power_kw:
+          - 0.0
+          - 5600.0
+        skipped:
+        - rotor_speed
+        - pitch_angle
+    - name: curtailments_power
       status: passed
+      severity: info
+      required: ''
+      actual: ''
+      points: 10/10
+      message: Found 3 full load levels.
+      details:
+        n_curtailments: 3
+        n_candidates_detected: 4
+        power:
+        - 0.0
+        - 3190.0
+        - 5600.0
+        height:
+        - 0.000393
+        - 0.000174
+        - 0.000279
+        ignored_below: 0.0
+    scoring:
+      achieved: 25
+      max: 30
+      percentage: 83.33
+      status: warning
     summary:
       critical_failures: 0
-      warnings: 0
+      warnings: 1

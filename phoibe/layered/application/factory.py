@@ -43,7 +43,7 @@ class RuleRegistry:
         return wrapper
 
     @classmethod
-    def get(cls, name: str):  # -> Type[ValidationRule]:
+    def get(cls, name: str) -> typing.Type[ValidationRule]:
         """Get rule class by name.
 
         Parameters

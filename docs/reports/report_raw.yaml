@@ -1,5 +1,5 @@
 run_metadata:
-  timestamp: '2026-02-27T23:34:00.181730'
+  timestamp: '2026-03-03T18:25:44.773995'
   total_turbines: 1
   passed: 0
   failed: 1
@@ -8,13 +8,13 @@ run_metadata:
 turbines:
   WEA 01:
     turbine_id: WEA 01
-    timestamp: '2026-02-27T23:34:00.114727'
+    timestamp: '2026-03-03T18:25:44.732366'
     layer: raw
     file_info:
       filename: in_memory_data
-      size_mb: 1.55
+      size_mb: 1.56
       format: in_memory
-      modified: '2026-02-27T23:34:00.055893'
+      modified: '2026-03-03T18:25:44.644185'
     detected_variables:
       power_kw: power
       wind_speed: wind_speed
@@ -43,7 +43,7 @@ turbines:
         start: '2027-01-01T00:00:00'
         end: '2027-12-31T23:50:00'
         tzinfo: None
-        n_dates: 40522
+        n_dates: 40870
         has_duplicates: false
         is_sorted: true
         frequency: 0 days 00:10:00
@@ -57,64 +57,64 @@ turbines:
       message: ''
       details:
         gap_count: 115
-        gap_length_total: 83 days 14:20:00
-        gap_length_mean: 0 days 17:26:46.956521
+        gap_length_total: 81 days 04:20:00
+        gap_length_mean: 0 days 16:56:31.304347
         gap_length_max: 0 days 23:50:00
     - name: availability
       status: failed
       severity: critical
       required: 90.00%
-      actual: 77.10%
+      actual: 77.76%
       points: 0/10
       message: Data availability critical.
       details:
-        availability_data: 0.771
+        availability_data: 0.778
         availability_hours:
           0: 0.768
-          1: 0.756
-          2: 0.759
-          3: 0.759
-          4: 0.765
-          5: 0.761
-          6: 0.754
-          7: 0.762
-          8: 0.766
-          9: 0.775
-          10: 0.778
-          11: 0.765
-          12: 0.774
-          13: 0.778
-          14: 0.775
-          15: 0.789
-          16: 0.784
-          17: 0.772
-          18: 0.775
-          19: 0.773
-          20: 0.775
-          21: 0.785
-          22: 0.783
-          23: 0.772
+          1: 0.764
+          2: 0.777
+          3: 0.782
+          4: 0.788
+          5: 0.787
+          6: 0.784
+          7: 0.772
+          8: 0.775
+          9: 0.779
+          10: 0.776
+          11: 0.778
+          12: 0.773
+          13: 0.774
+          14: 0.771
+          15: 0.769
+          16: 0.775
+          17: 0.789
+          18: 0.789
+          19: 0.793
+          20: 0.787
+          21: 0.777
+          22: 0.767
+          23: 0.768
         availability_days:
-          0: 0.743
-          1: 0.728
-          2: 0.829
-          3: 0.795
-          4: 0.784
-          5: 0.808
-          6: 0.71
+          Monday: 0.833
+          Tuesday: 0.791
+          Wednesday: 0.713
+          Thursday: 0.715
+          Friday: 0.771
+          Saturday: 0.847
+          Sunday: 0.773
         availability_months:
-          0: 0.767
-          1: 0.816
-          2: 0.849
-          3: 0.857
-          4: 0.743
-          5: 0.64
-          6: 0.814
-          7: 0.792
-          8: 0.784
-          9: 0.74
-          10: 0.708
-          11: 0.744
+          January: 0.802
+          February: 0.89
+          March: 0.734
+          April: 0.746
+          May: 0.717
+          June: 0.72
+          July: 0.828
+          August: 0.766
+          September: 0.762
+          October: 0.792
+          November: 0.79
+          December: 0.791
     scoring:
       achieved: 28
       max: 40
