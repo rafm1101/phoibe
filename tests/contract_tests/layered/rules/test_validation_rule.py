@@ -177,6 +177,37 @@ class TestRuleExecutionResultBuilderContract:
         result = builder.passed(required=True, actual=True)
         assert result.details == {}
 
+    def test_warning_returns_rule_execution_result(self, builder):
+        result = builder.warning(required=True, actual=True)
+        assert isinstance(result, RuleExecutionResult)
+
+    def test_warning_sets_status_passed(self, builder):
+        result = builder.warning(required=True, actual=True)
+        assert result.status == Status.WARNING
+
+    @pytest.mark.parametrize("points_achieved, expected", [(5, 5), (None, 10)])
+    def test_warning_awards_full_points(self, builder, points_achieved, expected):
+        result = builder.warning(required=True, actual=True, points=points_achieved)
+        assert result.points_achieved == expected
+        assert result.points_max == builder.points
+
+    def test_warning_includes_required_and_actual(self, builder):
+        result = builder.warning(required="expected", actual="got")
+        assert result.required == "expected"
+        assert result.actual == "got"
+
+    def test_warning_includes_message(self, builder):
+        result = builder.warning(required=True, actual=True, message="Success!")
+        assert result.message == "Success!"
+
+    def test_warning_includes_details(self, builder):
+        result = builder.warning(required=True, actual=True, details={"key": "value"})
+        assert result.details == {"key": "value"}
+
+    def test_warning_details_defaults_to_empty_dict(self, builder):
+        result = builder.warning(required=True, actual=True)
+        assert result.details == {}
+
     def test_failed_returns_rule_execution_result(self, builder):
         result = builder.failed(required=True, actual=False)
         assert isinstance(result, RuleExecutionResult)

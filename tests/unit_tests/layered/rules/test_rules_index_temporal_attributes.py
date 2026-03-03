@@ -9,7 +9,7 @@ from phoibe.layered.core.entities import Status
 from phoibe.layered.rules.rules_index import TemporalAttributes
 
 
-class TestTemporalAttributesUnit:
+class TestTemporalAttributes:
 
     @pytest.fixture
     def rule(self):
@@ -22,9 +22,11 @@ class TestTemporalAttributesUnit:
     def test_extracts_start_datetime(self, rule, context_with_datetime):
         df = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=5, freq="10min")})
         result = rule.execute(df, context_with_datetime)
-        assert result.status == Status.PASSED
+
+        assert result.status == Status.WARNING
         assert "start" in result.details
         assert "2024-01-01T00:00:00" in result.details["start"]
+        assert result.points_achieved == 8
 
     def test_extracts_end_datetime(self, rule, context_with_datetime):
         df = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=5, freq="10min")})
@@ -116,29 +118,35 @@ class TestTemporalAttributesUnit:
         assert result.status == Status.NOT_CHECKED
         assert "not detected" in result.message.lower()
 
-    def test_error_when_column_not_parseable(self, rule, context_with_datetime):
+    def test_return_warning_given_column_not_parseable(self, rule, context_with_datetime):
         df = pd.DataFrame({"Zeitstempel": ["not", "a", "datetime"]})
         result = rule.execute(df, context_with_datetime)
-        assert result.status in [Status.ERROR, Status.PASSED]
+        assert result.status == Status.WARNING
 
-    def test_error_when_all_nat(self, rule, context_with_datetime):
+    def test_return_warning_given_all_nat(self, rule, context_with_datetime):
         df = pd.DataFrame({"Zeitstempel": pd.to_datetime(["invalid"] * 5, errors="coerce")})
         result = rule.execute(df, context_with_datetime)
-        assert result.status in [Status.ERROR, Status.PASSED]
+        assert result.status == Status.WARNING
 
     def test_handles_single_timestamp(self, rule, context_with_datetime):
         df = pd.DataFrame({"Zeitstempel": [datetime.datetime(2024, 1, 1, 10, 0)]})
         result = rule.execute(df, context_with_datetime)
-        assert result.status == Status.PASSED
+        assert result.status == Status.WARNING
         assert result.details["start"] == result.details["end"]
         assert result.details["has_duplicates"] is False
         assert result.details["is_sorted"] is True
 
     def test_handles_two_timestamps(self, rule, context_with_datetime):
         df = pd.DataFrame(
-            {"Zeitstempel": [datetime.datetime(2024, 1, 1, 10, 0), datetime.datetime(2024, 1, 1, 10, 10)]}
+            {
+                "Zeitstempel": [
+                    datetime.datetime(2024, 1, 1, 10, 0, tzinfo=datetime.timezone.utc),
+                    datetime.datetime(2024, 1, 1, 10, 10, tzinfo=datetime.timezone.utc),
+                ]
+            }
         )
         result = rule.execute(df, context_with_datetime)
+
         assert result.status == Status.PASSED
         assert result.details["is_sorted"] is True
         assert result.details["has_duplicates"] is False
@@ -146,14 +154,22 @@ class TestTemporalAttributesUnit:
     def test_handles_empty_dataframe(self, rule, context_with_datetime):
         df = pd.DataFrame({"Zeitstempel": []})
         result = rule.execute(df, context_with_datetime)
-        assert result.status in [Status.ERROR, Status.PASSED]
+        assert result.status == Status.WARNING
 
     def test_handles_nat_values_mixed_with_valid(self, rule, context_with_datetime):
         df = pd.DataFrame(
             {
                 "Zeitstempel": pd.to_datetime(
-                    ["2024-01-01 10:00", "invalid", "2024-01-01 10:20", "also invalid", "2024-01-01 10:30"],
+                    [
+                        "2024-01-01 10:00",
+                        "invalid",
+                        "2024-01-01 10:20",
+                        "also invalid",
+                        "2024-01-01 10:30",
+                        "2024-01-01 10:40",
+                    ],
                     errors="coerce",
+                    utc=True,
                 )
             }
         )
@@ -161,7 +177,16 @@ class TestTemporalAttributesUnit:
         assert result.status == Status.PASSED
 
     def test_handles_different_datetime_formats(self, rule, context_with_datetime):
-        df = pd.DataFrame({"Zeitstempel": ["2024-01-01", "2024-01-01 10:00:00", "01/01/2024", "2024-01-01T10:30:00"]})
+        df = pd.DataFrame(
+            {
+                "Zeitstempel": [
+                    "2024-01-01+00:00",
+                    "2024-01-01 10:00:00+00:00",
+                    "01/01/2024+00:00",
+                    "2024-01-01T10:30:00+00:00",
+                ]
+            }
+        )
         result = rule.execute(df, context_with_datetime)
         assert result.status == Status.PASSED
 
@@ -196,32 +221,33 @@ class TestTemporalAttributesUnit:
         assert result.details["start"].startswith("2024-01-15T14:30:45")
 
     def test_always_passes_with_valid_data(self, rule, context_with_datetime):
-        df1 = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=5, freq="10min")})
+        df1 = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=5, freq="10min", tz="utc")})
+        utc = datetime.timezone.utc
         assert rule.execute(df1, context_with_datetime).status == Status.PASSED
         df2 = pd.DataFrame(
             {
                 "Zeitstempel": [
-                    datetime.datetime(2024, 1, 1, 10, 20),
-                    datetime.datetime(2024, 1, 1, 10, 0),
+                    datetime.datetime(2024, 1, 1, 10, 20, tzinfo=utc),
+                    datetime.datetime(2024, 1, 1, 10, 0, tzinfo=utc),
                 ]
             }
         )
-        assert rule.execute(df2, context_with_datetime).status == Status.PASSED
+        assert rule.execute(df2, context_with_datetime).status == Status.WARNING
         df3 = pd.DataFrame(
             {
                 "Zeitstempel": [
-                    datetime.datetime(2024, 1, 1, 10, 0),
-                    datetime.datetime(2024, 1, 1, 10, 0),
+                    datetime.datetime(2024, 1, 1, 10, 0, tzinfo=utc),
+                    datetime.datetime(2024, 1, 1, 10, 0, tzinfo=utc),
                 ]
             }
         )
-        assert rule.execute(df3, context_with_datetime).status == Status.PASSED
+        assert rule.execute(df3, context_with_datetime).status == Status.WARNING
 
     def test_severity_is_info(self, rule):
         assert rule.severity == Severity.INFO
 
     def test_always_awards_full_points(self, rule, context_with_datetime):
-        df = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=3, freq="10min")})
+        df = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=3, freq="10min", tz="utc")})
         result = rule.execute(df, context_with_datetime)
         assert result.points_achieved == rule.points
 

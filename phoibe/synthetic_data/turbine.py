@@ -22,7 +22,7 @@ DEFAULT_TIME = Time(start="2026-02-14T04:00:00", freq="10min", periods=576)
 
 def generate_wtg_scada(A=10, k=2, time: Time = DEFAULT_TIME, wtg_type: WtgType = DEFAULT_WTG):
     """Generate a timeseries of WTG Scada data for the given `Time` period, a given `WtgType` configuration."""
-    index = pd.date_range(start=time.start, freq=time.freq, periods=time.periods)
+    index = pd.date_range(start=time.start, freq=time.freq, periods=time.periods, name="datetime")
 
     wind_speed = _generate_weibull_timeseries(A=A, k=k, n_steps=len(index), delta_t=600, theta=1 / 7200)
     df = pd.DataFrame(data={"wind_speed": wind_speed}, index=index)
@@ -52,14 +52,23 @@ class MessUpPipeline:
 pipeline = MessUpPipeline(seed=23)
 
 
-def create_default_messup_pipeline(pipeline: MessUpPipeline = MessUpPipeline()) -> MessUpPipeline:
+def create_default_messup_pipeline(
+    pipeline: MessUpPipeline = MessUpPipeline(), incidence: float = 1.0, level: float = 1.0
+) -> MessUpPipeline:
     """Create a basic messup pipeline for scada data."""
+    gsegments_frequent_durable = GeometricSegments(n=int(11 * incidence), p=0.1 / level)
+    gsegments_medium_short = GeometricSegments(n=int(5 * incidence), p=0.5 / level)
+    gsegments_rare_medium = GeometricSegments(n=int(incidence), p=0.3 / level)
+    usegments_medium_medium = UniformSegments(n=int(5 * incidence), min_len=int(5 * level), max_len=int(11 * level))
+    usegments_frequent_short = UniformSegments(n=int(11 * incidence), min_len=int(1 * level), max_len=int(3 * level))
+    usegments_frequent_unique = UniformSegments(n=int(11 * incidence), min_len=1, max_len=1)
+
     pipeline.add(CurtailmentNight(limit=3200, column="power"))
-    pipeline.add(CurtailmentToZero(segments=GeometricSegments(n=5, p=0.1), columns_to_keep=["wind_speed"]))
-    pipeline.add(Freeze(segments=GeometricSegments(n=1, p=0.3), column="power"))
-    pipeline.add(Freeze(segments=GeometricSegments(n=3, p=0.2), column="rotor_speed"))
-    pipeline.add(RowDrop(segments=UniformSegments(n=3, min_len=3, max_len=7)))
-    pipeline.add(DeleteEntries(segments=UniformSegments(n=5, min_len=1, max_len=1), columns=["pitch_angle"]))
-    pipeline.add(Spike(segments=UniformSegments(n=5, min_len=1, max_len=1), column="power", magnitude=2000))
-    pipeline.add(Spike(segments=UniformSegments(n=5, min_len=1, max_len=1), column="wind_speed", magnitude=5))
+    pipeline.add(CurtailmentToZero(segments=gsegments_frequent_durable, columns_to_keep=["wind_speed"]))
+    pipeline.add(Freeze(segments=gsegments_medium_short, column="power"))
+    pipeline.add(Freeze(segments=gsegments_rare_medium, column="rotor_speed"))
+    pipeline.add(RowDrop(segments=usegments_medium_medium))
+    pipeline.add(DeleteEntries(segments=usegments_frequent_short, columns=["pitch_angle"]))
+    pipeline.add(Spike(segments=usegments_frequent_unique, column="power", magnitude=2000))
+    pipeline.add(Spike(segments=usegments_frequent_unique, column="wind_speed", magnitude=5))
     return pipeline
