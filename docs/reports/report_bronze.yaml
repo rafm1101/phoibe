@@ -1,24 +1,33 @@
 run_metadata:
-  timestamp: '2026-03-03T21:29:29.699708'
+  timestamp: '2026-03-10T23:48:17.752973'
   total_turbines: 1
-  passed: 0
+  passed: 1
   failed: 0
-  warnings: 1
+  warnings: 0
   errors: 0
 turbines:
   WEA 01:
     turbine_id: WEA 01
-    timestamp: '2026-03-03T21:29:27.992837'
+    timestamp: '2026-03-10T23:48:17.712165'
     layer: bronze
     file_info:
       filename: in_memory_data
-      size_mb: 1.56
+      size_mb: 5.07
       format: in_memory
-      modified: '2026-03-03T21:29:27.925096'
+      modified: '2026-03-10T23:48:17.627507'
     detected_variables:
       power_kw: power_kw
+      power_kw_min: power_min
+      power_kw_max: power_max
       wind_speed: wind_speed
-      wind_speed_max: null
+      wind_speed_min: wind_speed_min
+      wind_speed_max: wind_speed_max
+      rotor_speed: rotor_speed
+      rotor_speed_min: rotor_speed_min
+      rotor_speed_max: rotor_speed_max
+      pitch_angle: pitch_angle
+      pitch_angle_min: pitch_angle_min
+      pitch_angle_max: pitch_angle_max
       datetime: datetime
       date: datetime
       time: datetime
@@ -32,26 +41,30 @@ turbines:
       message: Checked ranges of 1 variables.
       details:
         n_out_of_range:
-          wind_speed: 15
+          wind_speed: 10
         skipped: []
-    - name: essential_ranges
-      status: warning
+    - name: essential_range
+      status: passed
       severity: info
       required: ''
       actual: ''
-      points: 5/10
-      message: Checked essential ranges of 2/4 variables.
+      points: 10/10
+      message: All essential ranges determined.
       details:
         checked:
           wind_speed:
-          - 0.41808752291597245
-          - 20.771261177204384
+          - 0.3826287993048673
+          - 19.907531465778426
           power_kw:
           - 0.0
           - 5600.0
-        skipped:
-        - rotor_speed
-        - pitch_angle
+          rotor_speed:
+          - 0.0
+          - 13.241691265245695
+          pitch_angle:
+          - 0.0
+          - 21.941447496525917
+        skipped: []
     - name: curtailments_power
       status: passed
       severity: info
@@ -64,18 +77,18 @@ turbines:
         n_candidates_detected: 4
         power:
         - 0.0
-        - 3190.0
+        - 3200.0
         - 5600.0
         height:
-        - 0.000393
-        - 0.000174
-        - 0.000279
+        - 7.2e-05
+        - 0.000471
+        - 0.000873
         ignored_below: 0.0
     scoring:
-      achieved: 25
+      achieved: 30
       max: 30
-      percentage: 83.33
-      status: warning
+      percentage: 100.0
+      status: passed
     summary:
       critical_failures: 0
-      warnings: 1
+      warnings: 0

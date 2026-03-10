@@ -1,24 +1,33 @@
 run_metadata:
-  timestamp: '2026-03-03T18:25:44.773995'
+  timestamp: '2026-03-10T23:48:16.199656'
   total_turbines: 1
   passed: 0
-  failed: 1
-  warnings: 0
+  failed: 0
+  warnings: 1
   errors: 0
 turbines:
   WEA 01:
     turbine_id: WEA 01
-    timestamp: '2026-03-03T18:25:44.732366'
+    timestamp: '2026-03-10T23:48:16.157922'
     layer: raw
     file_info:
       filename: in_memory_data
-      size_mb: 1.56
+      size_mb: 5.07
       format: in_memory
-      modified: '2026-03-03T18:25:44.644185'
+      modified: '2026-03-10T23:48:16.059938'
     detected_variables:
       power_kw: power
+      power_kw_min: power_min
+      power_kw_max: power_max
       wind_speed: wind_speed
-      wind_speed_max: null
+      wind_speed_min: wind_speed_min
+      wind_speed_max: wind_speed_max
+      rotor_speed: rotor_speed
+      rotor_speed_min: rotor_speed_min
+      rotor_speed_max: rotor_speed_max
+      pitch_angle: pitch_angle
+      pitch_angle_min: pitch_angle_min
+      pitch_angle_max: pitch_angle_max
       datetime: datetime
       date: datetime
       time: datetime
@@ -32,6 +41,15 @@ turbines:
       message: Variable 'power_kw' found
       details:
         column_name: power
+    - name: variable_wind_speed
+      status: passed
+      severity: critical
+      required: Variable 'wind_speed' detected
+      actual: Detected as 'wind_speed'
+      points: 10/10
+      message: Variable 'wind_speed' found
+      details:
+        column_name: wind_speed
     - name: temporal_attributes
       status: warning
       severity: info
@@ -43,7 +61,7 @@ turbines:
         start: '2027-01-01T00:00:00'
         end: '2027-12-31T23:50:00'
         tzinfo: None
-        n_dates: 40870
+        n_dates: 51102
         has_duplicates: false
         is_sorted: true
         frequency: 0 days 00:10:00
@@ -56,70 +74,70 @@ turbines:
       points: 10/10
       message: ''
       details:
-        gap_count: 115
-        gap_length_total: 81 days 04:20:00
-        gap_length_mean: 0 days 16:56:31.304347
-        gap_length_max: 0 days 23:50:00
+        gap_count: 35
+        gap_length_total: 10 days 03:00:00
+        gap_length_mean: 0 days 06:56:34.285714
+        gap_length_max: 0 days 09:10:00
     - name: availability
-      status: failed
+      status: passed
       severity: critical
       required: 90.00%
-      actual: 77.76%
-      points: 0/10
-      message: Data availability critical.
+      actual: 97.23%
+      points: 10/10
+      message: Data availability promising.
       details:
-        availability_data: 0.778
+        availability_data: 0.972
         availability_hours:
-          0: 0.768
-          1: 0.764
-          2: 0.777
-          3: 0.782
-          4: 0.788
-          5: 0.787
-          6: 0.784
-          7: 0.772
-          8: 0.775
-          9: 0.779
-          10: 0.776
-          11: 0.778
-          12: 0.773
-          13: 0.774
-          14: 0.771
-          15: 0.769
-          16: 0.775
-          17: 0.789
-          18: 0.789
-          19: 0.793
-          20: 0.787
-          21: 0.777
-          22: 0.767
-          23: 0.768
+          0: 0.976
+          1: 0.973
+          2: 0.97
+          3: 0.969
+          4: 0.971
+          5: 0.972
+          6: 0.977
+          7: 0.979
+          8: 0.977
+          9: 0.976
+          10: 0.979
+          11: 0.977
+          12: 0.974
+          13: 0.977
+          14: 0.974
+          15: 0.966
+          16: 0.968
+          17: 0.967
+          18: 0.966
+          19: 0.964
+          20: 0.965
+          21: 0.971
+          22: 0.974
+          23: 0.973
         availability_days:
-          Monday: 0.833
-          Tuesday: 0.791
-          Wednesday: 0.713
-          Thursday: 0.715
-          Friday: 0.771
-          Saturday: 0.847
-          Sunday: 0.773
+          Monday: 0.968
+          Tuesday: 0.954
+          Wednesday: 0.979
+          Thursday: 0.975
+          Friday: 0.971
+          Saturday: 0.985
+          Sunday: 0.973
         availability_months:
-          January: 0.802
-          February: 0.89
-          March: 0.734
-          April: 0.746
-          May: 0.717
-          June: 0.72
-          July: 0.828
-          August: 0.766
-          September: 0.762
-          October: 0.792
-          November: 0.79
-          December: 0.791
+          January: 0.98
+          February: 0.987
+          March: 0.976
+          April: 0.929
+          May: 0.981
+          June: 0.968
+          July: 0.973
+          August: 0.976
+          September: 0.98
+          October: 0.991
+          November: 0.97
+          December: 0.956
     scoring:
-      achieved: 28
-      max: 40
-      percentage: 70.0
-      status: failed
+      achieved: 48
+      max: 50
+      percentage: 96.0
+      status: warning
     summary:
-      critical_failures: 1
+      critical_failures: 0
       warnings: 1
