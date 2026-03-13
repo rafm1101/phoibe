@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 import dataclasses
 import datetime
 import enum
+import logging
 import typing
+
+logger = logging.getLogger(__name__)
 
 
 class Status(enum.Enum):
@@ -28,6 +33,15 @@ class Severity(enum.Enum):
     """Warning: Passed but has some issues."""
     INFO = "info"
     """Info."""
+
+
+class ValidationMode(str, enum.Enum):
+    """Validation execution mode."""
+
+    PROFILING = "profiling"
+    """Descriptive analysis: all rules run, no gates."""
+    CONTRACT = "contract"
+    """Prescriptive validation against contract: CRITICAL failures trigger gates."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -129,3 +143,168 @@ class LayerReport:
         if self.warnings > 0:
             return Status.WARNING
         return Status.PASSED
+
+
+@dataclasses.dataclass
+class LayerGateKeeper:
+    """Layer gate keeper. Decision whether data passes layer gate.
+
+    Created from LayerReport when in CONTRACT mode.
+    """
+
+    passed: bool
+    """True if data can proceed to next layer."""
+    failed_critical_rules: list[str]
+    """List of CRITICAL failures that blocked gate."""
+    report: LayerReport
+    """Full validation report."""
+    statistics: dict[str, int]
+    """Summary statistics of the gate."""
+
+    @classmethod
+    def from_report(cls, report: LayerReport) -> "LayerGateKeeper":
+        """Create a layer gate keeper from validation report.
+
+        Gate passes if no CRITICAL failures or CRITICAL errors exist.
+
+        Parameters
+        ----------
+        report
+            Validation report from a contract validation.
+
+        Returns
+        -------
+        LayerGateKeeper
+            GateDecision with pass/fail status and blocking failures.
+        """
+
+        if not report.rule_execution_results:
+            logger.warning(
+                f"Gate decision for empty report (layer={report.layer_name}, "
+                f"turbine={report.turbine_id}): PASSED by default."
+            )
+            return cls(passed=True, failed_critical_rules=[], report=report, statistics=cls._empty_statistics())
+
+        failed_critical_rules = [
+            result.rule_name
+            for result in report.rule_execution_results
+            if result.severity == Severity.CRITICAL and result.status in (Status.FAILED, Status.ERROR)
+        ]
+        passed = len(failed_critical_rules) == 0
+        statistics = cls._compute_statistics(report)
+
+        if passed:
+            logger.info(
+                f"Gate PASSED: layer={report.layer_name}, turbine={report.turbine_id}, "
+                f"score={report.score_achieved}/{report.score_max} ({report.percentage:.1f}%), "
+                f"critical_failures=0."
+            )
+        else:
+            logger.error(
+                f"Gate FAILED: layer={report.layer_name}, turbine={report.turbine_id}, "
+                f"failed_critical_rules={len(failed_critical_rules)}, "
+                f"rules={', '.join(failed_critical_rules)}, "
+                f"score={report.score_achieved}/{report.score_max} ({report.percentage:.1f}%)."
+            )
+
+        return cls(passed=passed, failed_critical_rules=failed_critical_rules, report=report, statistics=statistics)
+
+    @staticmethod
+    def _compute_statistics(report: LayerReport) -> dict[str, int]:
+        """Calculate gate statistics from report.
+
+        Parameters
+        ----------
+        LayerReport
+            Report to evaluate.
+
+        Returns
+        -------
+        stats
+            Dictionary with counts for each status and severity combination.
+        """
+        stats = {
+            "total_checks": len(report.rule_execution_results),
+            "passed": 0,
+            "failed": 0,
+            "warning": 0,
+            "error": 0,
+            "not_checked": 0,
+            "critical_failed": 0,
+            "critical_error": 0,
+            "warning_failed": 0,
+            "info_failed": 0,
+        }
+
+        for result in report.rule_execution_results:
+            if result.status == Status.PASSED:
+                stats["passed"] += 1
+            elif result.status == Status.FAILED:
+                stats["failed"] += 1
+            elif result.status == Status.WARNING:
+                stats["warning"] += 1
+            elif result.status == Status.ERROR:
+                stats["error"] += 1
+            elif result.status == Status.NOT_CHECKED:
+                stats["not_checked"] += 1
+
+            if result.severity == Severity.CRITICAL and result.status == Status.FAILED:
+                stats["critical_failed"] += 1
+            elif result.severity == Severity.CRITICAL and result.status == Status.ERROR:
+                stats["critical_error"] += 1
+            elif result.severity == Severity.WARNING and result.status == Status.FAILED:
+                stats["warning_failed"] += 1
+            elif result.severity == Severity.INFO and result.status == Status.FAILED:
+                stats["info_failed"] += 1
+
+        return stats
+
+    @staticmethod
+    def _empty_statistics() -> dict[str, int]:
+        """Return empty statistics dict."""
+        return {
+            "total_checks": 0,
+            "passed": 0,
+            "failed": 0,
+            "warning": 0,
+            "error": 0,
+            "not_checked": 0,
+            "critical_failed": 0,
+            "critical_error": 0,
+            "warning_failed": 0,
+            "info_failed": 0,
+        }
+
+
+class LayerGateFailureError(Exception):
+    """Raised when data fails a contract validation gate.
+
+    Attributes
+    ----------
+    decision
+        LayerGateKeeper that caused failure.
+    message
+        Human-readable error message.
+    """
+
+    def __init__(self, decision: LayerGateKeeper):
+        self.decision = decision
+        count = len(decision.failed_critical_rules)
+        plural = "failure" if count == 1 else "failures"
+
+        failures_str = ", ".join(decision.failed_critical_rules)
+
+        message = (
+            f"Contract validation gate FAILED for layer '{decision.report.layer_name}'. "
+            f"{count} CRITICAL {plural}: {failures_str}. "
+            f"Score: {decision.report.score_achieved}/{decision.report.score_max}. "
+            f"({decision.report.percentage:.1f}%). "
+            f"Turbine: {decision.report.turbine_id}."
+        )
+
+        super().__init__(message)
+
+        logger.error(f"GateFailureError raised: {count} blocking failures, " f"statistics={decision.statistics}")
+
+
+__all__ = ["LayerGateKeeper", "LayerGateFailureError"]
