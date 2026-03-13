@@ -15,7 +15,7 @@ Tools comprise:
 - `geography`: 
   - `complexity`: Assessment of terrain complexity.
     - `rix`: Ruggedness index computation.
-- `layered`: Assistant for a layered validation of data and report creation. Prototype.
+- `layered`: Assistant for a layered profiling and validation of data and report creation. Prototype.
 - `synthetic_data`: Collection of articial 2D-fields and wtg scada data timeseries for demonstration.
 
 ### Guidelines

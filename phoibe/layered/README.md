@@ -31,7 +31,7 @@ A modular, extensible validation framework following a progressive issue detecti
 1. Validation rule: Single rule for repsonsible for checking one aspect of data quality.
 2. Rule registry: Central registry for validation rules using decorators. Validation rules register on import.
 3. Validation context: Context passed to every rule.
-4. Layer report: Complete validation result for one dataset.
+4. Layer report: Complete profiling/validation result for one dataset.
 
 ### Key features
 
