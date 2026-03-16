@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from dataclasses import field
+import dataclasses
 from typing import Any
 
+from phoibe.layered.core.entities import ValidationMode
 
-@dataclass(frozen=True)
+
+@dataclasses.dataclass(frozen=True)
 class ValidationContext:
     """Value object of a layer validation configuration."""
 
@@ -15,7 +16,9 @@ class ValidationContext:
     """Mapping of standard variable names to actual column keys."""
     turbine_id: str
     """Identifier of the turbine whose data is being validated."""
-    metadata: dict[str, Any] = field(default_factory=dict)
+    validation_mode: ValidationMode = ValidationMode.PROFILING
+    """Pure descriptive (PROFILING) or prescriptive (CONTRACT) rule handling."""
+    metadata: dict[str, Any] = dataclasses.field(default_factory=dict)
     """Additional layer-specific metadata"""
 
     def get_column_key(self, variable: str) -> str | None:
@@ -47,6 +50,28 @@ class ValidationContext:
             True if variable was detected.
         """
         return self.detected_variables.get(variable) is not None
+
+    @property
+    def is_contract_mode(self) -> bool:
+        """Check whether validation is in contract mode.
+
+        Return
+        ------
+        bool
+            True if in CONTRACT mode.
+        """
+        return self.validation_mode == ValidationMode.CONTRACT
+
+    @property
+    def is_profiling_mode(self) -> bool:
+        """Check whether validation is in profiling mode.
+
+        Return
+        ------
+        bool
+            True if in PROFILING mode.
+        """
+        return self.validation_mode == ValidationMode.PROFILING
 
 
 __all__ = ["ValidationContext"]
