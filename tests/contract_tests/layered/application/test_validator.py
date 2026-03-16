@@ -1,15 +1,18 @@
 import datetime
 import pathlib
+import re
 
 import pandas as pd
 import pytest
 
 from phoibe.layered.application.context import ValidationContext
 from phoibe.layered.application.validator import LayerValidator
+from phoibe.layered.core.entities import LayerGateFailureError
 from phoibe.layered.core.entities import LayerReport
 from phoibe.layered.core.entities import RuleExecutionResult
 from phoibe.layered.core.entities import Severity
 from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import ValidationMode
 from phoibe.layered.infrastructure.detector import RegexVariableDetector
 from phoibe.layered.infrastructure.io import InMemoryDataLoader
 from phoibe.layered.infrastructure.io import PandasDataLoader
@@ -67,7 +70,11 @@ class TestLayerValidatorContract:
         rules = [MockRule("rule1", should_pass=True, points=10), MockRule("rule2", should_pass=True, points=20)]
 
         return LayerValidator(
-            layer_name="raw", data_loader=data_loader, variable_detector=variable_detector, rules=rules
+            layer_name="raw",
+            data_loader=data_loader,
+            variable_detector=variable_detector,
+            rules=rules,
+            mode=ValidationMode.PROFILING,
         )
 
     def test_validate_returns_layer_report(self, validator, sample_data_file):
@@ -225,3 +232,38 @@ class TestLayerValidatorContract:
         result = validator.validate(sample_data_file, "WEA 01")
 
         assert result.detected_variables["nonexistent"] is None
+
+    def test_raises_after_rule_failure_given_contract_mode(self, sample_data_file):
+        data_loader = PandasDataLoader()
+        variable_detector = RegexVariableDetector({})
+        validator = LayerValidator(
+            "raw",
+            data_loader,
+            variable_detector,
+            [
+                MockRule("rule1", should_pass=False),
+                MockRule("rule2", should_pass=True),
+                MockRule("rule3", should_pass=True),
+            ],
+            mode=ValidationMode.CONTRACT,
+        )
+        message = "1 CRITICAL failure: rule1. Score: 20/30. (66.7%). Turbine: WEA 01."
+        with pytest.raises(LayerGateFailureError, match=re.escape(message)):
+            _ = validator.validate(sample_data_file, "WEA 01")
+
+    def test_continues_after_rule_failure_given_contract_mode(self, sample_data_file):
+        data_loader = PandasDataLoader()
+        variable_detector = RegexVariableDetector({})
+        validator = LayerValidator(
+            "raw",
+            data_loader,
+            variable_detector,
+            [
+                MockRule("rule1", should_pass=False),
+                MockRule("rule2", should_pass=True),
+                MockRule("rule3", should_pass=True),
+            ],
+            mode=ValidationMode.CONTRACT,
+        )
+        result = validator.validate(sample_data_file, "WEA 01", raise_on_gate_failure=False)
+        assert len(result.rule_execution_results) == 3
