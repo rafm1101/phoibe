@@ -3,8 +3,8 @@ import pytest
 
 from phoibe.layered.application.config import ValidationConfig
 from phoibe.layered.application.context import ValidationContext
-from phoibe.layered.application.factory import RuleRegistry
 from phoibe.layered.application.factory import ValidatorFactory
+from phoibe.layered.application.registry import RuleRegistry
 from phoibe.layered.application.validator import LayerValidator
 from phoibe.layered.core.entities import RuleExecutionResult
 from phoibe.layered.core.entities import Severity

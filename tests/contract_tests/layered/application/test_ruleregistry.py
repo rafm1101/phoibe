@@ -1,6 +1,6 @@
 import pytest
 
-from phoibe.layered.application.factory import RuleRegistry
+from phoibe.layered.application.registry import RuleRegistry
 from phoibe.layered.rules.rule import ValidationRule
 
 
