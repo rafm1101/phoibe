@@ -3,6 +3,7 @@ import dataclasses
 import pytest
 
 from phoibe.layered.application.context import ValidationContext
+from phoibe.layered.core.entities import ValidationMode
 
 
 class TestValidationContextContract:
@@ -26,9 +27,10 @@ class TestValidationContextContract:
 
     def test_context_has_attributes(self, context):
         assert hasattr(context, "detected_variables")
+        assert isinstance(context.layer_name, str)
         assert isinstance(context.detected_variables, dict)
         assert isinstance(context.turbine_id, str)
-        assert isinstance(context.layer_name, str)
+        assert isinstance(context.validation_mode, str)
         assert isinstance(context.metadata, dict)
 
     def test_context_get_column_key_returns_column_name(self, context):
@@ -89,3 +91,18 @@ class TestValidationContextContract:
         )
         assert context.metadata["string"] == "value"
         assert context.metadata["int"] == 42
+
+    @pytest.mark.parametrize(
+        "validation_mode, expected_profiling, expected_contract",
+        [(ValidationMode.PROFILING, True, False), (ValidationMode.CONTRACT, False, True)],
+    )
+    def test_context_is_mode_returns_correct_bools(self, validation_mode, expected_profiling, expected_contract):
+        context = ValidationContext(
+            layer_name="platinum",
+            detected_variables={},
+            turbine_id="WEA_01",
+            validation_mode=validation_mode,
+            metadata={"custom_field": "value"},
+        )
+        assert context.is_profiling_mode is expected_profiling
+        assert context.is_contract_mode is expected_contract
