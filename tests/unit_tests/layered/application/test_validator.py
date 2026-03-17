@@ -27,7 +27,7 @@ class MockRule(ValidationRule):
             raise RuntimeError(f"{self.name} intentionally crashed")
         elif self.behavior == "fail":
             return RuleExecutionResult(self.name, Status.FAILED, Severity.CRITICAL, True, False, self.points, 0)
-        else:  # pass
+        else:
             return RuleExecutionResult(
                 self.name, Status.PASSED, Severity.CRITICAL, True, True, self.points, self.points
             )
