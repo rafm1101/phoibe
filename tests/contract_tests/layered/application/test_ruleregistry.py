@@ -4,7 +4,7 @@ from phoibe.layered.application.factory import RuleRegistry
 from phoibe.layered.rules.rule import ValidationRule
 
 
-class TestRuleRegistryContract:
+class TestRuleRegistry:
 
     def setup_method(self):
         RuleRegistry.clear()
@@ -143,6 +143,16 @@ class TestRuleRegistryContract:
     def test_list_rules_empty_when_no_rules(self):
         rules = RuleRegistry.list_rules()
         assert rules == []
+
+    def test_is_registered_returns_true_given_registered_rule(self):
+        @RuleRegistry.register("test_rule")
+        class TestRule(ValidationRule):
+            pass
+
+        assert RuleRegistry.is_registered("test_rule") is True
+
+    def test_is_registered_returns_false_given_unknown_rule(self):
+        assert RuleRegistry.is_registered("unknown_rule") is False
 
     def test_clear_removes_all_rules(self):
         @RuleRegistry.register("rule1")

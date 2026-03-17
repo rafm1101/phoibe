@@ -9,9 +9,8 @@ from phoibe.layered.application.validator import LayerValidator
 from phoibe.layered.core.entities import RuleExecutionResult
 from phoibe.layered.core.entities import Severity
 from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import ValidationMode
 from phoibe.layered.rules.rule import ValidationRule
-
-# TODO: Major refactor taking account of factory interface changes.
 
 
 class TestValidatorFactory:
@@ -28,9 +27,19 @@ class TestValidatorFactory:
             def name(self):
                 return "mock_rule"
 
+            @property
+            def severity(self):
+                return Severity.INFO
+
             def execute(self, df: pd.DataFrame, context: ValidationContext):
                 return RuleExecutionResult(
-                    "mock_rule", Status.PASSED, Severity.INFO, True, True, self.points, self.points
+                    rule_name="mock_rule",
+                    status=Status.PASSED,
+                    severity=Severity.INFO,
+                    required=True,
+                    actual=True,
+                    points_max=self.points,
+                    points_achieved=self.points,
                 )
 
     def teardown_method(self):
@@ -64,30 +73,97 @@ rules:
         df.to_csv(csv, index=False)
         return csv
 
-    def test_create_from_config_returns_validator(self, config_file):
+    def test_profiling_returns_validator(self, config_file):
         config = ValidationConfig.from_yaml(config_file)
-        validator = ValidatorFactory.create_from_config(config)
+        validator = ValidatorFactory.profiling(config)
         assert isinstance(validator, LayerValidator)
 
-    def test_validator_has_correct_layer_name(self, config_file):
+    def test_profiling_creates_profiling_mode(self, config_file):
         config = ValidationConfig.from_yaml(config_file)
-        validator = ValidatorFactory.create_from_config(config)
+        validator = ValidatorFactory.profiling(config)
+        assert validator.mode == ValidationMode.PROFILING
+
+    def test_profiling_validator_has_correct_layer_name(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        validator = ValidatorFactory.profiling(config)
         assert validator.layer_name == "raw"
 
-    def test_validator_has_rules_from_config(self, config_file):
+    def test_profiling_validator_has_rules_from_config(self, config_file):
         config = ValidationConfig.from_yaml(config_file)
-        validator = ValidatorFactory.create_from_config(config)
+        validator = ValidatorFactory.profiling(config)
         assert len(validator.rules) == 1
         assert validator.rules[0].name == "mock_rule"
 
-    def test_validator_works_end_to_end(self, config_file, sample_data):
+    def test_profiling_works_end_to_end(self, config_file, sample_data):
         config = ValidationConfig.from_yaml(config_file)
-        validator = ValidatorFactory.create_from_config(config)
+        validator = ValidatorFactory.profiling(config)
         report = validator.validate(sample_data, "WEA_01")
         assert report.turbine_id == "WEA_01"
         assert len(report.rule_execution_results) == 1
 
+    def test_contract_returns_validator(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        validator = ValidatorFactory.contract(config)
+        assert isinstance(validator, LayerValidator)
+
+    def test_contract_creates_contract_mode(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        validator = ValidatorFactory.contract(config)
+        assert validator.mode == ValidationMode.CONTRACT
+
+    def test_contract_validator_works_end_to_end(self, config_file, sample_data):
+        config = ValidationConfig.from_yaml(config_file)
+        validator = ValidatorFactory.contract(config)
+        report = validator.validate(sample_data, "WEA_01")
+        assert report.turbine_id == "WEA_01"
+
+    def test_profiling_with_data_returns_validator(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        df = pd.DataFrame({"Zeitstempel": [1, 2, 3]})
+        validator = ValidatorFactory.profiling(config, data=df)
+        assert isinstance(validator, LayerValidator)
+
+    def test_profiling_with_data_uses_memory_loader(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        df = pd.DataFrame({"Zeitstempel": [1, 2, 3]})
+        validator = ValidatorFactory.profiling(config, data=df)
+
+        from phoibe.layered.infrastructure.io import InMemoryDataLoader
+
+        assert isinstance(validator.data_loader, InMemoryDataLoader)
+
+    def test_profiling_memory_validator_uses_dataframe(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        df = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=5), "ws_gondel": [5, 6, 7, 8, 9]})
+        validator = ValidatorFactory.profiling(config, data=df, filename="test.csv")
+        report = validator.validate("", "WEA_01")
+        assert report.file_metadata.filename == "test.csv"
+        assert report.file_metadata.format == "in_memory"
+
+    def test_profiling_memory_default_filename(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        df = pd.DataFrame({"col": [1, 2]})
+        validator = ValidatorFactory.profiling(config, data=df)
+        report = validator.validate("", "WEA_01")
+        assert report.file_metadata.filename == "in_memory"
+
+    def test_contract_with_data_uses_memory_loader(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        df = pd.DataFrame({"Zeitstempel": [1, 2, 3]})
+        validator = ValidatorFactory.contract(config, data=df)
+        from phoibe.layered.infrastructure.io import InMemoryDataLoader
+
+        assert isinstance(validator.data_loader, InMemoryDataLoader)
+
+    def test_contract_memory_custom_filename(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        df = pd.DataFrame({"col": [1, 2]})
+        validator = ValidatorFactory.contract(config, data=df, filename="custom.csv")
+        report = validator.validate("", "WEA_01")
+        assert report.file_metadata.filename == "custom.csv"
+
     def test_raises_for_unknown_rule(self, tmp_path):
+        """Error: Raises KeyError for unknown rule"""
         config = tmp_path / "bad_config.yaml"
         config.write_text(
             """
@@ -101,25 +177,64 @@ rules:
 
         cfg = ValidationConfig.from_yaml(config)
         with pytest.raises(KeyError, match="not found in registry"):
-            ValidatorFactory.create_from_config(cfg)
+            ValidatorFactory.profiling(cfg)
 
-    def test_create_from_memory_returns_validator(self, config_file):
+    def test_raises_for_invalid_rule_params(self, tmp_path):
+        """Error: Raises TypeError for invalid rule parameters"""
+        config = tmp_path / "bad_params.yaml"
+        config.write_text(
+            """
+layer_name: raw
+variable_patterns: {}
+rules:
+  - name: mock_rule
+    params:
+      invalid_param: 999
+"""
+        )
+
+        cfg = ValidationConfig.from_yaml(config)
+        with pytest.raises(TypeError, match="mock_rule"):
+            ValidatorFactory.profiling(cfg)
+
+    def test_create_from_config_still_works(self, config_file):
         config = ValidationConfig.from_yaml(config_file)
-        df = pd.DataFrame({"Zeitstempel": [1, 2, 3]})
+        validator = ValidatorFactory.create_from_config(config)
+        assert isinstance(validator, LayerValidator)
+        assert validator.mode == ValidationMode.PROFILING
+
+    def test_create_from_memory_still_works(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        df = pd.DataFrame({"col": [1, 2, 3]})
         validator = ValidatorFactory.create_from_memory(config, df)
         assert isinstance(validator, LayerValidator)
-
-    def test_memory_validator_uses_dataframe(self, config_file):
-        config = ValidationConfig.from_yaml(config_file)
-        df = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=5), "ws_gondel": [5, 6, 7, 8, 9]})
-        validator = ValidatorFactory.create_from_memory(config, df, filename="test.csv")
-        report = validator.validate("", "WEA_01")
-        assert report.file_metadata.filename == "test.csv"
-        assert report.file_metadata.format == "in_memory"
-
-    def test_memory_validator_default_filename(self, config_file):
-        config = ValidationConfig.from_yaml(config_file)
-        df = pd.DataFrame({"col": [1, 2]})
-        validator = ValidatorFactory.create_from_memory(config, df)
         report = validator.validate("", "WEA_01")
         assert report.file_metadata.filename == "in_memory_data"
+
+    def test_create_with_explicit_mode(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+        profiling = ValidatorFactory.create(config, mode=ValidationMode.PROFILING)
+        contract = ValidatorFactory.create(config, mode=ValidationMode.CONTRACT)
+
+        assert profiling.mode == ValidationMode.PROFILING
+        assert contract.mode == ValidationMode.CONTRACT
+
+    def test_create_with_custom_data_loader(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+
+        from phoibe.layered.infrastructure.io import PandasDataLoader
+
+        custom_loader = PandasDataLoader()
+        validator = ValidatorFactory.create(config, mode=ValidationMode.PROFILING, data_loader=custom_loader)
+
+        assert validator.data_loader is custom_loader
+
+    def test_create_with_custom_variable_detector(self, config_file):
+        config = ValidationConfig.from_yaml(config_file)
+
+        from phoibe.layered.infrastructure.detector import RegexVariableDetector
+
+        custom_detector = RegexVariableDetector({})
+        validator = ValidatorFactory.create(config, mode=ValidationMode.PROFILING, variable_detector=custom_detector)
+
+        assert validator.variable_detector is custom_detector
