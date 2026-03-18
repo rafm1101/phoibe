@@ -1,0 +1,42 @@
+{
+  "productId": "scada-bronze-10m",
+  "version": "0.1",
+  "attestation": {
+    "attestedAt": "2026-03-17T23:26:52.322387",
+    "attestedBy": "phoibe-layered",
+    "validationLayer": "raw",
+    "turbineId": "WEA 01",
+    "qualityMetrics": {
+      "score": 96.0,
+      "scoreAchieved": 48,
+      "scoreMaximum": 50,
+      "overallStatus": "warning"
+    },
+    "compliance": {
+      "criticalFailures": 0,
+      "warnings": 1,
+      "totalChecks": 5,
+      "passedChecks": 4
+    },
+    "detailedMetrics": {
+      "temporal": {
+        "frequency": "0 days 00:10:00",
+        "sorted": true,
+        "duplicates": false,
+        "oversampling": []
+      },
+      "gapCount": 35,
+      "gapLengthMax": "0 days 09:10:00",
+      "gapLengthMean": "0 days 06:29:42.857142",
+      "availability": 0.974
+    },
+    "validationReport": {
+      "fileMetadata": {
+        "filename": "in_memory",
+        "sizeMB": 5.08,
+        "format": "in_memory"
+      },
+      "timestamp": "2026-03-17T23:15:48.920236"
+    }
+  }
+}

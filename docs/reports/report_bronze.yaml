@@ -1,5 +1,5 @@
 run_metadata:
-  timestamp: '2026-03-17T12:08:13.416396'
+  timestamp: '2026-03-17T23:15:51.317367'
   total_turbines: 1
   passed: 1
   failed: 0
@@ -8,13 +8,13 @@ run_metadata:
 turbines:
   WEA 01:
     turbine_id: WEA 01
-    timestamp: '2026-03-17T12:08:12.768428'
+    timestamp: '2026-03-17T23:15:51.295569'
     layer: bronze
     file_info:
       filename: in_memory
       size_mb: 5.08
       format: in_memory
-      modified: '2026-03-17T12:08:12.653666'
+      modified: '2026-03-17T23:15:51.163365'
     detected_variables:
       power_kw: power_kw
       power_kw_min: power_min
@@ -41,7 +41,7 @@ turbines:
       message: Checked ranges of 1 variables.
       details:
         n_out_of_range:
-          wind_speed: 6
+          wind_speed: 9
         skipped: []
     - name: essential_range
       status: passed
@@ -53,8 +53,8 @@ turbines:
       details:
         checked:
           wind_speed:
-          - 0.39740776463452543
-          - 19.876330165424925
+          - 0.43268963781832326
+          - 19.845273229536083
           power_kw:
           - 0.0
           - 5600.0
@@ -63,7 +63,7 @@ turbines:
           - 13.241691265245695
           pitch_angle:
           - 0.0
-          - 21.821192165187753
+          - 21.715865833537933
         skipped: []
     - name: curtailments_power
       status: passed
@@ -74,16 +74,16 @@ turbines:
       message: Found 3 full load levels.
       details:
         n_curtailments: 3
-        n_candidates_detected: 4
+        n_candidates_detected: 6
         power:
         - 0.0
         - 3200.0
         - 5600.0
         height:
-        - 9.2e-05
-        - 0.000401
-        - 0.000819
-        ignored_below: 1.0e-06
+        - 0.000116
+        - 0.000387
+        - 0.000711
+        ignored_below: 0.0
     scoring:
       achieved: 30
       max: 30
