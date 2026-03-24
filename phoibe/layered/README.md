@@ -2,9 +2,9 @@
 
 ## Summary
 
-A modular, extensible validation framework following a progressive issue detection and transformation approach subdivided into layers. The layers address:
+A modular, extensible profiling and validation framework following a progressive issue detection and transformation approach subdivided into layers. The layers address:
 
-- Raw layer: Basic and formal data properties. Aim at standaridising.
+- Raw layer: Basic and formal data properties. Aim at standardising, completeness and duplicates.
 - Bronze layer: Rule-based outlier and data issue detection. Aim at identifying potentially relevant data.
 - Silver layer: Sophisticated quality detection and imputation. Aim at preparing for value extraction.
 - Gold layer: Advanced analytics for the use case.
@@ -47,18 +47,19 @@ A modular, extensible validation framework following a progressive issue detecti
    - `config`: Keeping and reading values for validation layer configuration `ValidationConfiguration`, including read methods.
    - `context`: Keeping values of validation layer context `ValidationContext` to keep additional information.
 2. `core` - core layer:
-   - `entities`: Keeping values of the report `LayerReport`, metadata about files `FileMetadata`, validation rule executions `RuleExectionResult`, characterizations and states of validation rules `Status` and `Severity`.
+   - `entities`: Keeping values of the report `LayerReport`, metadata about files `FileMetadata`, validation rule executions `RuleExectionResult`, characterizations and states of validation rules `Status` and `Severity`, guard the gate to the next layer `LayerGateKeeper`.
    - `interfaces`: Protocols for `DataLoader`, `VariableDetector` and the final `Report`.
+   - `metadata`: Additional relevant metadata objects relevant for data interpretation.
 3. `infrastructure` - infrastructure layer:
    - `detector`: Detecting column keys `RegexVariableDetector` via regex patterns.
+   - `export`: Export data profiles `ProfileExporter` and data quality assessments `QualityAttestationWriter`.
    - `io`: Getting data `InMemoryDataloader`, `PandasDataloader`, and storing structured reports `YAMLReportRepository`.
 4. `rules` - rule layer:
    - `rule`: Abstaction of validation rules and their structured results `RuleExecutionBuilder`.
-4. `logging`:
+5. `logging`:
    - `formatter`: Formatting the JSON output `JSONFormatter`.
    - `handler`: Collection of different logging handler for console `ConsoleHandler`, log files `FileHandler` and JSON files `JSONHandler`.
    - `logging`: `LoggingConfig`, stateless factory for creating logger `LoggerFactory`, context manager for tracking logging messages `ContextualLogger`, context manager for tracking rule execution results `RuleExectionTracker`.
-
 
 ## Usage
 
@@ -72,6 +73,8 @@ report_raw = validator_raw.validate(file_path=".", turbine_id="WEA 01")
 ```
 
 ### Configuration
+
+A set of rules can be provided in memory as below, or as a `yaml` file that contains these definitions (and more). The structure for each rule configuration is always: Name of the registered rule and relevant parameters:
 
 ```python
 RULES_RAW = [

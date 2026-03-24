@@ -5,8 +5,9 @@
 Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_, _bright_ and _prophet_. She received control of the Oracle of Delphi from Themis before gifting it to her grandson Apollo. She collects high-level tools for tasks that occur in the data science workflow. Typically, these high-level tools require additional dependencies which are not desired in `ergaleiothiki`.
 
 Tools comprise:
+
 - The **complexity assessment of terrain** for wind energy projects measuring the steepness along rays. Follows TR6Rev12.
-- A **data validation framework** following a progressive issue detection and transformation approach subdivided into layers for (more than just) scada data. 
+- A **data validation framework** following a progressive issue detection and transformation approach subdivided into layers for (more than just) scada data.
 
 ## Structure
 
@@ -16,7 +17,7 @@ Tools comprise:
   - `complexity`: Assessment of terrain complexity.
     - `rix`: Ruggedness index computation.
 - `layered`: Assistant for a layered profiling and validation of data and report creation. Prototype.
-- `synthetic_data`: Collection of articial 2D-fields and wtg scada data timeseries for demonstration.
+- `synthetic_data`: Collection of articial 2D-fields and wtg scada data timeseries (including data mess) for demonstration.
 
 ### Guidelines
 
@@ -30,12 +31,14 @@ Tools comprise:
 git tag -a <version> -m "<message>"
 git push origin <version>
 ```
+
 2. Build the package from this tag.
 
 ```bash
 poetry build
 ```
-3. Move files to `nemea-index/docs/simple/<package>/<version>/.
+
+3. Move files to `nemea-index/docs/simple/\<package\>/\<version\>/.
 4. Update index files.
 5. [Possibly obsolete] Side effect: **Poetry** uses a package that bugs this tagging. Ensure to configure:
 
@@ -61,7 +64,7 @@ poetry config system-git-client true
    - Inline: `# noqa: E203`.
    - `pyproject.toml`: `ignore = E203`? Todo: Find general solution.
 
-## Structure
+## Structure package
 
 ### Package
 

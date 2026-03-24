@@ -1,0 +1,105 @@
+profileMetadata:
+  generatedBy: phoibe-validator
+  layer: raw
+  version: 0.0.0
+  deviceType: wtg
+  turbineId: WEA 01
+  profiledAt: '2026-03-24T19:21:29.907498'
+  validationScore: 96.0
+discoveredSchema:
+  power_kw:
+    actualColumn: power
+    detected: true
+  power_kw_min:
+    actualColumn: power_min
+    detected: true
+  power_kw_max:
+    actualColumn: power_max
+    detected: true
+  wind_speed:
+    actualColumn: wind_speed
+    detected: true
+  wind_speed_min:
+    actualColumn: wind_speed_min
+    detected: true
+  wind_speed_max:
+    actualColumn: wind_speed_max
+    detected: true
+  rotor_speed:
+    actualColumn: rotor_speed
+    detected: true
+  rotor_speed_min:
+    actualColumn: rotor_speed_min
+    detected: true
+  rotor_speed_max:
+    actualColumn: rotor_speed_max
+    detected: true
+  pitch_angle:
+    actualColumn: pitch_angle
+    detected: true
+  pitch_angle_min:
+    actualColumn: pitch_angle_min
+    detected: true
+  pitch_angle_max:
+    actualColumn: pitch_angle_max
+    detected: true
+  datetime:
+    actualColumn: datetime
+    detected: true
+  date:
+    actualColumn: datetime
+    detected: true
+  time:
+    actualColumn: datetime
+    detected: true
+discoveredQuality:
+  overallScore: 96.0
+  overallStatus: warning
+  criticalFailures: 0
+  warnings: 1
+  temporal:
+    frequency: 0 days 00:10:00
+    hasDuplicates: false
+    isSorted: true
+    start: '2027-01-01T00:00:00'
+    end: '2027-12-31T23:50:00'
+    timezone: None
+    oversampling: []
+  completeness:
+    gapCount: 35
+    longestGap: 0 days 09:00:00
+    meanGap: 0 days 06:30:00
+    totalGapLength: 9 days 11:30:00
+  availability: 0.974
+detectedVariables:
+  power_kw: power
+  power_kw_min: power_min
+  power_kw_max: power_max
+  wind_speed: wind_speed
+  wind_speed_min: wind_speed_min
+  wind_speed_max: wind_speed_max
+  rotor_speed: rotor_speed
+  rotor_speed_min: rotor_speed_min
+  rotor_speed_max: rotor_speed_max
+  pitch_angle: pitch_angle
+  pitch_angle_min: pitch_angle_min
+  pitch_angle_max: pitch_angle_max
+  datetime: datetime
+  date: datetime
+  time: datetime
+site:
+  id: WP001
+  name: WP Moptal
+  location:
+    latitude: 53.0
+    longitude: 13.1
+    elevation: 52
+  timezone: Europe/Berlin
+device:
+  device_id: WEA 01
+  device_type: wind_turbine
+  manufacturer: Vestas
+  model: V150
+  hub_height: 175
+  rotor_diameter: 150
+  rated_power: 5600
