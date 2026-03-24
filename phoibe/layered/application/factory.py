@@ -169,10 +169,15 @@ class ValidatorFactory:
 
         rules = cls._create_rules(config.rules)
 
-        logger.info(f"Created validator: layer={config.layer_name}, mode={mode.value}, rules={len(rules)}.")
+        logger.info(
+            f"Created validator: layer={config.layer_name}, version={config.version}, mode={mode.value}, "
+            f"rules={len(rules)}."
+        )
 
         return LayerValidator(
             layer_name=config.layer_name,
+            device_type=config.device_type,
+            version=config.version,
             data_loader=loader,
             variable_detector=detector,
             rules=rules,

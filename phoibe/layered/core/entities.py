@@ -99,6 +99,10 @@ class LayerReport:
 
     layer_name: str
     """Name of the layer."""
+    device_type: str
+    """Type of the device, i.e. ('wind_turbine', 'met_mast', 'lidar', etc.)."""
+    version: str
+    """Version of the underlying configuration."""
     turbine_id: str
     """Turbine identifier."""
     timestamp: datetime.datetime

@@ -206,6 +206,39 @@ class TemporalSpecification:
             return f"PT{hours}H"
         return f"PT{minutes}M"
 
+    @staticmethod
+    def from_timedelta(timedelta: datetime.timedelta) -> str:
+        """Convert some timedelta to ISO 8601 duration.
+
+        Parameters
+        ----------
+        timedelta
+            Any timedelta that is below one month.
+
+        Return
+        ------
+        iso_representation
+            ISO 8601 duration (e.g., 'PT10M', 'P1DT2H).
+        """
+        total_seconds = int(timedelta.total_seconds())
+        days, remainder = divmod(total_seconds, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        iso_representation = "P"
+        if days:
+            iso_representation += f"{days}D"
+        if any([hours, minutes, seconds]):
+            iso_representation += "T"
+            if hours:
+                iso_representation += f"{hours}H"
+            if minutes:
+                iso_representation += f"{minutes}M"
+            if seconds:
+                iso_representation += f"{seconds}S"
+
+        return iso_representation
+
 
 @dataclasses.dataclass
 class LineageNode:

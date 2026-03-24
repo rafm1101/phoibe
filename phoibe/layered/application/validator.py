@@ -30,6 +30,10 @@ class LayerValidator:
 
     layer_name: str
     """Name of the current layer (raw, bronze, silver, gold)."""
+    version: str
+    """Version of the underlying configuration."""
+    device_type: str
+    """Type of the device, i.e. ('wind_turbine', 'met_mast', 'lidar', etc.)."""
     data_loader: DataLoader
     """Loader for the data (file or memory)."""
     variable_detector: VariableDetector
@@ -42,12 +46,16 @@ class LayerValidator:
     def __init__(
         self,
         layer_name: str,
+        device_type: str,
+        version: str,
         data_loader: DataLoader,
         variable_detector: VariableDetector,
         rules: list[ValidationRule],
         mode: ValidationMode = ValidationMode.PROFILING,
     ):
         self.layer_name = layer_name
+        self.device_type = device_type
+        self.version = version
         self.data_loader = data_loader
         self.variable_detector = variable_detector
         self.rules = rules
@@ -104,6 +112,8 @@ class LayerValidator:
 
         report = LayerReport(
             layer_name=self.layer_name,
+            device_type=self.device_type,
+            version=self.version,
             turbine_id=turbine_id,
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,

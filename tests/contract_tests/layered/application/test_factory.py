@@ -51,6 +51,8 @@ class TestValidatorFactory:
         config.write_text(
             """
 layer_name: raw
+version: 0.0.0
+device_type: wtg
 variable_patterns:
   timestamp:
     - zeitstempel
@@ -168,6 +170,8 @@ rules:
         config.write_text(
             """
 layer_name: raw
+version: 0.0.0
+device_type: wtg
 variable_patterns: {}
 rules:
   - name: nonexistent_rule
@@ -185,6 +189,8 @@ rules:
         config.write_text(
             """
 layer_name: raw
+version: 0.0.0
+device_type: wtg
 variable_patterns: {}
 rules:
   - name: mock_rule

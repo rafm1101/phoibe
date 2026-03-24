@@ -52,7 +52,7 @@ class TestLayerValidatorErrorRecovery:
 
     def test_single_crashing_rule_creates_error_result(self, mock_loader, mock_detector):
         rules = [MockRule("crasher", behavior="crash")]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         report = validator.validate("test.csv", "WEA 01")
 
         assert len(report.rule_execution_results) == 1
@@ -61,7 +61,7 @@ class TestLayerValidatorErrorRecovery:
 
     def test_crashed_rule_has_zero_points(self, mock_loader, mock_detector):
         rules = [MockRule("crasher", behavior="crash", points=50)]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         report = validator.validate("test.csv", "WEA 01")
 
         assert report.rule_execution_results[0].points_achieved == 0
@@ -69,7 +69,7 @@ class TestLayerValidatorErrorRecovery:
 
     def test_crashed_rule_error_message_contains_exception(self, mock_loader, mock_detector):
         rules = [MockRule("crasher", behavior="crash")]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         report = validator.validate("test.csv", "WEA 01")
 
         message = report.rule_execution_results[0].message
@@ -82,7 +82,7 @@ class TestLayerValidatorErrorRecovery:
             MockRule("crasher", behavior="crash"),
             MockRule("rule3", behavior="pass"),
         ]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         report = validator.validate("test.csv", "WEA 01")
         assert len(report.rule_execution_results) == 3
 
@@ -97,7 +97,7 @@ class TestLayerValidatorErrorRecovery:
             MockRule("crasher2", behavior="crash"),
             MockRule("survivor", behavior="pass"),
         ]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         report = validator.validate("test.csv", "WEA 01")
         errors = [record for record in report.rule_execution_results if record.status == Status.ERROR]
         assert len(errors) == 2
@@ -105,13 +105,13 @@ class TestLayerValidatorErrorRecovery:
 
     def test_overall_status_error_with_any_crash(self, mock_loader, mock_detector):
         rules = [MockRule("passer", behavior="pass"), MockRule("crasher", behavior="crash")]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         report = validator.validate("test.csv", "WEA 01")
         assert report.overall_status == Status.ERROR
 
     def test_overall_status_failed_without_crashes(self, mock_loader, mock_detector):
         rules = [MockRule("passer", behavior="pass"), MockRule("failer", behavior="fail")]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         report = validator.validate("test.csv", "WEA 01")
         assert report.overall_status == Status.FAILED
 
@@ -121,7 +121,7 @@ class TestLayerValidatorErrorRecovery:
             MockRule("crasher", behavior="crash", points=20),
             MockRule("rule3", behavior="pass", points=30),
         ]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         report = validator.validate("test.csv", "WEA 01")
         assert report.score_max == 60
 
@@ -131,7 +131,7 @@ class TestLayerValidatorErrorRecovery:
             MockRule("crasher", behavior="crash", points=20),
             MockRule("rule3", behavior="pass", points=30),
         ]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         report = validator.validate("test.csv", "WEA 01")
         assert report.score_achieved == 40
 
@@ -144,7 +144,7 @@ class TestLayerValidatorErrorRecovery:
             def execute(self, df, context):
                 raise ValueError("Invalid value")
 
-        validator = LayerValidator("raw", mock_loader, mock_detector, [ValueErrorRule(points=13)])
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, [ValueErrorRule(points=13)])
         report = validator.validate("test.csv", "WEA 01")
         assert report.rule_execution_results[0].status == Status.ERROR
         assert "Invalid value" in report.rule_execution_results[0].message
@@ -158,7 +158,7 @@ class TestLayerValidatorErrorRecovery:
             def execute(self, df, context):
                 raise KeyError("missing_column")
 
-        validator = LayerValidator("raw", mock_loader, mock_detector, [KeyErrorRule(points=13)])
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, [KeyErrorRule(points=13)])
         report = validator.validate("test.csv", "WEA 01")
         assert report.rule_execution_results[0].status == Status.ERROR
         assert "missing_column" in report.rule_execution_results[0].message
@@ -172,7 +172,7 @@ class TestLayerValidatorErrorRecovery:
             def execute(self, df, context):
                 raise AttributeError("missing attribute")
 
-        validator = LayerValidator("raw", mock_loader, mock_detector, [AttrErrorRule(points=13)])
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, [AttrErrorRule(points=13)])
         report = validator.validate("test.csv", "WEA 01")
         assert report.rule_execution_results[0].status == Status.ERROR
 
@@ -198,7 +198,7 @@ class TestLayerValidatorEdgeCases:
         loader.get_metadata.return_value = FileMetadata("empty.csv", 0, "csv", datetime.datetime.now())
 
         rules = [MockRule("rule1")]
-        validator = LayerValidator("raw", loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", loader, mock_detector, rules)
         report = validator.validate("empty.csv", "WEA 01")
 
         assert isinstance(report.rule_execution_results, list)
@@ -209,7 +209,7 @@ class TestLayerValidatorEdgeCases:
         loader.get_metadata.return_value = FileMetadata("single.csv", 10, "csv", datetime.datetime.now())
 
         rules = [MockRule("rule1")]
-        validator = LayerValidator("raw", loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", loader, mock_detector, rules)
         report = validator.validate("single.csv", "WEA 01")
 
         assert len(report.rule_execution_results) == 1
@@ -219,7 +219,7 @@ class TestLayerValidatorEdgeCases:
         detector.detect.return_value = {"timestamp": None, "power": None, "wind_speed": None}
 
         rules = [MockRule("rule1")]
-        validator = LayerValidator("raw", mock_loader, detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, detector, rules)
         report = validator.validate("test.csv", "WEA 01")
 
         assert len(report.rule_execution_results) == 1
@@ -241,7 +241,7 @@ class TestLayerValidatorEdgeCases:
                 return RuleExecutionResult(self._name, Status.PASSED, Severity.INFO, True, True, 0, 0)
 
         rules = [OrderTrackingRule("first"), OrderTrackingRule("second"), OrderTrackingRule("third")]
-        validator = LayerValidator("raw", mock_loader, mock_detector, rules)
+        validator = LayerValidator("raw", "0.0.0", "wtg", mock_loader, mock_detector, rules)
         validator.validate("test.csv", "WEA 01")
 
         assert execution_order == ["first", "second", "third"]

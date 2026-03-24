@@ -72,8 +72,10 @@ class ProfileExporter:
         profile = {
             "profileMetadata": {
                 "generatedBy": "phoibe-validator",
-                "turbineId": report.turbine_id,
                 "layer": report.layer_name,
+                "version": report.version,
+                "deviceType": report.device_type,
+                "turbineId": report.turbine_id,
                 "profiledAt": report.timestamp.isoformat(),
                 "validationScore": report.percentage,
             },

@@ -377,8 +377,10 @@ class TestLayerGateKeeper:
     def _create_report(self, rule_execution_results: list[RuleExecutionResult]) -> LayerReport:
         """Create test report."""
         return LayerReport(
-            turbine_id="WEA_01",
             layer_name="bronze",
+            version="0.0.0",
+            device_type="wtg",
+            turbine_id="WEA_01",
             timestamp=datetime.datetime.now(),
             file_metadata=FileMetadata(
                 filename="test.csv", size_bytes=1024**2, format="csv", modified_at=datetime.datetime.now()

@@ -14,6 +14,8 @@ class TestValidationConfig:
         config.write_text(
             """
 layer_name: raw
+version: 0.0.0
+device_type: wtg
 variable_patterns:
   timestamp:
     - zeitstempel
@@ -73,6 +75,8 @@ rules:
         config.write_text(
             """
 layer_name: raw
+version: 0.0.0
+device_type: wtg
 variable_patterns: {}
 rules: []
 """
@@ -85,6 +89,8 @@ rules: []
         config.write_text(
             """
 layer_name: raw
+version: 0.0.0
+device_type: wtg
 variable_patterns: {}
 rules: []
 """

@@ -43,6 +43,8 @@ def sample_reports():
 
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id=turbine_id,
             timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
             file_metadata=FileMetadata(

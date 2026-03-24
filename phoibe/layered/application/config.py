@@ -28,6 +28,10 @@ class ValidationConfig:
 
     layer_name: str
     """Unique name of the validation layer ('raw', 'bronze', 'silver', 'gold')."""
+    version: str
+    """Version of the configuration."""
+    device_type: str
+    """Type of the device, i.e. ('wind_turbine', 'met_mast', 'lidar', etc.)."""
     variable_patterns: dict[str, list[str]]
     """Mapping of variable names to detection patterns: {variable_name: [regex_patterns]}."""
     rules: list[dict[str, typing.Any]] = dataclasses.field(default_factory=list)
@@ -70,6 +74,14 @@ class ValidationConfig:
         if not layer_name:
             raise ValueError(f"Missing 'layer_name' in config: {config_path}")
 
+        device_type = data.get("device_type")
+        if not device_type:
+            raise ValueError(f"Missing 'device_type' in config: {config_path}")
+
+        version = data.get("version")
+        if not version:
+            raise ValueError(f"Missing 'version' in config: {config_path}")
+
         variable_patterns = data.get("variable_patterns", {})
         if not isinstance(variable_patterns, dict):
             raise ValueError(f"'variable_patterns' must be dict, got {type(variable_patterns)}")
@@ -80,7 +92,13 @@ class ValidationConfig:
 
         logger.info(f"Loaded config for layer '{layer_name}': " f"{len(variable_patterns)} signals, {len(rules)} rules")
 
-        return cls(layer_name=layer_name, variable_patterns=variable_patterns, rules=rules)
+        return cls(
+            layer_name=layer_name,
+            version=version,
+            device_type=device_type,
+            variable_patterns=variable_patterns,
+            rules=rules,
+        )
 
 
 __all__ = ["ValidationConfig"]

@@ -71,6 +71,8 @@ class TestLayerValidatorContract:
 
         return LayerValidator(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             data_loader=data_loader,
             variable_detector=variable_detector,
             rules=rules,
@@ -136,7 +138,7 @@ class TestLayerValidatorContract:
 
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({})
-        validator = LayerValidator("raw", data_loader, variable_detector, [CaptureRule(points=13)])
+        validator = LayerValidator("raw", "0.0.0", "wtg", data_loader, variable_detector, [CaptureRule(points=13)])
         validator.validate(sample_data_file, "WEA 01")
         assert received_df is not None
         assert isinstance(received_df, pd.DataFrame)
@@ -157,7 +159,7 @@ class TestLayerValidatorContract:
 
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({"timestamp": [r"zeit"]})
-        validator = LayerValidator("raw", data_loader, variable_detector, [CaptureRule(points=13)])
+        validator = LayerValidator("raw", "0.0.0", "wtg", data_loader, variable_detector, [CaptureRule(points=13)])
         validator.validate(sample_data_file, "WEA 01")
         assert received_context is not None
         assert isinstance(received_context, ValidationContext)
@@ -181,7 +183,7 @@ class TestLayerValidatorContract:
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({})
         validator = LayerValidator(
-            "raw", data_loader, variable_detector, [CrashingRule(points=13), MockRule("survivor")]
+            "raw", "0.0.0", "wtg", data_loader, variable_detector, [CrashingRule(points=13), MockRule("survivor")]
         )
         result = validator.validate(sample_data_file, "WEA 01")
         assert len(result.rule_execution_results) == 2
@@ -192,10 +194,12 @@ class TestLayerValidatorContract:
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({})
         validator = LayerValidator(
-            "raw",
-            data_loader,
-            variable_detector,
-            [
+            layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
+            data_loader=data_loader,
+            variable_detector=variable_detector,
+            rules=[
                 MockRule("rule1", should_pass=False),
                 MockRule("rule2", should_pass=True),
                 MockRule("rule3", should_pass=True),
@@ -208,7 +212,7 @@ class TestLayerValidatorContract:
         df = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=5), "ws_gondel": [5, 6, 7, 8, 9]})
         data_loader = InMemoryDataLoader(df, filename="memory_data")
         variable_detector = RegexVariableDetector({"timestamp": [r"zeit"]})
-        validator = LayerValidator("raw", data_loader, variable_detector, [MockRule()])
+        validator = LayerValidator("raw", "0.0.0", "wtg", data_loader, variable_detector, [MockRule()])
         result = validator.validate("", "WEA 01")
 
         assert isinstance(result, LayerReport)
@@ -217,7 +221,7 @@ class TestLayerValidatorContract:
     def test_works_with_no_rules(self, sample_data_file):
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({})
-        validator = LayerValidator("raw", data_loader, variable_detector, rules=[])
+        validator = LayerValidator("raw", "0.0.0", "wtg", data_loader, variable_detector, rules=[])
         result = validator.validate(sample_data_file, "WEA 01")
 
         assert isinstance(result, LayerReport)
@@ -228,7 +232,7 @@ class TestLayerValidatorContract:
     def test_works_with_no_detected_variables(self, sample_data_file):
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({"nonexistent": [r"will_not_match"]})
-        validator = LayerValidator("raw", data_loader, variable_detector, [])
+        validator = LayerValidator("raw", "0.0.0", "wtg", data_loader, variable_detector, [])
         result = validator.validate(sample_data_file, "WEA 01")
 
         assert result.detected_variables["nonexistent"] is None
@@ -237,10 +241,12 @@ class TestLayerValidatorContract:
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({})
         validator = LayerValidator(
-            "raw",
-            data_loader,
-            variable_detector,
-            [
+            layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
+            data_loader=data_loader,
+            variable_detector=variable_detector,
+            rules=[
                 MockRule("rule1", should_pass=False),
                 MockRule("rule2", should_pass=True),
                 MockRule("rule3", should_pass=True),
@@ -255,10 +261,12 @@ class TestLayerValidatorContract:
         data_loader = PandasDataLoader()
         variable_detector = RegexVariableDetector({})
         validator = LayerValidator(
-            "raw",
-            data_loader,
-            variable_detector,
-            [
+            layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
+            data_loader=data_loader,
+            variable_detector=variable_detector,
+            rules=[
                 MockRule("rule1", should_pass=False),
                 MockRule("rule2", should_pass=True),
                 MockRule("rule3", should_pass=True),

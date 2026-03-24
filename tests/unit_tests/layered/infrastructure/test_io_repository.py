@@ -22,6 +22,8 @@ class TestYAMLReportRepositoryEdgeCases:
         """Create minimal valid LayerReport"""
         return LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA_01",
             timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
             file_metadata=FileMetadata(
@@ -66,6 +68,8 @@ class TestYAMLReportRepositoryEdgeCases:
         for i in range(150):
             report = LayerReport(
                 layer_name="raw",
+                version="0.0.0",
+                device_type="wtg",
                 turbine_id=f"WEA_{i:03d}",
                 timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
                 file_metadata=FileMetadata(
@@ -125,6 +129,8 @@ class TestYAMLReportRepositoryEdgeCases:
     def test_yaml_preserves_unicode(self, repository, tmp_path):
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA_Müller_Äpfel",
             timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
             file_metadata=FileMetadata(
@@ -146,7 +152,9 @@ class TestYAMLReportRepositoryEdgeCases:
     def test_yaml_handles_special_yaml_characters(self, repository, tmp_path):
         report = LayerReport(
             layer_name="raw",
-            turbine_id="WEA:01",  # Colon is special in YAML
+            version="0.0.0",
+            device_type="wtg",
+            turbine_id="WEA:01",
             timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
             file_metadata=FileMetadata(
                 filename="data-2024.csv",
@@ -182,6 +190,8 @@ class TestYAMLReportRepositoryEdgeCases:
     def test_serializes_rule_with_none_values(self, repository, tmp_path):
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA_01",
             timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
             file_metadata=FileMetadata(
@@ -210,6 +220,8 @@ class TestYAMLReportRepositoryEdgeCases:
     def test_serializes_rule_with_dict_details(self, repository, tmp_path):
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA_01",
             timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
             file_metadata=FileMetadata(
@@ -240,6 +252,8 @@ class TestYAMLReportRepositoryEdgeCases:
     def test_serializes_rule_with_empty_message(self, repository, tmp_path):
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA_01",
             timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
             file_metadata=FileMetadata(
@@ -362,6 +376,8 @@ class TestYAMLReportRepositoryEdgeCases:
 
         return LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id=turbine_id,
             timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
             file_metadata=FileMetadata(

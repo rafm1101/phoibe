@@ -147,6 +147,8 @@ class YAMLReportRepository:
             "turbine_id": reported.turbine_id,
             "timestamp": reported.timestamp.isoformat(),
             "layer": reported.layer_name,
+            "version": reported.version,
+            "device_type": reported.device_type,
             "file_info": {
                 "filename": str(reported.file_metadata.filename),
                 "size_mb": float(reported.file_metadata.size_mb),
@@ -200,6 +202,8 @@ class YAMLReportRepository:
         )
         reported = LayerReport(
             layer_name=d["layer"],
+            version=d["version"],
+            device_type=d["device_type"],
             turbine_id=d["turbine_id"],
             timestamp=datetime.datetime.fromisoformat(d["timestamp"]),
             file_metadata=fm,
