@@ -52,13 +52,13 @@ def _generate_weibull_timeseries(
     return x
 
 
-def _wind_speed_to_power(
-    wtg_type: WtgType, wind_speeds: NDArray[np.floating] = np.linspace(0, 30, num=61)
-) -> NDArray[np.floating]:
+def _wind_speed_to_power(wtg_type: WtgType, wind_speeds: NDArray[np.floating] | None = None) -> NDArray[np.floating]:
     """Convert given wind speeds to powers for the `WtgType` configuration.
 
     The powercurve features cut-in, rated and cut-out wind speed, and remains very basic.
     """
+    wind_speeds = wind_speeds if wind_speeds is not None else np.linspace(0, 30, num=61)
+
     t = np.array(
         [0, wtg_type.cut_in - 0.5, wtg_type.cut_in, wtg_type.rated, wtg_type.cut_out, wtg_type.cut_out + 0.5, 30]
     )

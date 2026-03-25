@@ -5,9 +5,7 @@ from typing import Any
 
 import yaml
 
-from .handler import ConsoleHandler
-from .handler import FileHandler
-from .handler import JSONHandler
+from .handler import ConsoleHandler, FileHandler, JSONHandler
 
 
 class LoggingConfig:
@@ -36,10 +34,13 @@ class LoggingConfig:
             return cls(**data.get("logging", {}))
 
 
+DEFAULT_LOGGONG_CONFIG = LoggingConfig()
+
+
 class LoggerFactory:
     """Stateless factory for creating configured loggers."""
 
-    def __init__(self, config: LoggingConfig = LoggingConfig()):
+    def __init__(self, config: LoggingConfig = DEFAULT_LOGGONG_CONFIG):
         """Initialize factory with configuration."""
         self.config = config
 
@@ -115,7 +116,7 @@ class RuleExecutionTracker:
         )
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, _exc_tb):
         duration_ms = (time.time() - self.start_time) * 1000
 
         if exc_type is None:
@@ -161,7 +162,7 @@ class ContextualLogger:
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
         return None
 
     def _log_with_context(self, level: int, msg: str, *args, **kwargs):
@@ -189,6 +190,6 @@ class ContextualLogger:
         self.error(msg, *args, **kwargs)
 
 
-def get_logger(name: str, logger_config: LoggingConfig = LoggingConfig()) -> logging.Logger:
+def get_logger(name: str, logger_config: LoggingConfig = DEFAULT_LOGGONG_CONFIG) -> logging.Logger:
     """Retrieve a fully configured logger for a module."""
     return LoggerFactory(config=logger_config).create_logger(name=name)

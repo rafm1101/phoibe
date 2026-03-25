@@ -3,8 +3,7 @@ import typing
 
 import pandas as pd
 
-from .entities import FileMetadata
-from .entities import LayerReport
+from .entities import FileMetadata, LayerReport
 
 
 class DataLoader(typing.Protocol):

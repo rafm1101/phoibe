@@ -7,7 +7,6 @@ from phoibe.layered.core.entities import ValidationMode
 
 
 class TestValidationContextContract:
-
     @pytest.fixture
     def context(self):
         return ValidationContext(

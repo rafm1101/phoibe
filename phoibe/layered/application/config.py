@@ -90,7 +90,7 @@ class ValidationConfig:
         if not isinstance(rules, list):
             raise ValueError(f"'rules' must be list, got {type(rules)}")
 
-        logger.info(f"Loaded config for layer '{layer_name}': " f"{len(variable_patterns)} signals, {len(rules)} rules")
+        logger.info(f"Loaded config for layer '{layer_name}': {len(variable_patterns)} signals, {len(rules)} rules")
 
         return cls(
             layer_name=layer_name,

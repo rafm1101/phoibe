@@ -5,7 +5,6 @@ from phoibe.layered.infrastructure.detector import RegexVariableDetector
 
 
 class VariableDetectorContract:
-
     @pytest.fixture
     def sample_dataframe(self):
         return pd.DataFrame(
@@ -38,13 +37,12 @@ class VariableDetectorContract:
         result = detector.detect(sample_dataframe)
         for variable_name, column_key in result.items():
             if column_key is not None:
-                assert column_key in sample_dataframe.columns, (
-                    f"Signal '{variable_name}' matched to '{column_key}' " f"but column does not exist in DataFrame"
-                )
+                assert (
+                    column_key in sample_dataframe.columns
+                ), f"Signal '{variable_name}' matched to '{column_key}' but column does not exist in DataFrame"
 
 
 class TestRegexVariableDetectorContract(VariableDetectorContract):
-
     @pytest.fixture
     def detector(self):
         patterns = {
@@ -117,7 +115,6 @@ class TestRegexVariableDetectorContract(VariableDetectorContract):
 
 
 class TestSignalDetectorRealWorld:
-
     def test_detects_rotorsoft_columns(self):
         df = pd.DataFrame(
             {

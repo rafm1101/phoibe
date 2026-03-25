@@ -5,9 +5,7 @@ import typing
 import pandas as pd
 
 from phoibe.layered.application.context import ValidationContext
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import RuleExecutionResult, Severity, Status
 
 
 class RuleExecutionResultBuilder:

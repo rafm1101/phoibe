@@ -1,5 +1,3 @@
-import typing
-
 from phoibe.layered.logging.logging import get_logger
 from phoibe.layered.rules.rule import ValidationRule
 
@@ -20,13 +18,13 @@ class RuleRegistry:
        >     ...
     """
 
-    _rules: dict[str, typing.Type[ValidationRule]] = {}
+    _rules: dict[str, type[ValidationRule]] = {}
 
     @classmethod
     def register(cls, name: str):
         """Decorator to register a validation rule."""
 
-        def wrapper(rule_class: typing.Type[ValidationRule]):
+        def wrapper(rule_class: type[ValidationRule]):
             if name in cls._rules:
                 logger.warning(f"Rule '{name}' already registered, overwriting.")
             cls._rules[name] = rule_class
@@ -36,7 +34,7 @@ class RuleRegistry:
         return wrapper
 
     @classmethod
-    def get(cls, name: str) -> typing.Type[ValidationRule]:
+    def get(cls, name: str) -> type[ValidationRule]:
         """Get rule class by name.
 
         Parameters
@@ -56,7 +54,7 @@ class RuleRegistry:
         """
         if name not in cls._rules:
             available = ", ".join(sorted(cls._rules.keys()))
-            raise KeyError(f"Rule '{name}' not found in registry. " f"Available rules: {available}.")
+            raise KeyError(f"Rule '{name}' not found in registry. Available rules: {available}.")
         return cls._rules[name]
 
     @classmethod

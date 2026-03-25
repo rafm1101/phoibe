@@ -1,16 +1,17 @@
 import datetime
 
-from phoibe.layered.core.entities import FileMetadata
-from phoibe.layered.core.entities import LayerGateFailureError
-from phoibe.layered.core.entities import LayerGateKeeper
-from phoibe.layered.core.entities import LayerReport
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import (
+    FileMetadata,
+    LayerGateFailureError,
+    LayerGateKeeper,
+    LayerReport,
+    RuleExecutionResult,
+    Severity,
+    Status,
+)
 
 
 class TestLayerGateKeeper:
-
     def test_has_from_report_classmethod(self):
         assert hasattr(LayerGateKeeper, "from_report")
         assert callable(LayerGateKeeper.from_report)

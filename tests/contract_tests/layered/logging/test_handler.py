@@ -2,19 +2,15 @@ import logging
 
 import pytest
 
-from phoibe.layered.logging.handler import ConsoleHandler
-from phoibe.layered.logging.handler import FileHandler
-from phoibe.layered.logging.handler import JSONHandler
+from phoibe.layered.logging.handler import ConsoleHandler, FileHandler, JSONHandler
 
 
 class HandlerContracts:
-
     def test_handler_is_handler_instance(self, handler):
         assert isinstance(handler, logging.Handler)
 
 
 class TestConsoleHandlerContracts(HandlerContracts):
-
     @pytest.fixture
     def handler(self):
         return ConsoleHandler.create()
@@ -24,7 +20,6 @@ class TestConsoleHandlerContracts(HandlerContracts):
 
 
 class TestFileHandlerContracts(HandlerContracts):
-
     @pytest.fixture
     def handler(self, tmp_path):
         handler = FileHandler.create(log_dir=tmp_path)
@@ -54,7 +49,6 @@ class TestFileHandlerContracts(HandlerContracts):
 
 
 class TestJSONHandlerContracts(HandlerContracts):
-
     @pytest.fixture
     def handler(self, tmp_path):
         return JSONHandler.create(log_dir=tmp_path)

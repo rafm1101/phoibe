@@ -6,13 +6,11 @@ from phoibe.layered.application.config import ValidationConfig
 
 
 class TestValidationConfig:
-
     @pytest.fixture
     def config_file(self, tmp_path):
         """Create sample config"""
         config = tmp_path / "config.yaml"
-        config.write_text(
-            """
+        config.write_text("""
 layer_name: raw
 version: 0.0.0
 device_type: wtg
@@ -25,8 +23,7 @@ rules:
   - name: rule1
     params:
       param1: value1
-"""
-        )
+""")
         return config
 
     def test_from_yaml_returns_config(self, config_file):
@@ -72,28 +69,24 @@ rules:
 
     def test_handles_empty_variable_patterns(self, tmp_path):
         config = tmp_path / "config.yaml"
-        config.write_text(
-            """
+        config.write_text("""
 layer_name: raw
 version: 0.0.0
 device_type: wtg
 variable_patterns: {}
 rules: []
-"""
-        )
+""")
         validation_config = ValidationConfig.from_yaml(config)
         assert validation_config.variable_patterns == {}
 
     def test_handles_empty_rules(self, tmp_path):
         config = tmp_path / "config.yaml"
-        config.write_text(
-            """
+        config.write_text("""
 layer_name: raw
 version: 0.0.0
 device_type: wtg
 variable_patterns: {}
 rules: []
-"""
-        )
+""")
         validation_config = ValidationConfig.from_yaml(config)
         assert validation_config.rules == []

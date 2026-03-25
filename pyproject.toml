@@ -22,6 +22,12 @@ pre-commit = "^3.8.0"
 pdoc = "^14.7.0"
 pytest-cov = "^4.1.0"
 pytest-xdist = "^3.8.0"
+mypy = "*"
+pandas-stubs = "*"
+types-PyYAML = "*"
+types-requests = "*"
+types-python-dateutil = "*"
+ruff = "*"
 
 [tool.poetry.group.docs]
 optional = true
@@ -47,22 +53,41 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.vulture]
 min_confidence = 80
-paths = ['.']
+paths = ['phoibe']
 exclude = ['**/cachedir/*', '**/.venv/*']
 sort_by_size = true
 verbose = false
 
 [tool.black]
 line-length = 120
+target-version = ["py313"]
 
-[tool.flake8]
-max-line-length = 120
-per-file-ignores = """
-    __init__.py:F401
-    tests/integration/conftest.py:E402
-"""
+[tool.mypy]
+python_version = "3.12"
+#strict = true
+ignore_missing_imports = true
 
-[tool.isort]
-profile = "black"
-force_single_line = "true"
-line_length = 120
+[mypy-yaml]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "phoibe.synthetic_data"
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+exclude = [".venv/*", "__pycache__", "build/*", "dist/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**/*.py" = ["ANN", "B905"]
+"*.ipynb" = ["B006", "B008", "B018", "B905", "E402", "F821"]
+
+[tool.ruff.format]
+quote-style = "double"

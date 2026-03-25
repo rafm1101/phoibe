@@ -2,11 +2,8 @@ import numpy as np
 import pytest
 import shapely.geometry
 
-from phoibe.geography.complexity.rix.profiles import NaNPolicy
-from phoibe.geography.complexity.rix.profiles import RayGeometry
-from phoibe.geography.complexity.rix.profiles import RayProfile
-from phoibe.geography.complexity.rix.results import RadialRixResult
-from phoibe.geography.complexity.rix.results import RayResult
+from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayGeometry, RayProfile
+from phoibe.geography.complexity.rix.results import RadialRixResult, RayResult
 
 
 class DummySampler:
@@ -161,7 +158,7 @@ def test_radial_result_retrieves_correct_ray(radial_result):
 def test_radial_result_directional_stats_order(radial_result):
     ruggednesses = radial_result.ruggednesses
     angles = radial_result.angles
-    for angle, ruggedness in zip(angles, ruggednesses):
+    for angle, ruggedness in zip(angles, ruggednesses, strict=True):
         ray = radial_result.ray(angle)
         assert np.isclose(ruggedness, ray.ruggedness)
 

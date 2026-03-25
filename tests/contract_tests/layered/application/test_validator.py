@@ -7,20 +7,20 @@ import pytest
 
 from phoibe.layered.application.context import ValidationContext
 from phoibe.layered.application.validator import LayerValidator
-from phoibe.layered.core.entities import LayerGateFailureError
-from phoibe.layered.core.entities import LayerReport
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
-from phoibe.layered.core.entities import ValidationMode
+from phoibe.layered.core.entities import (
+    LayerGateFailureError,
+    LayerReport,
+    RuleExecutionResult,
+    Severity,
+    Status,
+    ValidationMode,
+)
 from phoibe.layered.infrastructure.detector import RegexVariableDetector
-from phoibe.layered.infrastructure.io import InMemoryDataLoader
-from phoibe.layered.infrastructure.io import PandasDataLoader
+from phoibe.layered.infrastructure.io import InMemoryDataLoader, PandasDataLoader
 from phoibe.layered.rules.rule import ValidationRule
 
 
 class MockRule(ValidationRule):
-
     def __init__(self, name: str = "mock_rule", should_pass: bool = True, points: int = 10):
         self._name = name
         self.should_pass = should_pass
@@ -47,7 +47,6 @@ class MockRule(ValidationRule):
 
 
 class TestLayerValidatorContract:
-
     @pytest.fixture
     def sample_data_file(self, tmp_path):
         csv_file = tmp_path / "test.csv"

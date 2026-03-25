@@ -3,16 +3,11 @@ import datetime
 import pytest
 import yaml
 
-from phoibe.layered.core.entities import FileMetadata
-from phoibe.layered.core.entities import LayerReport
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import FileMetadata, LayerReport, RuleExecutionResult, Severity, Status
 from phoibe.layered.infrastructure.io import YAMLReportRepository
 
 
 class TestYAMLReportRepositoryEdgeCases:
-
     @pytest.fixture
     def repository(self):
         return YAMLReportRepository()

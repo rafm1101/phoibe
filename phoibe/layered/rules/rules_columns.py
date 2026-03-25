@@ -4,8 +4,7 @@ import pandas as pd
 
 from phoibe.layered.application.context import ValidationContext
 from phoibe.layered.application.registry import RuleRegistry
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
+from phoibe.layered.core.entities import RuleExecutionResult, Severity
 from phoibe.layered.rules.rule import ValidationRule
 
 

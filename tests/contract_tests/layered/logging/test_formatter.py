@@ -16,7 +16,6 @@ def logging_record():
 
 
 class TestJSONFormatterContract:
-
     @pytest.fixture
     def formatter(self):
         return JSONFormatter()

@@ -4,10 +4,8 @@ import numpy as np
 import pytest
 
 from phoibe.geography.complexity.rix.geometry import RayGeometry
-from phoibe.geography.complexity.rix.profiles import NaNPolicy
-from phoibe.geography.complexity.rix.profiles import RayProfile
-from phoibe.geography.complexity.rix.results import RadialRixResult
-from phoibe.geography.complexity.rix.results import RayResult
+from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile
+from phoibe.geography.complexity.rix.results import RadialRixResult, RayResult
 
 
 @dataclasses.dataclass(frozen=True)

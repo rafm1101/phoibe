@@ -7,8 +7,7 @@ import pandas as pd
 
 from phoibe.layered.application.context import ValidationContext
 from phoibe.layered.application.registry import RuleRegistry
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
+from phoibe.layered.core.entities import RuleExecutionResult, Severity
 from phoibe.layered.rules.rule import ValidationRule
 
 # TODO: Document properly, refactor `TemporalResolutionRule`.
@@ -309,8 +308,8 @@ class AvailabilityRule(ValidationRule):
             "availability_days": self._to_dict(availability_days),
             "availability_months": self._to_dict(availability_months),
         }
-        required = f"{self.good_threshold*100:.2f}%"
-        actual = f"{availability_global*100:.2f}%"
+        required = f"{self.good_threshold * 100:.2f}%"
+        actual = f"{availability_global * 100:.2f}%"
 
         if availability_global > self.good_threshold:
             return self.result_builder.passed(

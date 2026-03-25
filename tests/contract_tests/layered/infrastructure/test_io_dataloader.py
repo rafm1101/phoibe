@@ -4,8 +4,7 @@ import pandas as pd
 import pytest
 
 from phoibe.layered.core.entities import FileMetadata
-from phoibe.layered.infrastructure.io import InMemoryDataLoader
-from phoibe.layered.infrastructure.io import PandasDataLoader
+from phoibe.layered.infrastructure.io import InMemoryDataLoader, PandasDataLoader
 
 
 @pytest.fixture
@@ -20,7 +19,6 @@ def sample_dataframe():
 
 
 class DataLoaderContract:
-
     def test_load_returns_dataframe(self, loader, sample_data):
         result = loader.load(sample_data)
         assert isinstance(result, pd.DataFrame)
@@ -52,7 +50,6 @@ class DataLoaderContract:
 
 
 class TestPandasDataLoaderContract(DataLoaderContract):
-
     @pytest.fixture
     def loader(self):
         return PandasDataLoader()
@@ -99,7 +96,6 @@ class TestPandasDataLoaderContract(DataLoaderContract):
 
 
 class TestInMemoryDataLoaderContract(DataLoaderContract):
-
     @pytest.fixture
     def loader(self, sample_dataframe):
         return InMemoryDataLoader(sample_dataframe, filename="test_data")
@@ -145,7 +141,6 @@ class TestInMemoryDataLoaderContract(DataLoaderContract):
 
 
 class TestDataLoaderInteroperability:
-
     def test_file_and_memory_loaders_produce_same_data(self, tmp_path):
         df_original = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
         csv_file = tmp_path / "data.csv"

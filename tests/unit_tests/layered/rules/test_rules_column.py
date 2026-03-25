@@ -2,13 +2,11 @@ import pandas as pd
 import pytest
 
 from phoibe.layered.application.context import ValidationContext
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import Severity, Status
 from phoibe.layered.rules.rules_columns import RequiredVariableRule
 
 
 class TestRequiredVariableRuleUnit:
-
     @pytest.fixture
     def rule(self):
         return RequiredVariableRule(variable_name="timestamp", points=10, severity=Severity.CRITICAL)

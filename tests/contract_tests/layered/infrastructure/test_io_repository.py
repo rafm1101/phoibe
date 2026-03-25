@@ -6,7 +6,6 @@ from phoibe.layered.infrastructure.io import YAMLReportRepository
 
 
 class ReportRepositoryContract:
-
     def test_save_creates_nonempty_file(self, repository, sample_reports, tmp_path):
         output_path = tmp_path / "report.yaml"
         repository.save(sample_reports, str(output_path))
@@ -42,7 +41,6 @@ class ReportRepositoryContract:
 
 
 class TestYAMLReportRepositoryContract(ReportRepositoryContract):
-
     @pytest.fixture
     def repository(self):
         return YAMLReportRepository()
@@ -142,7 +140,6 @@ class TestYAMLReportRepositoryContract(ReportRepositoryContract):
 
 
 class TestReportRepositoryRoundTrip:
-
     @pytest.fixture
     def repository(self):
         return YAMLReportRepository()

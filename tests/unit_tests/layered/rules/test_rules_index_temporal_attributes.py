@@ -4,13 +4,11 @@ import pandas as pd
 import pytest
 
 from phoibe.layered.application.context import ValidationContext
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import Severity, Status
 from phoibe.layered.rules.rules_index import TemporalAttributes
 
 
 class TestTemporalAttributes:
-
     @pytest.fixture
     def rule(self):
         return TemporalAttributes(points=10, severity=Severity.INFO)
@@ -140,8 +138,8 @@ class TestTemporalAttributes:
         df = pd.DataFrame(
             {
                 "Zeitstempel": [
-                    datetime.datetime(2024, 1, 1, 10, 0, tzinfo=datetime.timezone.utc),
-                    datetime.datetime(2024, 1, 1, 10, 10, tzinfo=datetime.timezone.utc),
+                    datetime.datetime(2024, 1, 1, 10, 0, tzinfo=datetime.UTC),
+                    datetime.datetime(2024, 1, 1, 10, 10, tzinfo=datetime.UTC),
                 ]
             }
         )
@@ -191,7 +189,7 @@ class TestTemporalAttributes:
         assert result.status == Status.PASSED
 
     def test_handles_mixed_timezones(self, rule, context_with_datetime):
-        utc = datetime.timezone.utc
+        utc = datetime.UTC
         timestamps = [
             datetime.datetime(2024, 1, 1, 10, 0, tzinfo=utc),
             datetime.datetime(2024, 1, 1, 11, 0, tzinfo=utc),
@@ -222,7 +220,7 @@ class TestTemporalAttributes:
 
     def test_always_passes_with_valid_data(self, rule, context_with_datetime):
         df1 = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=5, freq="10min", tz="utc")})
-        utc = datetime.timezone.utc
+        utc = datetime.UTC
         assert rule.execute(df1, context_with_datetime).status == Status.PASSED
         df2 = pd.DataFrame(
             {

@@ -5,10 +5,7 @@ import pandas as pd
 import pytest
 
 from phoibe.layered.application.validator import LayerValidator
-from phoibe.layered.core.entities import FileMetadata
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import FileMetadata, RuleExecutionResult, Severity, Status
 from phoibe.layered.rules.rule import ValidationRule
 
 
@@ -34,7 +31,6 @@ class MockRule(ValidationRule):
 
 
 class TestLayerValidatorErrorRecovery:
-
     @pytest.fixture
     def mock_loader(self):
         loader = Mock()
@@ -178,7 +174,6 @@ class TestLayerValidatorErrorRecovery:
 
 
 class TestLayerValidatorEdgeCases:
-
     @pytest.fixture
     def mock_loader(self):
         loader = Mock()

@@ -3,14 +3,10 @@ import datetime
 
 import pytest
 
-from phoibe.layered.core.entities import FileMetadata
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import FileMetadata, RuleExecutionResult, Severity, Status
 
 
 class TestFileMetadataContract:
-
     def test_file_metadata_is_frozen(self):
         metadata = FileMetadata(filename="test.csv", size_bytes=1024, format="csv", modified_at=datetime.datetime.now())
 
@@ -33,7 +29,6 @@ class TestFileMetadataContract:
 
 
 class TestRuleExecutionResultContract:
-
     def test_is_frozen(self):
         result = RuleExecutionResult(
             rule_name="test",

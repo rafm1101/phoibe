@@ -6,11 +6,7 @@ import pandas as pd
 import xarray
 import yaml
 
-from ..core.entities import FileMetadata
-from ..core.entities import LayerReport
-from ..core.entities import RuleExecutionResult
-from ..core.entities import Severity
-from ..core.entities import Status
+from ..core.entities import FileMetadata, LayerReport, RuleExecutionResult, Severity, Status
 from ..logging.logging import get_logger
 
 LOGGER = get_logger(__name__)
@@ -96,9 +92,9 @@ class PandasDataLoader:
     def _load_excel(self, file_path: pathlib.Path | str) -> pd.DataFrame:
         try:
             return pd.read_excel(file_path)
-        except Exception:
+        except Exception as exception:
             LOGGER.error(f"Failed to load Excel: {file_path}.")
-            raise ValueError(f"Failed to load Excel {file_path}")
+            raise ValueError(f"Failed to load Excel {file_path}") from exception
 
     def get_metadata(self, file_path: pathlib.Path | str) -> FileMetadata:
         path = pathlib.Path(file_path)
@@ -218,7 +214,7 @@ class YAMLReportRepository:
             LOGGER.error(f"File not found: {path}")
             raise FileNotFoundError(f"File not found: {path}")
 
-        with open(path, "r") as filestream:
+        with open(path) as filestream:
             contents = yaml.safe_load(filestream)
 
         layer_reports = [self._layer_report_from_dict(content) for content in contents["turbines"].values()]

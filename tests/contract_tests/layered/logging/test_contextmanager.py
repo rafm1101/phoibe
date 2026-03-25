@@ -3,14 +3,10 @@ import sys
 
 import pytest
 
-from phoibe.layered.logging.logging import ContextualLogger
-from phoibe.layered.logging.logging import LoggerFactory
-from phoibe.layered.logging.logging import LoggingConfig
-from phoibe.layered.logging.logging import RuleExecutionTracker
+from phoibe.layered.logging.logging import ContextualLogger, LoggerFactory, LoggingConfig, RuleExecutionTracker
 
 
 class TestRuleExecutionTrackerContract:
-
     @pytest.fixture
     def logger(self, tmp_path):
         logging_config = LoggingConfig(log_dir=tmp_path)
@@ -68,7 +64,6 @@ class TestRuleExecutionTrackerContract:
 
 
 class TestContextualLoggerContract:
-
     @pytest.fixture
     def logger(self, tmp_path):
         logging_config = LoggingConfig(log_dir=tmp_path)

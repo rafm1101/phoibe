@@ -4,13 +4,11 @@ import pandas as pd
 import pytest
 
 from phoibe.layered.application.context import ValidationContext
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import Severity, Status
 from phoibe.layered.rules.rules_index import AvailabilityRule
 
 
 class TestAvailabilityRule:
-
     @pytest.fixture
     def rule(self):
         return AvailabilityRule(good_threshold=0.9, acceptable_threshold=0.75, points=10, locale="en_US")
@@ -142,7 +140,7 @@ class TestAvailabilityRule:
         df = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=144, freq="10min")})
         result = rule.execute(df, context_with_datetime)
 
-        result.status == Status.PASSED
+        assert result.status == Status.PASSED
         assert result.points_achieved == rule.points
 
     def test_awards_half_points_when_warning(self, rule, context_with_datetime):
