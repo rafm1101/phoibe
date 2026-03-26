@@ -3,8 +3,7 @@ import pytest
 import shapely
 
 from phoibe.geography.complexity.rix import analyse
-from phoibe.geography.complexity.rix.profiles import NaNPolicy
-from phoibe.geography.complexity.rix.profiles import RayProfile
+from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile
 
 
 @pytest.fixture
@@ -91,7 +90,6 @@ class TestRayProfileRegularLinear(RayProfileContractLinearProfile):
 
 
 class TestRayProfileLevelCrossing:
-
     @pytest.fixture
     def level_crossing_profile(self, ray_north, linear_sampler):
         return RayProfile.create_levelcrossing(

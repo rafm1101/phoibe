@@ -5,7 +5,6 @@ from phoibe.layered.rules.rule import ValidationRule
 
 
 class TestRuleRegistryEdgeCases:
-
     def setup_method(self):
         RuleRegistry.clear()
 

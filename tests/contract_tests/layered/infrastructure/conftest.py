@@ -2,11 +2,7 @@ import datetime
 
 import pytest
 
-from phoibe.layered.core.entities import FileMetadata
-from phoibe.layered.core.entities import LayerReport
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import FileMetadata, LayerReport, RuleExecutionResult, Severity, Status
 
 
 @pytest.fixture
@@ -14,7 +10,7 @@ def sample_reports():
     reports = []
 
     for i in range(3):
-        turbine_id = f"WEA_{i+1:02d}"
+        turbine_id = f"WEA_{i + 1:02d}"
 
         rule_execution_results = [
             RuleExecutionResult(
@@ -43,6 +39,8 @@ def sample_reports():
 
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id=turbine_id,
             timestamp=datetime.datetime(2024, 1, 1, 10, 0, 0),
             file_metadata=FileMetadata(

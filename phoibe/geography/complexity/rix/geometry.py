@@ -4,9 +4,7 @@ import logging
 import ergaleiothiki.kiklos.circle
 import numpy as np
 from ergaleiothiki.perdix import LocationCCS
-from ergaleiothiki.tididi.validate_numerics import _validate_non_negative
-from ergaleiothiki.tididi.validate_numerics import _validate_notna_finite
-from ergaleiothiki.tididi.validate_numerics import _validate_positive
+from ergaleiothiki.tididi.validate_numerics import _validate_non_negative, _validate_notna_finite, _validate_positive
 from numpy.typing import NDArray
 
 LOGGER = logging.getLogger(__name__)

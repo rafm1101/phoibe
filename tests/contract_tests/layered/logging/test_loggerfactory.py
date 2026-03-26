@@ -2,8 +2,7 @@ import logging
 
 import pytest
 
-from phoibe.layered.logging.logging import LoggerFactory
-from phoibe.layered.logging.logging import LoggingConfig
+from phoibe.layered.logging.logging import LoggerFactory, LoggingConfig
 
 
 @pytest.fixture
@@ -12,7 +11,6 @@ def logging_config(tmp_path):
 
 
 class TestLoggerFactoryContract:
-
     @pytest.fixture
     def logger(self, logging_config, request):
         logger = LoggerFactory(logging_config).create_logger(request.param)

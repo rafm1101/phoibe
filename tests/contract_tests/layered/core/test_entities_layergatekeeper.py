@@ -1,16 +1,17 @@
 import datetime
 
-from phoibe.layered.core.entities import FileMetadata
-from phoibe.layered.core.entities import LayerGateFailureError
-from phoibe.layered.core.entities import LayerGateKeeper
-from phoibe.layered.core.entities import LayerReport
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import (
+    FileMetadata,
+    LayerGateFailureError,
+    LayerGateKeeper,
+    LayerReport,
+    RuleExecutionResult,
+    Severity,
+    Status,
+)
 
 
 class TestLayerGateKeeper:
-
     def test_has_from_report_classmethod(self):
         assert hasattr(LayerGateKeeper, "from_report")
         assert callable(LayerGateKeeper.from_report)
@@ -267,8 +268,10 @@ class TestLayerGateKeeper:
     def _create_report(self, rule_execution_results: list[RuleExecutionResult]) -> LayerReport:
         """Create a LayerReport for testing."""
         return LayerReport(
-            turbine_id="WEA 01",
             layer_name="bronze",
+            version="0.0.0",
+            device_type="wtg",
+            turbine_id="WEA_01",
             timestamp=datetime.datetime.now(),
             file_metadata=FileMetadata(
                 filename="test.csv", size_bytes=1024**2, format="csv", modified_at=datetime.datetime(1498, 3, 14, 13, 0)

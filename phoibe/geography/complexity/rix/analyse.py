@@ -7,10 +7,8 @@ from numpy.typing import NDArray
 
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
-from .profiles import NaNPolicy
-from .profiles import RayProfile
-from .results import RadialRixResult
-from .results import RayResult
+from .profiles import NaNPolicy, RayProfile
+from .results import RadialRixResult, RayResult
 
 LOGGER = logging.getLogger(__name__)
 
@@ -214,5 +212,5 @@ def steep_ray_segments(profile: RayProfile, slope_critical: float) -> list[shape
         xs = ray_segments.xs[start : stop + 1]  # noqa: E203
         ys = ray_segments.ys[start : stop + 1]  # noqa: E203
         if len(xs) >= 2:
-            segments.append(shapely.geometry.LineString(zip(xs, ys)))
+            segments.append(shapely.geometry.LineString(zip(xs, ys, strict=True)))
     return segments

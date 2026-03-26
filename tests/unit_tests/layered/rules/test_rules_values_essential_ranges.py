@@ -3,13 +3,11 @@ import pandas as pd
 import pytest
 
 from phoibe.layered.application.context import ValidationContext
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import Severity, Status
 from phoibe.layered.rules.rules_values import EssentialRange
 
 
 class TestEssentialRanges:
-
     @pytest.fixture
     def rule(self):
         return EssentialRange(variable_names=["power_kw", "wind_speed", "temperature"], proportion=0.995, points=10)

@@ -5,12 +5,10 @@ import pandas as pd
 import pytest
 import xarray
 
-from phoibe.layered.infrastructure.io import InMemoryDataLoader
-from phoibe.layered.infrastructure.io import PandasDataLoader
+from phoibe.layered.infrastructure.io import InMemoryDataLoader, PandasDataLoader
 
 
 class TestPandasDataLoaderEdgeCases:
-
     @pytest.fixture
     def loader(self):
         return PandasDataLoader()
@@ -185,7 +183,6 @@ class TestPandasDataLoaderEdgeCases:
 
 
 class TestInMemoryDataLoaderEdgeCases:
-
     def test_accepts_dataframe(self):
         df = pd.DataFrame({"a": [1, 2, 3]})
         loader = InMemoryDataLoader(df)

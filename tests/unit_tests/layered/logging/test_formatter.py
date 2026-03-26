@@ -7,7 +7,6 @@ from phoibe.layered.logging.formatter import JSONFormatter
 
 
 class TestJSONFormatterUnitTests:
-
     @pytest.fixture
     def formatter(self):
         return JSONFormatter()

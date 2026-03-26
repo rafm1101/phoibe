@@ -1,16 +1,17 @@
 import datetime
 
-from phoibe.layered.core.entities import FileMetadata
-from phoibe.layered.core.entities import LayerGateFailureError
-from phoibe.layered.core.entities import LayerGateKeeper
-from phoibe.layered.core.entities import LayerReport
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import (
+    FileMetadata,
+    LayerGateFailureError,
+    LayerGateKeeper,
+    LayerReport,
+    RuleExecutionResult,
+    Severity,
+    Status,
+)
 
 
 class TestLayerGateKeeper:
-
     def test_empty_report_passes_gate(self):
         report = self._create_report([])
         decision = LayerGateKeeper.from_report(report)
@@ -250,7 +251,7 @@ class TestLayerGateKeeper:
     def test_statistics_empty_report(self):
         report = self._create_report([])
         decision = LayerGateKeeper.from_report(report)
-        for key, value in decision.statistics.items():
+        for _, value in decision.statistics.items():
             assert value == 0
 
     def test_single_critical_failed(self):
@@ -377,8 +378,10 @@ class TestLayerGateKeeper:
     def _create_report(self, rule_execution_results: list[RuleExecutionResult]) -> LayerReport:
         """Create test report."""
         return LayerReport(
-            turbine_id="WEA_01",
             layer_name="bronze",
+            version="0.0.0",
+            device_type="wtg",
+            turbine_id="WEA_01",
             timestamp=datetime.datetime.now(),
             file_metadata=FileMetadata(
                 filename="test.csv", size_bytes=1024**2, format="csv", modified_at=datetime.datetime.now()

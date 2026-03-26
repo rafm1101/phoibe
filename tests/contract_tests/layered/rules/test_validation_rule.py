@@ -4,15 +4,11 @@ import pandas as pd
 import pytest
 
 from phoibe.layered.application.context import ValidationContext
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
-from phoibe.layered.rules.rule import RuleExecutionResultBuilder
-from phoibe.layered.rules.rule import ValidationRule
+from phoibe.layered.core.entities import RuleExecutionResult, Severity, Status
+from phoibe.layered.rules.rule import RuleExecutionResultBuilder, ValidationRule
 
 
 class MockValidationRule(ValidationRule):
-
     def __init__(
         self,
         rule_name: str = "mock_rule",
@@ -32,7 +28,6 @@ class MockValidationRule(ValidationRule):
 
 
 class TestValidationRuleContract:
-
     def test_is_abstract_base_class(self):
         with pytest.raises(TypeError):
             ValidationRule(points=10)
@@ -126,7 +121,6 @@ class TestValidationRuleContract:
 
 
 class TestRuleExecutionResultBuilderContract:
-
     @pytest.fixture
     def builder(self):
         return RuleExecutionResultBuilder(rule_name="test_rule", points=10, severity=Severity.CRITICAL)

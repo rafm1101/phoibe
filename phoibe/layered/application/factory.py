@@ -6,11 +6,9 @@ from phoibe.layered.application.config import ValidationConfig
 from phoibe.layered.application.registry import RuleRegistry
 from phoibe.layered.application.validator import LayerValidator
 from phoibe.layered.core.entities import ValidationMode
-from phoibe.layered.core.interfaces import DataLoader
-from phoibe.layered.core.interfaces import VariableDetector
+from phoibe.layered.core.interfaces import DataLoader, VariableDetector
 from phoibe.layered.infrastructure.detector import RegexVariableDetector
-from phoibe.layered.infrastructure.io import InMemoryDataLoader
-from phoibe.layered.infrastructure.io import PandasDataLoader
+from phoibe.layered.infrastructure.io import InMemoryDataLoader, PandasDataLoader
 from phoibe.layered.logging.logging import get_logger
 from phoibe.layered.rules.rule import ValidationRule
 
@@ -169,10 +167,15 @@ class ValidatorFactory:
 
         rules = cls._create_rules(config.rules)
 
-        logger.info(f"Created validator: layer={config.layer_name}, mode={mode.value}, rules={len(rules)}.")
+        logger.info(
+            f"Created validator: layer={config.layer_name}, version={config.version}, mode={mode.value}, "
+            f"rules={len(rules)}."
+        )
 
         return LayerValidator(
             layer_name=config.layer_name,
+            device_type=config.device_type,
+            version=config.version,
             data_loader=loader,
             variable_detector=detector,
             rules=rules,
@@ -219,13 +222,13 @@ class ValidatorFactory:
             except TypeError as exception:
                 logger.error(f"Failed to instantiate rule '{rule_name}': {exception}")
                 raise TypeError(
-                    f"Failed to instantiate rule '{rule_name}': {exception}. " f"Provided params: {rule_params}"
+                    f"Failed to instantiate rule '{rule_name}': {exception}. Provided params: {rule_params}"
                 ) from exception
 
         return rules
 
     @staticmethod
-    @warnings.deprecated("`create_from_config` is deprecated. Please use `create`, `contract` or `profiling`.")
+    @warnings.deprecated("`create_from_config` is deprecated. Please use `create`, `contract` or `profiling`.")  # type: ignore[attr-defined]
     def create_from_config(config: ValidationConfig) -> LayerValidator:
         """Create validator from configuration.
 
@@ -243,7 +246,7 @@ class ValidatorFactory:
         return ValidatorFactory.profiling(config=config)
 
     @staticmethod
-    @warnings.deprecated("`create_from_memory` is deprecated. Please use `create`, `contract` or `profiling`.")
+    @warnings.deprecated("`create_from_memory` is deprecated. Please use `create`, `contract` or `profiling`.")  # type: ignore[attr-defined]
     def create_from_memory(
         config: ValidationConfig, data: pd.DataFrame, filename: str = "in_memory_data"
     ) -> LayerValidator:

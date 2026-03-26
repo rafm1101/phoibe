@@ -12,7 +12,7 @@ from .geometry import RayGeometry
 LOGGER = logging.getLogger(__name__)
 
 
-class NaNPolicy(enum.Enum):
+class NaNPolicy(enum.StrEnum):
     """NaN handling policy in sampled profiles."""
 
     TRUNCATE = "truncate"

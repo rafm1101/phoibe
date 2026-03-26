@@ -2,13 +2,10 @@ import json
 
 import pytest
 
-from phoibe.layered.logging.logging import ContextualLogger
-from phoibe.layered.logging.logging import LoggerFactory
-from phoibe.layered.logging.logging import LoggingConfig
+from phoibe.layered.logging.logging import ContextualLogger, LoggerFactory, LoggingConfig
 
 
 class TestContextualLoggerUnitTests:
-
     @pytest.fixture
     def logger(self, tmp_path):
         logging_config = LoggingConfig(log_dir=tmp_path)

@@ -7,7 +7,6 @@ from phoibe.layered.infrastructure.detector import RegexVariableDetector
 
 
 class TestRegexVariableDetectorEdgeCases:
-
     @pytest.mark.parametrize(
         "df, expected_timestamp, expected_power",
         [

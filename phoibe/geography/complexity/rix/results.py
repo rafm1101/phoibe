@@ -164,7 +164,7 @@ class RadialRixResult:
             return self._ray_by_angle[theta]
         except KeyError:
             available = sorted(self._ray_by_angle.keys())
-            raise KeyError(f"No ray found for theta={theta:.1f}°. " f"Available angles: {available}") from None
+            raise KeyError(f"No ray found for theta={theta:.1f}°. Available angles: {available}") from None
 
     def to_dataframe(self):
         """Generate a dataframe summarising the metrics of all rays.

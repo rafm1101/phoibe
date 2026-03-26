@@ -1,20 +1,24 @@
 import numpy as np
 import pandas as pd
 
-from ._turbine_noise import CurtailmentNight
-from ._turbine_noise import CurtailmentToZero
-from ._turbine_noise import DeleteEntries
-from ._turbine_noise import Freeze
-from ._turbine_noise import GeometricSegments
-from ._turbine_noise import RowDrop
-from ._turbine_noise import Spike
-from ._turbine_noise import UniformSegments
-from ._turbine_scada import Time
-from ._turbine_scada import WtgType
-from ._turbine_scada import _generate_weibull_timeseries
-from ._turbine_scada import _wind_speed_to_pitch_angle
-from ._turbine_scada import _wind_speed_to_power
-from ._turbine_scada import _wind_speed_to_rotor_speed
+from ._turbine_noise import (
+    CurtailmentNight,
+    CurtailmentToZero,
+    DeleteEntries,
+    Freeze,
+    GeometricSegments,
+    RowDrop,
+    Spike,
+    UniformSegments,
+)
+from ._turbine_scada import (
+    Time,
+    WtgType,
+    _generate_weibull_timeseries,
+    _wind_speed_to_pitch_angle,
+    _wind_speed_to_power,
+    _wind_speed_to_rotor_speed,
+)
 
 DEFAULT_WTG = WtgType(nominal_power=5600, rotor_diameter=150, cut_in=3.0, cut_out=25.0, rated=13.0, tsr=8.0)
 DEFAULT_TIME = Time(start="2026-02-14T04:00:00", freq="10min", periods=576)
@@ -96,9 +100,11 @@ pipeline = MessUpPipeline(seed=23)
 
 
 def create_default_messup_pipeline(
-    pipeline: MessUpPipeline = MessUpPipeline(), incidence: float = 1.0, level: float = 1.0
+    pipeline: MessUpPipeline | None = None, incidence: float = 1.0, level: float = 1.0
 ) -> MessUpPipeline:
     """Create a basic messup pipeline for scada data w/ four columns."""
+    pipeline = pipeline if pipeline is not None else MessUpPipeline()
+
     gsegments_frequent_durable = GeometricSegments(n=int(11 * incidence), p=0.1 / level)
     gsegments_medium_short = GeometricSegments(n=int(5 * incidence), p=0.5 / level)
     gsegments_rare_medium = GeometricSegments(n=int(incidence), p=0.3 / level)
@@ -118,9 +124,11 @@ def create_default_messup_pipeline(
 
 
 def create_extended_messup_pipeline(
-    pipeline: MessUpPipeline = MessUpPipeline(), incidence: float = 1.0, level: float = 1.0
+    pipeline: MessUpPipeline | None = None, incidence: float = 1.0, level: float = 1.0
 ) -> MessUpPipeline:
     """Create a basic messup pipeline for scada data."""
+    pipeline = pipeline if pipeline is not None else MessUpPipeline()
+
     gsegments_frequent_durable = GeometricSegments(n=int(11 * incidence), p=0.1 / level)
     gsegments_medium_short = GeometricSegments(n=int(5 * incidence), p=0.5 / level)
     gsegments_rare_medium = GeometricSegments(n=int(incidence), p=0.3 / level)

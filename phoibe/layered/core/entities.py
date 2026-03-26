@@ -9,7 +9,7 @@ import typing
 logger = logging.getLogger(__name__)
 
 
-class Status(enum.Enum):
+class Status(enum.StrEnum):
     """Status of a check."""
 
     PASSED = "passed"
@@ -24,7 +24,7 @@ class Status(enum.Enum):
     """An error occurred during the check."""
 
 
-class Severity(enum.Enum):
+class Severity(enum.StrEnum):
     """Severity of a check."""
 
     CRITICAL = "critical"
@@ -35,7 +35,7 @@ class Severity(enum.Enum):
     """Info."""
 
 
-class ValidationMode(str, enum.Enum):
+class ValidationMode(enum.StrEnum):
     """Validation execution mode."""
 
     PROFILING = "profiling"
@@ -99,6 +99,10 @@ class LayerReport:
 
     layer_name: str
     """Name of the layer."""
+    device_type: str
+    """Type of the device, i.e. ('wind_turbine', 'met_mast', 'lidar', etc.)."""
+    version: str
+    """Version of the underlying configuration."""
     turbine_id: str
     """Turbine identifier."""
     timestamp: datetime.datetime
@@ -162,7 +166,7 @@ class LayerGateKeeper:
     """Summary statistics of the gate."""
 
     @classmethod
-    def from_report(cls, report: LayerReport) -> "LayerGateKeeper":
+    def from_report(cls, report: LayerReport) -> LayerGateKeeper:
         """Create a layer gate keeper from validation report.
 
         Gate passes if no CRITICAL failures or CRITICAL errors exist.
@@ -304,7 +308,7 @@ class LayerGateFailureError(Exception):
 
         super().__init__(message)
 
-        logger.error(f"GateFailureError raised: {count} blocking failures, " f"statistics={decision.statistics}")
+        logger.error(f"GateFailureError raised: {count} blocking failures, statistics={decision.statistics}")
 
 
 __all__ = ["LayerGateKeeper", "LayerGateFailureError"]

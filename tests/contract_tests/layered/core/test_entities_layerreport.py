@@ -2,11 +2,7 @@ import datetime
 
 import pytest
 
-from phoibe.layered.core.entities import FileMetadata
-from phoibe.layered.core.entities import LayerReport
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
+from phoibe.layered.core.entities import FileMetadata, LayerReport, RuleExecutionResult, Severity, Status
 
 
 @pytest.fixture
@@ -15,7 +11,6 @@ def file_metadata():
 
 
 class TestLayerReportScoring:
-
     @pytest.fixture
     def sample_checks(self):
         return [
@@ -51,6 +46,8 @@ class TestLayerReportScoring:
     def test_score_max_sums_all_points(self, sample_checks, file_metadata):
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -63,6 +60,8 @@ class TestLayerReportScoring:
     def test_score_achieved_sums_achieved_points(self, sample_checks, file_metadata):
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -75,6 +74,8 @@ class TestLayerReportScoring:
     def test_percentage_computes_correcly(self, sample_checks, file_metadata):
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -88,6 +89,8 @@ class TestLayerReportScoring:
     def test_percentage_is_zero_when_max_is_zero(self, file_metadata):
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -106,6 +109,8 @@ class TestLayerReportScoring:
         ]
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -123,6 +128,8 @@ class TestLayerReportScoring:
         ]
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -143,6 +150,8 @@ class TestLayerReportOverallStatus:
         ]
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -158,6 +167,8 @@ class TestLayerReportOverallStatus:
         ]
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -174,6 +185,8 @@ class TestLayerReportOverallStatus:
         ]
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -190,6 +203,8 @@ class TestLayerReportOverallStatus:
         ]
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -206,6 +221,8 @@ class TestLayerReportOverallStatus:
         ]
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,
@@ -222,6 +239,8 @@ class TestLayerReportOverallStatus:
         ]
         report = LayerReport(
             layer_name="raw",
+            version="0.0.0",
+            device_type="wtg",
             turbine_id="WEA 01",
             timestamp=datetime.datetime.now(),
             file_metadata=file_metadata,

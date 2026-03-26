@@ -2,9 +2,7 @@ import numpy as np
 import pytest
 
 from phoibe.geography.complexity.rix import analyse
-from phoibe.geography.complexity.rix.profiles import NaNPolicy
-from phoibe.geography.complexity.rix.profiles import RayProfile
-from phoibe.geography.complexity.rix.profiles import _compute_level_crossings
+from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile, _compute_level_crossings
 
 
 class DummySampler:

@@ -53,7 +53,6 @@ class RayResultContract:
 
 
 class RayResultContractFlatProfile(RayResultContract):
-
     def test_ruggedness_is_zero(self, ray_result):
         assert np.isclose(ray_result.ruggedness, 0.0)
 
@@ -66,7 +65,6 @@ class RayResultContractFlatProfile(RayResultContract):
 
 
 class RayResultContractSteepProfile(RayResultContract):
-
     def test_ruggedness_is_positive(self, ray_result):
         assert ray_result.ruggedness > 0
 
@@ -99,7 +97,6 @@ class TestRayResultSteep(RayResultContractSteepProfile):
 
 
 class RadialRixResultContract:
-
     def test_verify_required_attributes(self, radial_result):
         assert hasattr(radial_result, "rix")
         assert hasattr(radial_result, "n_rays")
@@ -146,7 +143,6 @@ class RadialRixResultContract:
 
 
 class RadialRixResultContractFlatProfile(RadialRixResultContract):
-
     def test_verify_ruggedness_is_zero(self, radial_result):
         assert np.isclose(radial_result.rix, 0.0)
         directional_rix = radial_result.directional_stats()

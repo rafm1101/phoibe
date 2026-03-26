@@ -6,15 +6,11 @@ from phoibe.layered.application.context import ValidationContext
 from phoibe.layered.application.factory import ValidatorFactory
 from phoibe.layered.application.registry import RuleRegistry
 from phoibe.layered.application.validator import LayerValidator
-from phoibe.layered.core.entities import RuleExecutionResult
-from phoibe.layered.core.entities import Severity
-from phoibe.layered.core.entities import Status
-from phoibe.layered.core.entities import ValidationMode
+from phoibe.layered.core.entities import RuleExecutionResult, Severity, Status, ValidationMode
 from phoibe.layered.rules.rule import ValidationRule
 
 
 class TestValidatorFactory:
-
     def setup_method(self):
         RuleRegistry.clear()
 
@@ -48,9 +44,10 @@ class TestValidatorFactory:
     @pytest.fixture
     def config_file(self, tmp_path):
         config = tmp_path / "config.yaml"
-        config.write_text(
-            """
+        config.write_text("""
 layer_name: raw
+version: 0.0.0
+device_type: wtg
 variable_patterns:
   timestamp:
     - zeitstempel
@@ -62,8 +59,7 @@ rules:
   - name: mock_rule
     params:
       points: 10
-"""
-        )
+""")
         return config
 
     @pytest.fixture
@@ -165,15 +161,15 @@ rules:
     def test_raises_for_unknown_rule(self, tmp_path):
         """Error: Raises KeyError for unknown rule"""
         config = tmp_path / "bad_config.yaml"
-        config.write_text(
-            """
+        config.write_text("""
 layer_name: raw
+version: 0.0.0
+device_type: wtg
 variable_patterns: {}
 rules:
   - name: nonexistent_rule
     params: {}
-"""
-        )
+""")
 
         cfg = ValidationConfig.from_yaml(config)
         with pytest.raises(KeyError, match="not found in registry"):
@@ -182,16 +178,16 @@ rules:
     def test_raises_for_invalid_rule_params(self, tmp_path):
         """Error: Raises TypeError for invalid rule parameters"""
         config = tmp_path / "bad_params.yaml"
-        config.write_text(
-            """
+        config.write_text("""
 layer_name: raw
+version: 0.0.0
+device_type: wtg
 variable_patterns: {}
 rules:
   - name: mock_rule
     params:
       invalid_param: 999
-"""
-        )
+""")
 
         cfg = ValidationConfig.from_yaml(config)
         with pytest.raises(TypeError, match="mock_rule"):

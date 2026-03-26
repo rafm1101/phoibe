@@ -1,6 +1,5 @@
 import logging
-from typing import Literal
-from typing import Protocol
+from typing import Literal, Protocol
 
 import numpy as np
 import scipy.interpolate
