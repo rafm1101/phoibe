@@ -1,4 +1,6 @@
 import numpy as np
+import pyproj
+import rasterio
 import xarray
 
 
@@ -90,3 +92,55 @@ def make_radial_wave_field(nx: int, ny: int, dx: float, dy: float, freq: float) 
     z = np.cos(np.atan2(xx, yy) * freq)
 
     return xarray.DataArray(data=z, coords={"x": x, "y": y}, dims=("y", "x"), name="elevation")
+
+
+def make_field_rio(
+    da: xarray.DataArray,
+    bounds: tuple[float, float, float, float],
+    crs: pyproj.CRS | int | str,
+    dtype: str | None = None,
+    nodata: int | float | None = np.nan,
+) -> xarray.DataArray:
+    """Convert a vanilla dataarray to a raster dataarray.
+
+    Parameters
+    ----------
+    da
+        Dataarray holding raster data.
+    bounds
+        Bounds west, south, east, north in the desired CRS.
+    crs
+        CRS provided as CRS object or EPSG code or string.
+    dtype
+        Dtype to be set. If `None` use the input dtype.
+    nodata
+        Nodata identifier to be set, e.g. `None`, `np.nan`, `-32768`.
+        Must be compatible to `dtype` (`np.nan` is no `int`).
+
+    Returns
+    -------
+    dario
+        Enriched field.
+    """
+    crs_to = pyproj.CRS.from_user_input(crs)
+
+    width, height = da.sizes["x"], da.sizes["y"]
+    dtype_to = dtype if dtype is not None else da.dtype
+
+    west, south, east, north = bounds
+    xs = np.linspace(east, west, width)
+    ys = np.linspace(north, south, height)
+    transform = rasterio.transform.from_bounds(
+        west=west, south=south, east=east, north=north, width=width, height=height
+    )
+
+    field = np.asarray(da.values, dtype=dtype_to)
+    dario = xarray.DataArray(data=field, dims=("y", "x"), coords={"x": xs, "y": ys}, name="band1")
+
+    dario.rio.write_crs(crs_to, inplace=True)
+    dario.rio.write_transform(transform, inplace=True)
+
+    if nodata is not None:
+        dario.rio.write_nodata(nodata, inplace=True)
+
+    return dario

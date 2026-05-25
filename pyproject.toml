@@ -37,6 +37,7 @@ ipykernel = "^6.31"
 geopandas = "^1.1.2"
 matplotlib = "^3.10.8"
 python-dotenv = "^1.2.1"
+cartopy = "^0.25.0"
 
 [[tool.poetry.source]]
 name = "nemea-index"
