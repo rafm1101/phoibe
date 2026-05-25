@@ -13,19 +13,27 @@ Tools comprise:
 
 ### Actual
 
-- `geography`: 
+- `geography`:
   - `complexity`: Assessment of terrain complexity.
     - `rix`: Ruggedness index computation.
+  - `crs`:
+    - `reproject`: Simplify reprojections of raster data.
 - `layered`: Assistant for a layered profiling and validation of data and report creation. Prototype.
 - `synthetic_data`: Collection of articial 2D-fields and wtg scada data timeseries (including data mess) for demonstration.
 
-### Guidelines
+<!--### Guidelines-->
 
 ## Observed code sweets and sours
 
-### Setup
+### How to ... use the package
 
-1. Atm, the package is registered in a locally hosted registry. Tag the package _from main_:
+Currently, the package is registered in a locally hosted registry. This works on my computer. To run examples, adjust `pyproject.toml` to receive the dependency _ergaleiothiki_ directly from github, and remove the source _nemea-index_.
+
+An alternative is to download the _ergaleiothiki_ along with _phoibe_, set the path of the former in `pyproject.toml` accordingly, and remove the source.
+
+### How to ... register new package versions
+
+1. Tag the package _from main_:
 
 ```bash
 git tag -a <version> -m "<message>"
@@ -72,7 +80,7 @@ poetry config system-git-client true
    - Functions that are used package internally in e.g. fundamental objects _and_ externally may easily create circular imports. Avoid by:
      - Creating private functions that carry the domain logic but rely on native Python objects in private modules.
      - Letting higher-level objects rely on the private functions.
-     - Creating public functions that consume higher-level objects, and call the related private funtion.
+     - Creating public functions that consume higher-level objects, and call the related private function.
    - Example: `perdix.LocationGCSFactory` and `atlas._earth._compute_square_around_center`.
 
 ### Objects
