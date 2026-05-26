@@ -15,7 +15,10 @@ Tools for assessing different aspects of geospatial data.
     - `profiles`: Generate profiles along rays.
     - `analyse`: Computations.
     - `results`: Gather and provide results.
-
+- `crs`: Manipulations incorporating coordinate reference systems.
+  - `reproject`: Reproject raster data.
+- `plot`: Visualisations of 2D fields.
+  - `raster`: Plot raster data bringing their own CRS or not.
 
 ## Topics
 
