@@ -18,8 +18,10 @@ Tools comprise:
     - `rix`: Ruggedness index computation.
   - `crs`:
     - `reproject`: Simplify reprojections of raster data.
+  - `plot`: Visualisations.
+    - `raster`: Show raster data w/ or w/o CRS attached.
 - `layered`: Assistant for a layered profiling and validation of data and report creation. Prototype.
-- `synthetic_data`: Collection of articial 2D-fields and wtg scada data timeseries (including data mess) for demonstration.
+- `synthetic_data`: Collection of synthetic 2D-fields and wtg scada data timeseries (including data mess) for demonstration.
 
 <!--### Guidelines-->
 
