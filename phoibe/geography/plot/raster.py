@@ -39,6 +39,15 @@ def _get_crs_from_dataarray(da: xarray.DataArray) -> ccrs.CRS | None:
     return plot_crs
 
 
+def _hide_nodata_points(da: xarray.DataArray) -> xarray.DataArray:
+    """Mask rio's nodata-encoded points in `da`."""
+    if hasattr(da, "rio") and da.rio.nodata is not None:
+        da_clean = da.where(da != da.rio.nodata) if da.rio.nodata is not None else da
+    else:
+        da_clean = da
+    return da_clean
+
+
 def plot_raster(
     da: xarray.DataArray,
     title: str | None = None,
@@ -76,9 +85,10 @@ def plot_raster(
 
     figure = plt.figure(figsize=figsize)
     ax = figure.add_subplot(1, 1, 1, projection=plot_crs)
-    print(da.rio.nodata)
+    if hasattr(da, "rio"):
+        print(da.rio.nodata)
 
-    da_clean = da.where(da != da.rio.nodata) if da.rio.nodata is not None else da
+    da_clean = _hide_nodata_points(da=da)
     vmin, vmax = _get_value_ranges(da=da_clean, pct_lower=1, pct_upper=99)
     cnorm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
 
