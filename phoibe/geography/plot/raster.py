@@ -9,45 +9,6 @@ LAND_CMAP = matplotlib.colors.LinearSegmentedColormap.from_list(
 )
 
 
-def _get_value_ranges(da: xarray.DataArray, pct_lower=1, pct_upper=99) -> tuple[float, float]:
-    """Determine the essential range of values appearing in `da`."""
-    vmin = float(np.nanpercentile(da, pct_lower))
-    vmax = float(np.nanpercentile(da, pct_upper))
-    return vmin, vmax
-
-
-def _get_crs_from_dataarray(da: xarray.DataArray) -> ccrs.CRS | None:
-    """Determine the cartopy CRS related to `da`s crs.
-
-    Notes
-    -----
-    1. Designed to run for the standard GCS (EPSG: 4326), or projected CRS (UTM, GK).
-    2. Designed to recognise CRS via their EPSG code. Returns `None` if undetected.
-    3. Function may behave unexpectedly.
-    """
-    if hasattr(da, "rio") and da.rio.crs is not None:
-        epsg_code = int(da.rio.crs.to_authority()[1])
-        if epsg_code == 4326:
-            plot_crs = ccrs.PlateCarree()
-        elif epsg_code is not None:
-            plot_crs = ccrs.epsg(epsg_code)
-        else:
-            plot_crs = None
-    else:
-        plot_crs = None
-
-    return plot_crs
-
-
-def _hide_nodata_points(da: xarray.DataArray) -> xarray.DataArray:
-    """Mask rio's nodata-encoded points in `da`."""
-    if hasattr(da, "rio") and da.rio.nodata is not None:
-        da_clean = da.where(da != da.rio.nodata) if da.rio.nodata is not None else da
-    else:
-        da_clean = da
-    return da_clean
-
-
 def plot_raster(
     da: xarray.DataArray,
     title: str | None = None,
@@ -81,12 +42,9 @@ def plot_raster(
     2. Supported EPSG codes are 4326 and projected CRS. Unrecognised CRS are ignored.
     """
     plot_crs = _get_crs_from_dataarray(da=da)
-    print(plot_crs)
 
     figure = plt.figure(figsize=figsize)
     ax = figure.add_subplot(1, 1, 1, projection=plot_crs)
-    if hasattr(da, "rio"):
-        print(da.rio.nodata)
 
     da_clean = _hide_nodata_points(da=da)
     vmin, vmax = _get_value_ranges(da=da_clean, pct_lower=1, pct_upper=99)
@@ -112,3 +70,43 @@ def plot_raster(
 
     plt.tight_layout()
     return figure, ax
+
+
+def _get_value_ranges(da: xarray.DataArray, pct_lower=1, pct_upper=99) -> tuple[float, float]:
+    """Determine the essential range of values appearing in `da`."""
+    vmin = float(np.nanpercentile(da, pct_lower))
+    vmax = float(np.nanpercentile(da, pct_upper))
+    return vmin, vmax
+
+
+def _get_crs_from_dataarray(da: xarray.DataArray) -> ccrs.CRS | None:
+    """Determine the cartopy CRS related to `da`s crs.
+
+    Notes
+    -----
+    1. Designed to run for the standard GCS (EPSG: 4326), or projected CRS (UTM, GK).
+    2. Designed to recognise CRS via their EPSG code. Returns `None` if undetected.
+    3. Function may behave unexpectedly.
+    """
+    if hasattr(da, "rio") and da.rio.crs is not None:
+        epsg_code = int(da.rio.crs.to_authority()[1])
+        if epsg_code == 4326:
+            plot_crs = ccrs.PlateCarree()
+        elif epsg_code is not None:
+            plot_crs = ccrs.epsg(epsg_code)
+        else:
+            plot_crs = None
+    else:
+        plot_crs = None
+
+    return plot_crs
+
+
+def _hide_nodata_points(da: xarray.DataArray) -> xarray.DataArray:
+    """Mask rio's nodata-encoded points in `da`. Pass in case it is no rio."""
+    if hasattr(da, "rio") and da.rio.nodata is not None:
+        mask_nodata = da != da.rio.nodata
+        da_clean = da.where(mask_nodata)
+    else:
+        da_clean = da
+    return da_clean
