@@ -12,7 +12,7 @@ def make_sites(
     buffer: float = 0,
     crs: pyproj.CRS = None,
     seed: int | None = None,
-) -> gpd.GeoSeries:
+) -> gpd.GeoDataFrame:
     """Generate a given number of random sites within the given bounds.
 
     Parameters
@@ -30,8 +30,8 @@ def make_sites(
 
     Returns
     -------
-    gs
-        GeoSeries with enumerated locations.
+    gdf
+        GeoDataFrame with enumerated locations.
 
     Examples
     --------
@@ -46,5 +46,7 @@ def make_sites(
 
     x_locations = random_generator.uniform(low=west + buffer, high=east - buffer, size=n_sites)
     y_locations = random_generator.uniform(low=south + buffer, high=north - buffer, size=n_sites)
-    gs = gpd.GeoSeries(gpd.points_from_xy(x=x_locations, y=y_locations), index=index, crs=crs)
+    gs = gpd.GeoDataFrame(
+        geometry=gpd.points_from_xy(x=x_locations, y=y_locations), data=index, columns=["name"], crs=crs
+    )
     return gs
