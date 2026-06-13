@@ -121,24 +121,31 @@ def make_field_rio(
     -------
     dario
         Enriched field.
+
+    Notes
+    -----
+    `rioxarray` is loaded silently if not yet done. Required for adding CRS-related functionality.
     """
+    try:
+        import rioxarray  # noqa: F401
+    except ImportError as exception:
+        raise ImportError("`make_field_rio` requires the package `rioxarray`. Please import.") from exception
     crs_to = pyproj.CRS.from_user_input(crs)
 
     width, height = da.sizes["x"], da.sizes["y"]
     dtype_to = dtype if dtype is not None else da.dtype
 
     west, south, east, north = bounds
-    xs = np.linspace(east, west, width)
-    ys = np.linspace(north, south, height)
     transform = rasterio.transform.from_bounds(
         west=west, south=south, east=east, north=north, width=width, height=height
     )
 
     field = np.asarray(da.values, dtype=dtype_to)
-    dario = xarray.DataArray(data=field, dims=("y", "x"), coords={"x": xs, "y": ys}, name="band1")
+    dario = xarray.DataArray(data=field, dims=("y", "x"), name="band1")
 
     dario.rio.write_crs(crs_to, inplace=True)
     dario.rio.write_transform(transform, inplace=True)
+    dario.rio.set_spatial_dims(x_dim="x", y_dim="y")
 
     if nodata is not None:
         dario.rio.write_nodata(nodata, inplace=True)

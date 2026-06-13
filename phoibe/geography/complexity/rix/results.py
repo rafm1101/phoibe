@@ -123,6 +123,13 @@ class RadialRixResult:
         object.__setattr__(self, "_ray_by_angle", {ray.theta: ray for ray in self.rays})
 
     @property
+    def z(self) -> tuple[float, float]:
+        """Elevation of the centre point."""
+        return float(np.mean([ray.profile.z[0] for ray in self.rays])), float(
+            np.std([ray.profile.z[0] for ray in self.rays])
+        )
+
+    @property
     def rix(self) -> float:
         """RIX/mean ruggedness across all ray directions."""
         return float(np.mean([ray.ruggedness for ray in self.rays]))
