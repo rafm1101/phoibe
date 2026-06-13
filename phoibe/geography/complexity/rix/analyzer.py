@@ -1,0 +1,404 @@
+from __future__ import annotations
+
+import dataclasses
+import datetime
+import logging
+import pathlib
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import pyproj
+import scipy.spatial.distance
+import xarray
+import yaml
+from ergaleiothiki.perdix import LocationCCS
+
+from . import trix
+from .analyse import compute_regular_rix
+from .fieldsampler import RegularGridXYSampler
+from .results import RadialRixResult
+
+LOGGER = logging.getLogger(__name__)
+
+
+_REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical", "crs"}
+
+_DEFAULTS: dict = {
+    "version": "1.0",
+    "description": "TRIX, TR6 Rev.12",
+    "n_angles": 72,
+    "R_km": 3.5,
+    "dr_km": 0.05,
+    "slope_critical": 0.3,
+    "crs": None,
+}
+
+
+@dataclasses.dataclass(frozen=True)
+class ResultSummary:
+    """Immutable container for a completed RIX analysis run.
+
+    Attributes
+    ----------
+    locations_site
+        Assessed sites.
+    locations_reference
+        Assessed reference locations, e.g. of a wind data base.
+    summary
+        Sites' RIX assessment including location_id, rix, rix_std, n_rays, slope_critical.
+    roses
+        RIX rose for all sites.
+    trix
+        Pairwise TRIX table (site x reference) if reference is provided. Otherwise `None`.
+        Columns: id_a, id_b, rix_a, rix_b, trix_diff, trix_ratio.
+    transferability
+        Transferability matrix between site and reference.
+        Values from 2 (below distance threshold A) to 0 (above limit threshold B).
+    distance_A
+        Distance treshold matrix A if reference is provided. Otherwise `None`.
+    distance_B
+        Distance treshold matrix B if reference is provided. Otherwise `None`.
+    steep_segments
+        Steep segments of sites as LineStrings. Columns: location_id, theta,
+        segment_id, geometry.
+    meta
+        Meta information including config, timestamp.
+    """
+
+    locations_site: gpd.GeoDataFrame
+    locations_reference: gpd.GeoDataFrame | None
+    summary: pd.DataFrame
+    roses: pd.DataFrame
+    trix: pd.DataFrame | None
+    transferability: pd.DataFrame | None
+    distance_A: pd.DataFrame | None
+    distance_B: pd.DataFrame | None
+    steep_segments: gpd.GeoDataFrame
+    meta: dict
+
+
+class RIXAnalyzer:
+    """Compute RIX (and optionally TRIX) for one or two GeoDataFrame collections.
+
+    Parameters
+    ----------
+    config
+        Validated configuration dictionary. Use `.from_config` for the
+        normal entry point.
+
+    Notes
+    -----
+    CRS responsibility lies with the caller: ``dem``, ``locations_a``, and
+    ``locations_b`` must all share the projected metric CRS specified in
+    ``config["crs"]``.
+    """
+
+    def __init__(self, config: dict) -> None:
+        _validate_config(config=config)
+        self._config = config
+
+    @classmethod
+    def from_config(cls, path: str | pathlib.Path) -> RIXAnalyzer:
+        """Create an analyzer from a YAML config file.
+
+        Parameters
+        ----------
+        path
+            Path to ``config.yaml``.
+
+        Returns
+        -------
+        RIXAnalyzer
+            Ready-to-use analyzer instance.
+        """
+        return cls(config=_load_config(path))
+
+    def run(
+        self,
+        dem: xarray.DataArray,
+        locations_site: gpd.GeoDataFrame,
+        locations_reference: gpd.GeoDataFrame | None = None,
+    ) -> ResultSummary:
+        """Run the full RIX analysis.
+
+        Parameters
+        ----------
+        dem
+            Digital elevation model. Must have 'x' and 'y' coordinates in the
+            same projected CRS as the locations.
+        locations_site
+            Point locations. Must have a unique index used as location_id.
+        locations_reference
+            Optional second collection for pairwise TRIX computation.
+
+        Returns
+        -------
+        ResultSummary
+            Frozen result object.
+
+        Raises
+        ------
+        ValueError
+            On CRS mismatch or invalid geometries.
+        """
+        # TODO: Add failed validations to messages, and add messages to meta.
+        # self._validate_inputs(dem=dem, locations_site=locations_site, locations_wind=locations_wind)
+
+        sampler = RegularGridXYSampler(da=dem, method="linear")
+
+        radial_rix_site = self._compute_rix_results(sampler, locations_site)
+        steep_segments_site = self._build_steep_segments(radial_rix_site, locations_site)
+        rix_roses = self._build_rix_rose(radial_rix_site, locations_site)
+        summary_site = self._build_summary(radial_rix_site, locations_site)
+
+        trix_values, transferability, A, B = None, None, None, None
+        if locations_reference is not None:
+            radial_rix_reference = self._compute_rix_results(sampler, locations_reference)
+            summary_reference = self._build_summary(radial_rix_reference, locations_reference)
+            trix_values, A, B = self._compute_trix(summary_site, summary_reference)
+            distances = self._compute_pairwise_distances_m(locations_site.geometry, locations_reference.geometry) / 1000
+            transferability_ = trix.evaluate_transferability_limits(distances=distances.values, A=A.values, B=B.values)
+            transferability = pd.DataFrame(
+                data=transferability_, index=locations_site["location_id"], columns=locations_reference["location_id"]
+            )
+
+        meta = {
+            "timestamp": datetime.datetime.now(tz=datetime.UTC),
+            "config": self._config,
+        }
+
+        return ResultSummary(
+            locations_site=locations_site,
+            locations_reference=locations_reference,
+            summary=summary_site,
+            roses=rix_roses,
+            trix=trix_values,
+            transferability=transferability,
+            distance_A=A,
+            distance_B=B,
+            steep_segments=steep_segments_site,
+            meta=meta,
+        )
+
+    def _validate_inputs(
+        self, dem: xarray.DataArray, locations_site: gpd.GeoDataFrame, locations_wind: gpd.GeoDataFrame | None
+    ) -> None:
+        """Check CRS consistency and index uniqueness."""
+        expected_crs = self._config["crs"]
+
+        if locations_site.crs is None:
+            raise ValueError("locations_wind has no CRS. Set it to match config['crs'].")
+        if str(locations_site.crs) != expected_crs and locations_site.crs.to_epsg() != _epsg_int(expected_crs):
+            raise ValueError(f"locations_wind CRS mismatch: expected {expected_crs}, got {locations_site.crs}.")
+        if not locations_site.index.is_unique:
+            raise ValueError("locations_wind index must be unique (used as location_id).")
+
+        if locations_wind is not None:
+            if locations_wind.crs is None:
+                raise ValueError("locations_reference has no CRS.")
+            if str(locations_wind.crs) != expected_crs and locations_wind.crs.to_epsg() != _epsg_int(expected_crs):
+                raise ValueError(
+                    f"locations_reference CRS mismatch: expected {expected_crs}, got {locations_wind.crs}."
+                )
+            if not locations_wind.index.is_unique:
+                raise ValueError("locations_reference index must be unique.")
+
+        if not {"x", "y"}.issubset(dem.coords):
+            raise ValueError("DEM must have 'x' and 'y' coordinates.")
+
+    def _compute_rix_results(
+        self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame
+    ) -> dict[object, RadialRixResult]:
+        """Run RIX for every location. Returns dict keyed by location_id."""
+        cfg = self._config
+        results = {}
+
+        for location_id, row in locations.iterrows():
+            point = row.geometry
+            location_ccs = LocationCCS(easting=float(point.x), northing=float(point.y), zone=32)
+
+            LOGGER.debug("Computing RIX for location_id=%s", location_id)
+            results[location_id] = compute_regular_rix(
+                location_ccs=location_ccs,
+                sampler=sampler,
+                n_angles=cfg["n_angles"],
+                R_km=cfg["R_km"],
+                dr_km=cfg["dr_km"],
+                slope_critical=cfg["slope_critical"],
+            )
+
+        return results
+
+    def _get_steep_segments(self, rix_results: dict[object, RadialRixResult]) -> dict[object, RadialRixResult]:
+        """Run RIX for every location. Returns dict keyed by location_id."""
+        cfg = self._config
+        steep_segments = {}
+
+        for location_id, rix_result in rix_results.items():
+            steep_segs = rix_result.steep_segments_geodataframe(crs=pyproj.CRS.from_user_input(cfg.get("crs", None)))
+            steep_segments[location_id] = steep_segs
+
+        return steep_segments
+
+    def _build_rix_rose(
+        self, radial_results: dict[object, RadialRixResult], locations: gpd.GeoDataFrame
+    ) -> pd.DataFrame:
+        """Build summary DataFrame and detail GeoDataFrame from radial results."""
+        rix_rose_rows = []
+
+        for location_id, radial_rix in radial_results.items():
+            rix_rose = pd.Series(index=radial_rix.angles, data=radial_rix.ruggednesses, name=location_id)
+            rix_rose_rows.append(rix_rose)
+
+        rix_roses = pd.DataFrame(rix_rose_rows)
+
+        return rix_roses
+
+    def _build_summary(
+        self, radial_results: dict[object, RadialRixResult], locations: gpd.GeoDataFrame
+    ) -> pd.DataFrame:
+        """Build summary DataFrame from radial results."""
+        summary_rows = []
+
+        for location_id, radial_rix in radial_results.items():
+            description = radial_rix.describe()
+            summary_rows.append(
+                {
+                    "location_id": location_id,
+                    "elevation": radial_rix.z[0],
+                    "elevation_std": radial_rix.z[1],
+                    "rix": radial_rix.rix,
+                    "rix_std": description["rix_std"],
+                    "rix_min": description["rix_min"],
+                    "rix_max": description["rix_max"],
+                    "n_rays": radial_rix.n_rays,
+                    "slope_critical": radial_rix.slope_critical,
+                }
+            )
+
+        summary = pd.DataFrame(summary_rows)
+        return summary
+
+    def _build_steep_segments(
+        self, radial_results: dict[object, RadialRixResult], locations: gpd.GeoDataFrame
+    ) -> tuple[pd.DataFrame, gpd.GeoDataFrame]:
+        """Build summary DataFrame and detail GeoDataFrame from radial results."""
+        crs = self._config["crs"]
+        steep_segments_rows = []
+
+        for location_id, radial_rix in radial_results.items():
+            gdf_segments = radial_rix.steep_segments_geodataframe(crs=crs)
+            gdf_segments.insert(0, "location_id", location_id)
+            steep_segments_rows.append(gdf_segments)
+
+        if steep_segments_rows:
+            steep_segments = gpd.GeoDataFrame(
+                pd.concat(steep_segments_rows, ignore_index=True), geometry="geometry", crs=crs
+            )
+        else:
+            steep_segments = gpd.GeoDataFrame(
+                columns=["location_id", "theta", "segment_id", "geometry"], geometry="geometry", crs=crs
+            )
+
+        return steep_segments
+
+    def _compute_trix(
+        self, summary_site: pd.DataFrame, summary_reference: pd.DataFrame
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Compute pairwise TRIX as Cartesian product of summary_site × summary_reference.
+
+        Returns
+        -------
+        trix_result, A, B
+            Pairwise trix values and limit distance matrices A and B with sites in rows
+            and reference locations in columns.
+        """
+        trix_records = trix.compute_trix(
+            rix_site=np.array(summary_site["rix"]),
+            elevation_site=np.array(summary_site["elevation"]),
+            rix_wind=np.array(summary_reference["rix"]),
+            elevation_wind=np.array(summary_reference["elevation"]),
+        )
+        trix_result = pd.DataFrame(
+            data=trix_records, index=summary_site["location_id"], columns=summary_reference["location_id"]
+        )
+
+        _A, _B = trix.compute_trix_limit_distances(trix=trix_records, decimals=1)
+        A = pd.DataFrame(data=_A, index=summary_site["location_id"], columns=summary_reference["location_id"])
+        B = pd.DataFrame(data=_B, index=summary_site["location_id"], columns=summary_reference["location_id"])
+
+        return trix_result, A, B
+
+    def _compute_pairwise_distances_m(
+        self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries
+    ) -> pd.DataFrame:
+        """Compute pairwise Euclidean distances between site and wind locations."""
+        coords_a = np.vstack([point.coords[0] for point in location_site])
+        coords_b = np.vstack([point.coords[0] for point in location_reference])
+        distances = pd.DataFrame(
+            data=scipy.spatial.distance.cdist(coords_a, coords_b, metric="euclidean"),
+            index=location_site.index,
+            columns=location_reference.index,
+        )
+        return distances
+
+
+def _epsg_int(crs_str: str) -> int | None:
+    """Extract integer EPSG code from 'EPSG:XXXX' string, or None."""
+    try:
+        prefix, code = crs_str.upper().split(":")
+        if prefix == "EPSG":
+            return int(code)
+    except (ValueError, AttributeError):
+        pass
+    return None
+
+
+def _load_config(path: str | pathlib.Path) -> dict:
+    """Load and validate analyzer configuration from a YAML file.
+
+    Parameters
+    ----------
+    path
+        Path to ``config.yaml``.
+
+    Returns
+    -------
+    config
+        Validated configuration dictionary.
+
+    Raises
+    ------
+    ValueError
+        If required keys are missing or values are out of range.
+
+    Example config.yaml
+    -------------------
+    n_angles: 36
+    R_km: 5.0
+    dr_km: 0.05
+    slope_critical: 0.3
+    crs: "EPSG:2056"
+    """
+    path = pathlib.Path(path)
+    with path.open() as f:
+        raw = yaml.safe_load(f)
+
+    config = {**_DEFAULTS, **raw}
+    _validate_config(config)
+    return config
+
+
+def _validate_config(config: dict) -> None:
+    missing_keys = _REQUIRED_KEYS - config.keys()
+    if missing_keys:
+        raise ValueError(f"config.yaml is missing required keys: {missing_keys}")
+    # if config["crs"] is None:
+    #     raise ValueError("config.yaml must specify 'crs' (e.g. 'EPSG:2056').")
+    if config["dr_km"] >= config["R_km"]:
+        raise ValueError("dr_km must be smaller than R_km.")
+    if not (1 <= config["n_angles"] <= 360):
+        raise ValueError(f"n_angles must be between 1 and 360, got {config['n_angles']}.")
+    if config["slope_critical"] <= 0:
+        raise ValueError(f"slope_critical must be positive, got {config['slope_critical']}.")

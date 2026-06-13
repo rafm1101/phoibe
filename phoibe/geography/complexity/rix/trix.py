@@ -47,7 +47,7 @@ def compute_trix_limit_distances(trix: NDArray, decimals: int | None = 1) -> tup
     Returns
     -------
     A, B
-        Matrices containing the distance measures A and B.
+        Matrices containing the limit distances A and B.
 
     Notes
     -----
@@ -60,6 +60,37 @@ def compute_trix_limit_distances(trix: NDArray, decimals: int | None = 1) -> tup
         A = np.round(A, decimals=decimals)
         B = np.round(B, decimals=decimals)
     return A, B
+
+
+def evaluate_transferability_limits(distances: NDArray, A: NDArray, B: NDArray) -> NDArray:
+    """Apply the limits of transferability due to complexity.
+
+    Parameters
+    ----------
+    distances
+        Pairwise distances of locations to evaluate.
+    A
+        Limit distances for flow models.
+    B
+        Limit distances for flow models while accounting for additional uncertainties.
+
+    Returns
+    -------
+    result
+        Transferability matrix.
+
+    Notes
+    -----
+    1. Encoding:
+       - 2: Unconditional transferability (below limits A).
+       - 1: Transferrable subject to additional uncertainties (below limits B).
+       - 0: No transfer (above limits B).
+    """
+    result = 2 * np.ones_like(distances, dtype=int)
+
+    result = np.where(distances > A, 1, result)
+    result = np.where(distances > B, 0, result)
+    return result
 
 
 def _ensure_1D(a: NDArray | numbers.Real, dtype: str = "float") -> NDArray:
