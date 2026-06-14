@@ -2,55 +2,64 @@
 name = "phoibe"
 version = "0.3.0"
 description = "Repository holding high level functions"
-authors = [{ name = "MR", email = "<raffmatth@gmail.com>" }]
+authors = [{ name = "MR", email = "raffmatth@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.13, <3.14"
+dependencies = [
+    "xarray>=2025.12.0",
+    "scipy>=1.17.0",
+    "shapely>=2.1.2",
+    "rasterio>=1.5.0",
+    "rioxarray>=0.20.0",
+    "ergaleiothiki>=0.3.0",
+    "openpyxl>=3.1.5",
+]
 
-[tool.poetry.dependencies]
-xarray = "^2025.12.0"
-scipy = "^1.17.0"
-shapely = "^2.1.2"
-rasterio = "^1.5.0"
-rioxarray = "^0.20.0"
+[dependency-groups]
+dev=[
+    "mypy>=2.1.0",
+    "pandas-stubs>=3.0.0.260204",
+    "pdoc>=16.0.0",
+    "pre-commit>=4.6.0",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.15.15",
+    "types-python-dateutil>=2.9.0.20260518",
+    "types-pyyaml>=6.0.12.20260518",
+    "types-requests>=2.33.0.20260518",
+]
+
+
+[project.optional-dependencies]
+docs = [
+    "ipykernel>=6.31",
+    "geopandas>=1.1.2",
+    "matplotlib>=3.10.8",
+    "python-dotenv>=1.2.1",
+    "cartopy>=0.25.0",
+]
+
+[tool.uv.sources]
 # ergaleiothiki = { git = "git@github.com:rafm1101/ergaleiothiki.git", tag = "0.2.0" }
-ergaleiothiki = { version = "^0.3.0", source = "nemea-index" }
-openpyxl = "^3.1.5"
+ergaleiothiki = { index = "nemea-index" }
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.4.2"
-pre-commit = "^3.8.0"
-pdoc = "^14.7.0"
-pytest-cov = "^4.1.0"
-pytest-xdist = "^3.8.0"
-mypy = "*"
-pandas-stubs = "*"
-types-PyYAML = "*"
-types-requests = "*"
-types-python-dateutil = "*"
-ruff = "*"
-
-[tool.poetry.group.docs]
-optional = true
-
-[tool.poetry.group.docs.dependencies]
-ipykernel = "^6.31"
-geopandas = "^1.1.2"
-matplotlib = "^3.10.8"
-python-dotenv = "^1.2.1"
-cartopy = "^0.25.0"
-
-[[tool.poetry.source]]
+[[tool.uv.index]]
 name = "nemea-index"
 url = "http://localhost:8080/simple/"
 priority = "primary"
 
-[[tool.poetry.source]]
+[[tool.uv.index]]
 name = "PyPI"
+url = "https://pypi.org/simple/"
 priority = "supplemental"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fintech_customer_retention"]
 
 [tool.vulture]
 min_confidence = 80
@@ -64,7 +73,7 @@ line-length = 120
 target-version = ["py313"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 #strict = true
 ignore_missing_imports = true
 
