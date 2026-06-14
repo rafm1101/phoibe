@@ -6,13 +6,13 @@ authors = [{ name = "MR", email = "raffmatth@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.13, <3.14"
 dependencies = [
-    "xarray>=2025.12.0",
-    "scipy>=1.17.0",
-    "shapely>=2.1.2",
-    "rasterio>=1.5.0",
-    "rioxarray>=0.20.0",
     "ergaleiothiki>=0.3.0",
     "openpyxl>=3.1.5",
+    "rasterio>=1.5.0",
+    "rioxarray>=0.20.0",
+    "scipy>=1.17.0",
+    "shapely>=2.1.2",
+    "xarray>=2025.12.0",
 ]
 
 [dependency-groups]
@@ -34,10 +34,10 @@ dev=[
 [project.optional-dependencies]
 docs = [
     "ipykernel>=6.31",
+    "cartopy>=0.25.0",
     "geopandas>=1.1.2",
     "matplotlib>=3.10.8",
     "python-dotenv>=1.2.1",
-    "cartopy>=0.25.0",
 ]
 
 [tool.uv.sources]
