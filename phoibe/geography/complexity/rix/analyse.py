@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def compute_regular_rix(
-    location_ccs: LocationCCS, sampler: FieldSampler, n_angles: int, R_km, dr_km, slope_critical=0.3
+    location_ccs: LocationCCS, sampler: FieldSampler, n_angles: int, R_km, dr_km, crs, slope_critical=0.3
 ):
     """Compute the ruggedness index RIX of a location. The RIX assesses height profiles along
     rays originating at `location_ccs`.
@@ -31,6 +31,8 @@ def compute_regular_rix(
         Distance [km] to which the profiles are considered.
     dr_km
         Stepsize [km] to sample from the field.
+    crs
+        CRS of the location.
     slope_critical
         Threshold on the slope between two points for a segment to be considered steep.
 
@@ -43,7 +45,7 @@ def compute_regular_rix(
     results = []
 
     for theta in angles:
-        ray = RayGeometry.from_compass_regular(location=location_ccs, theta=theta, R_km=R_km, dr_km=dr_km)
+        ray = RayGeometry.from_compass_regular(location=location_ccs, theta=theta, R_km=R_km, dr_km=dr_km, crs=crs)
         ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
         results.append(RayResult(profile=ray_profile, slope_critical=slope_critical))
 

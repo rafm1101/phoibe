@@ -105,7 +105,7 @@ class RayProfile:
         levels = np.asarray(levels, dtype=float)
         r_crossings, z_crossings = _compute_level_crossings(r=r_regular, z=z_regular, levels=levels)
 
-        ray_resampled = RayGeometry.from_compass(location=ray.location, theta=ray.theta, r_m=r_crossings)
+        ray_resampled = RayGeometry.from_compass(location=ray.location, theta=ray.theta, r_m=r_crossings, crs=ray.crs)
         return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings)
 
 

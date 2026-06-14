@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import dataclasses
 import logging
 
 import ergaleiothiki.kiklos.circle
 import numpy as np
-from ergaleiothiki.perdix import LocationCCS
+import pyproj
+import shapely.geometry
 from ergaleiothiki.tididi.validate_numerics import _validate_non_negative, _validate_notna_finite, _validate_positive
 from numpy.typing import NDArray
 
@@ -26,7 +29,9 @@ class RayGeometry:
         Create any grid starting from `location` in direction `theta` given in increasing sequence of distances `r_m`.
     """
 
-    location: LocationCCS
+    crs: pyproj.CRS | None
+    """CRS of the 2D world."""
+    location: shapely.geometry.Point
     """Origin of the ray in world coordinates."""
     theta: float
     """Direction of the ray [°] with 0° facing North and angles increasing clockwise."""
@@ -43,7 +48,7 @@ class RayGeometry:
             _validate_positive(dr, "delta r_m")
 
     @classmethod
-    def from_compass_regular(cls, location, theta, R_km, dr_km):
+    def from_compass_regular(cls, location, theta, R_km, dr_km, crs):
         """Generate `RayGeometry` as a equidistant grid.
 
         Parameters
@@ -77,10 +82,10 @@ class RayGeometry:
             msg = "Ray for %.1f truncated as %.3f not multiple of %.3f. Last point at %.3fm."
             LOGGER.warning(msg, theta, R_km, dr_km, r_m[-1])
 
-        return cls._from_compass_r_m(location, theta, r_m)
+        return cls._from_compass_r_m(location, theta, r_m, crs)
 
     @classmethod
-    def from_compass(cls, location, theta, r_m):
+    def from_compass(cls, location, theta, r_m, crs):
         """Generate `RayGeometry` as any grid.
 
         Parameters
@@ -97,14 +102,27 @@ class RayGeometry:
         RayGeometry
             Immutable representation of the regular grid starting at `location` and heading in direction `theta`.
         """
-        return cls._from_compass_r_m(location, theta, r_m)
+        return cls._from_compass_r_m(location, theta, r_m, crs)
 
     @classmethod
-    def _from_compass_r_m(cls, location, theta, r_m):
+    def _from_compass_r_m(cls, location, theta, r_m, crs):
         r_m = np.asarray(r_m, dtype=float)
         _validate_positive(np.diff(r_m), "dr_m")
+        crs = pyproj.CRS.from_user_input(crs)
 
         dx, dy = ergaleiothiki.kiklos.circle.compass_polar_to_cartesian(theta, r_m)
         xs = location.easting + dx
         ys = location.northing + dy
-        return cls(location=location, theta=theta, r_m=r_m, xs=xs, ys=ys)
+        return cls(location=location, theta=theta, r_m=r_m, xs=xs, ys=ys, crs=crs)
+
+    def to_crs(self, crs: pyproj.CRS | None) -> tuple[RayGeometry, str | None]:
+        if self.crs is None or crs is None:
+            message = "Assume all coordinates are in the same CRS. "
+            message += "Ray-CRS None. " if self.crs is None else f"Ray-CRS {self.crs.to_authority()}. "
+            message += "DEM-CRS None. " if crs is None else f"DEM-CRS {crs.to_authority()}."
+            return self, message
+        elif self.crs == crs:
+            return self, None
+        else:
+            # Transform using pyproj.
+            return self, None

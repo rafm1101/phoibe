@@ -226,6 +226,7 @@ class RIXAnalyzer:
                 R_km=cfg["R_km"],
                 dr_km=cfg["dr_km"],
                 slope_critical=cfg["slope_critical"],
+                crs=None,
             )
 
         return results
