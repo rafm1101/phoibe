@@ -1,16 +1,16 @@
 build-docs:
-	poetry run pdoc -d numpy -o html_docs phoibe
+	uv run pdoc -d numpy -o html_docs phoibe
 
 install:
-	poetry sync --all-extras --with dev,docs
-	poetry run pre-commit install
+	uv sync --all-extras
+	uv run pre-commit install
 
 re-install:
 	rm -rf .venv
 	$(MAKE) install
 
 test:
-	poetry run pytest --cov phoibe --cov-report term-missing
+	uv run pytest --cov phoibe --cov-report term-missing
 
 update-precommits:
-	poetry run pre-commit autoupdate
+	uv run pre-commit autoupdate

@@ -6,7 +6,7 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
 
 Tools comprise:
 
-- The **complexity assessment of terrain** for wind energy projects measuring the steepness along rays. Follows TR6Rev12.
+- The **complexity assessment of terrain and transferability of wind statistics** for wind energy projects in one go. Follows TR6Rev12.
 - A **data validation framework** following a progressive issue detection and transformation approach subdivided into layers for (more than just) scada data.
 
 ## Structure
@@ -14,7 +14,7 @@ Tools comprise:
 ### Actual
 
 - `geography`:
-  - `complexity`: Assessment of terrain complexity.
+  - `complexity`: Assessment of terrain complexity and wind transferability.
     - `rix`: Ruggedness index computation.
   - `crs`:
     - `reproject`: Simplify reprojections of raster data.
