@@ -29,10 +29,10 @@ class RayGeometry:
         Create any grid starting from `location` in direction `theta` given in increasing sequence of distances `r_m`.
     """
 
-    crs: pyproj.CRS | None
-    """CRS of the 2D world."""
     location: shapely.geometry.Point
     """Origin of the ray in world coordinates."""
+    crs: pyproj.CRS | None
+    """CRS of the 2D world."""
     theta: float
     """Direction of the ray [°] with 0° facing North and angles increasing clockwise."""
     r_m: NDArray[np.floating]
@@ -48,7 +48,7 @@ class RayGeometry:
             _validate_positive(dr, "delta r_m")
 
     @classmethod
-    def from_compass_regular(cls, location, theta, R_km, dr_km, crs):
+    def from_compass_regular(cls, location, theta, R_km, dr_km, crs=None):
         """Generate `RayGeometry` as a equidistant grid.
 
         Parameters
@@ -61,6 +61,8 @@ class RayGeometry:
             Length [km] of the ray.
         dr_km
             Stepsize [km] of the grid.
+        crs
+            CRS of the 2D world. If `None`, assume vanilla coordinates.
 
         Returns
         -------
@@ -96,6 +98,8 @@ class RayGeometry:
             Direction of the ray [°] with 0° facing North and angles increasing clockwise.
         r_m
             Gridpoint distances [m] from the origin. Must be strictly increasing.
+        crs
+            CRS of the 2D world. If `None`, assume vanilla coordinates.
 
         Returns
         -------
@@ -116,13 +120,38 @@ class RayGeometry:
         return cls(location=location, theta=theta, r_m=r_m, xs=xs, ys=ys, crs=crs)
 
     def to_crs(self, crs: pyproj.CRS | None) -> tuple[RayGeometry, str | None]:
+        """Transform the ray to some CRS.
+
+        Parameters
+        ----------
+        crs
+            Target CRS. If `None` or ray's CRS is `None`, no transformation is performed.
+
+        Returns
+        -------
+        RayGeometry
+            Transformed ray.
+        str | None
+            Message.
+
+        Notes
+        -----
+        1. Only `location`, `xs` and `ys` are subject to the transformation.
+           `r_m` is invariant, and `theta` stays as metadatum for identification w/o any transformation.
+        2. Message tracks action and non-action.
+        """
         if self.crs is None or crs is None:
             message = "Assume all coordinates are in the same CRS. "
             message += "Ray-CRS None. " if self.crs is None else f"Ray-CRS {self.crs.to_authority()}. "
             message += "DEM-CRS None. " if crs is None else f"DEM-CRS {crs.to_authority()}."
             return self, message
+
         elif self.crs == crs:
             return self, None
+
         else:
-            # Transform using pyproj.
-            return self, None
+            transformer = pyproj.Transformer.from_crs(crs_from=self.crs, crs_to=crs, always_xy=True)
+            xs_to, ys_to = transformer.transform(self.xs, self.ys)
+            location = shapely.geometry.Point(xs_to[0], ys_to[0])
+            ray = RayGeometry(location=location, theta=self.theta, r_m=self.r_m, xs=xs_to, ys=ys_to, crs=crs)
+            return ray, f"Transformed {self.crs.to_authority()} to {crs.to_authority()}."
