@@ -43,6 +43,7 @@ class RayProfile:
     """Distances [m] from the ray origin at which the field is evaluated. Must be strictly increasing."""
     z: NDArray[np.floating]
     """Sampled scalar field values along the ray. Each value corresponds to the same index in `r_m`."""
+    meta: dict
 
     def __post_init__(self):
         if len(self.r_m) != len(self.z):
@@ -54,6 +55,8 @@ class RayProfile:
     @classmethod
     def create_regular(cls, ray: RayGeometry, sampler: FieldSampler, nan_policy: NaNPolicy):
         """Generate `RayProfile` from a regular grid.
+
+        If CRSs differ, ray is reprojected for sampling.
 
         Parameters
         ----------
@@ -69,9 +72,16 @@ class RayProfile:
         RayProfile
             Immutable representation of the sampled field along `ray`.
         """
-        z = sampler.sample(xs=ray.xs, ys=ray.ys)
+        meta = dict(
+            crs_ray=ray.crs.to_authority() if ray.crs is not None else None,
+            crs_dem=sampler.crs.to_authority() if sampler.crs is not None else None,
+        )
+        ray_in_sampler_crs, message = ray.to_crs(crs=sampler.crs)
+        meta["message"] = message
+        z, nan_count = sampler.sample(xs=ray_in_sampler_crs.xs, ys=ray_in_sampler_crs.ys)
+        meta["nan_count"] = nan_count
         r_m, z = _apply_nan_policy(r_m=ray.r_m, z=z, theta=ray.theta, policy=nan_policy)
-        return cls(ray_=ray, r_m=r_m, z=z)
+        return cls(ray_=ray, r_m=r_m, z=z, meta=meta)
 
     @property
     def ray(self) -> RayGeometry:
@@ -82,6 +92,8 @@ class RayProfile:
         cls, ray: RayGeometry, sampler: FieldSampler, levels: NDArray[np.floating], nan_policy: NaNPolicy
     ):
         """Generate `RayProfile` from a level crossings.
+
+        If CRSs differ, ray is reprojected for sampling.
 
         Parameters
         ----------
@@ -99,14 +111,21 @@ class RayProfile:
         RayProfile
             Immutable representation of the sampled field along `ray`.
         """
-        z_regular = sampler.sample(xs=ray.xs, ys=ray.ys)
+        meta = dict(
+            crs_ray=ray.crs.to_authority() if ray.crs is not None else None,
+            crs_dem=sampler.crs.to_authority() if sampler.crs is not None else None,
+        )
+        ray_in_sampler_crs, message = ray.to_crs(crs=sampler.crs)
+        meta["message"] = message
+        z_regular, nan_count = sampler.sample(xs=ray_in_sampler_crs.xs, ys=ray_in_sampler_crs.ys)
+        meta["nan_count"] = nan_count
         r_regular, z_regular = _apply_nan_policy(r_m=ray.r_m, z=z_regular, theta=ray.theta, policy=nan_policy)
 
         levels = np.asarray(levels, dtype=float)
         r_crossings, z_crossings = _compute_level_crossings(r=r_regular, z=z_regular, levels=levels)
 
         ray_resampled = RayGeometry.from_compass(location=ray.location, theta=ray.theta, r_m=r_crossings, crs=ray.crs)
-        return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings)
+        return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings, meta=meta)
 
 
 def _apply_nan_policy(

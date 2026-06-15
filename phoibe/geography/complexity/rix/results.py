@@ -9,6 +9,15 @@ from .profiles import RayProfile
 
 
 @dataclasses.dataclass(frozen=True)
+class RayProfileMeta:
+    crs_ray: tuple[str, str] | None
+    crs_dem: tuple[str, str] | None
+    resolution: float
+    n_oob: str
+    messages: str
+
+
+@dataclasses.dataclass(frozen=True)
 class RayResult:
     """Analysis result for a single ray direction.
 
@@ -19,6 +28,17 @@ class RayResult:
     """Ray profile of some field."""
     slope_critical: float
     """Slope [m/m] above which a segment is consideres as steep."""
+
+    @property
+    def meta(self) -> RayProfileMeta:
+        a = RayProfileMeta(
+            crs_ray=self.profile.meta.get("crs_ray", None),
+            crs_dem=self.profile.meta.get("crs_dem", None),
+            resolution=0,
+            n_oob=str(self.profile.meta.get("nan_count", None)),
+            messages=str(self.profile.meta.get("message", None)),
+        )
+        return a
 
     @property
     def theta(self) -> float:
@@ -71,13 +91,8 @@ class RayResult:
             "n_steep_segments": self.n_steep_segments,
         }
 
-    def steep_segments_geodataframe(self, *, crs):
+    def steep_segments_geodataframe(self):
         """GeoDataFrame of steep segments for visualization.
-
-        Parameters
-        ----------
-        crs: `pyproj.CRS`
-            Coordinate reference system for the GeoDataFrame.
 
         Returns
         -------
@@ -96,20 +111,21 @@ class RayResult:
 
         records = [{"segment_id": i, "geometry": seg} for i, seg in enumerate(self.steep_segments)]
 
-        return gpd.GeoDataFrame(records, geometry="geometry", crs=crs)
+        return gpd.GeoDataFrame(records, geometry="geometry", crs=self.profile.ray.crs)
 
 
 @dataclasses.dataclass(frozen=True)
 class RadialRixResult:
     """Radial RIX analysis aggregating multiple ray directions.
 
-    Provides access to individual rays, aggregate metrics, and various views
+    Provides access to individual rays, aggregate metrics, messages, and various views
     of the data for inspection and validation.
     """
 
     rays: tuple[RayResult, ...]
     """Collection of rays being evaluated."""
     _ray_by_angle: dict[float, RayResult] = dataclasses.field(init=False, repr=False, compare=False)
+    # messages: str = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
         """Build internal index for fast theta lookups."""
@@ -119,6 +135,11 @@ class RadialRixResult:
         slope_criticals = {ray.slope_critical for ray in self.rays}
         if len(slope_criticals) > 1:
             raise ValueError(f"All rays must use same slope_critical, got: {slope_criticals}")
+
+        crss = {ray.profile.ray.crs.to_authority() for ray in self.rays}
+
+        if len(crss) > 1:
+            raise ValueError(f"All rays must have the same crs, got: {crss}")
 
         object.__setattr__(self, "_ray_by_angle", {ray.theta: ray for ray in self.rays})
 
@@ -148,6 +169,22 @@ class RadialRixResult:
     def angles(self) -> np.ndarray:
         """Array of ray angles [°] in sorted order."""
         return np.array(sorted(self._ray_by_angle.keys()), dtype=float)
+
+    @property
+    def ruggednesses(self) -> np.ndarray:
+        """Array of ruggedness values aligned with angles.
+
+        Returns
+        -------
+        np.ndarray
+            Ruggedness for each angle in `self.angles`.
+        """
+        return np.array([self._ray_by_angle[theta].ruggedness for theta in self.angles], dtype=float)
+
+    @property
+    def meta(self) -> dict:
+        records = {ray.theta: ray.profile.meta for ray in self.rays}
+        return records
 
     def ray(self, theta: float) -> RayResult:
         """Get RayResult for a specific angle.
@@ -194,14 +231,8 @@ class RadialRixResult:
         records = [ray.describe() for ray in self.rays]
         return pd.DataFrame(records)
 
-    def steep_segments_geodataframe(self, *, crs):
+    def steep_segments_geodataframe(self):
         """Generate a GeoDataFrame holding all steep segments.
-
-        Parameters
-        ----------
-        crs: `pyproj.CRS`
-            Coordinate reference system for the GeoDataFrame.
-            Might be set to `None` in cases w/o real-world link.
 
         Returns
         -------
@@ -223,7 +254,9 @@ class RadialRixResult:
             for i, segment in enumerate(ray.steep_segments):
                 records.append({"theta": ray.theta, "segment_id": i, "geometry": segment})
 
-        return gpd.GeoDataFrame(records, columns=["theta", "segment_id", "geometry"], geometry="geometry", crs=crs)
+        return gpd.GeoDataFrame(
+            records, columns=["theta", "segment_id", "geometry"], geometry="geometry", crs=self.rays[0].profile.ray.crs
+        )
 
     def describe(self) -> dict[str, float]:
         """Summary statistics across all rays.
@@ -243,17 +276,6 @@ class RadialRixResult:
             "n_rays": self.n_rays,
             "slope_critical": self.slope_critical,
         }
-
-    @property
-    def ruggednesses(self) -> np.ndarray:
-        """Array of ruggedness values aligned with angles.
-
-        Returns
-        -------
-        np.ndarray
-            Ruggedness for each angle in `self.angles`.
-        """
-        return np.array([self._ray_by_angle[theta].ruggedness for theta in self.angles], dtype=float)
 
     def plot_polar(self, ax=None):
         """Create polar plot of ruggedness values.

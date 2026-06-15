@@ -2,6 +2,7 @@ import logging
 from typing import Literal, Protocol
 
 import numpy as np
+import pyproj
 import scipy.interpolate
 import xarray
 from numpy.typing import NDArray
@@ -12,7 +13,12 @@ INTERPOLATION_METHODS = Literal["linear", "nearest"]
 
 
 class FieldSampler(Protocol):
-    def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> NDArray[np.floating]:
+    @property
+    def crs(self) -> pyproj.CRS | None:
+        """Return the sampler's CRS in case it has one."""
+        raise NotImplementedError
+
+    def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         """Sample field values along a path.
 
         Parameters
@@ -22,9 +28,16 @@ class FieldSampler(Protocol):
         ys
             Array of y coordinates of same length.
 
+        Returns
+        -------
+        NDArray[np.floating], int
+            Sampled values and NaN count.
+
         Notes
         -----
         1. Implementation may truncate the result if NaN values are encountered.
+        2. NaN counts shall be passed for diagnosis reasons.
+           They may the user to check the map bounds or data gaps.
         """
         raise NotImplementedError
 
@@ -49,7 +62,14 @@ class RegularGridXYSampler:
             points=(y, x), values=da.transpose("y", "x").values, method=method, bounds_error=False, fill_value=np.nan
         )
 
-    def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> NDArray[np.floating]:
+    @property
+    def crs(self) -> pyproj.CRS | None:
+        if hasattr(self.da, "rio"):
+            return self.da.rio.crs
+        else:
+            return None
+
+    def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         _xs = np.asarray(xs, dtype=float)
         _ys = np.asarray(ys, dtype=float)
 
@@ -65,7 +85,7 @@ class RegularGridXYSampler:
                 np.isnan(z).sum(),
                 z.size,
             )
-        return z
+        return z, np.isnan(z).sum()
 
 
 # TODO: tididi candidate.

@@ -8,11 +8,9 @@ import pathlib
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-import pyproj
 import scipy.spatial.distance
 import xarray
 import yaml
-from ergaleiothiki.perdix import LocationCCS
 
 from . import trix
 from .analyse import compute_regular_rix
@@ -166,6 +164,7 @@ class RIXAnalyzer:
         meta = {
             "timestamp": datetime.datetime.now(tz=datetime.UTC),
             "config": self._config,
+            "site": radial_rix_site,
         }
 
         return ResultSummary(
@@ -215,29 +214,29 @@ class RIXAnalyzer:
         results = {}
 
         for location_id, row in locations.iterrows():
-            point = row.geometry
-            location_ccs = LocationCCS(easting=float(point.x), northing=float(point.y), zone=32)
+            # point = row.geometry
+            # location_ccs = LocationCCS(easting=float(point.x), northing=float(point.y), zone=32)
 
             LOGGER.debug("Computing RIX for location_id=%s", location_id)
             results[location_id] = compute_regular_rix(
-                location_ccs=location_ccs,
+                location=row.geometry,
                 sampler=sampler,
                 n_angles=cfg["n_angles"],
                 R_km=cfg["R_km"],
                 dr_km=cfg["dr_km"],
                 slope_critical=cfg["slope_critical"],
-                crs=None,
+                crs=locations.crs,
             )
 
         return results
 
     def _get_steep_segments(self, rix_results: dict[object, RadialRixResult]) -> dict[object, RadialRixResult]:
         """Run RIX for every location. Returns dict keyed by location_id."""
-        cfg = self._config
+        # cfg = self._config
         steep_segments = {}
 
         for location_id, rix_result in rix_results.items():
-            steep_segs = rix_result.steep_segments_geodataframe(crs=pyproj.CRS.from_user_input(cfg.get("crs", None)))
+            steep_segs = rix_result.steep_segments_geodataframe()
             steep_segments[location_id] = steep_segs
 
         return steep_segments
@@ -289,7 +288,7 @@ class RIXAnalyzer:
         steep_segments_rows = []
 
         for location_id, radial_rix in radial_results.items():
-            gdf_segments = radial_rix.steep_segments_geodataframe(crs=crs)
+            gdf_segments = radial_rix.steep_segments_geodataframe()
             gdf_segments.insert(0, "location_id", location_id)
             steep_segments_rows.append(gdf_segments)
 

@@ -115,8 +115,8 @@ class RayGeometry:
         crs = pyproj.CRS.from_user_input(crs)
 
         dx, dy = ergaleiothiki.kiklos.circle.compass_polar_to_cartesian(theta, r_m)
-        xs = location.easting + dx
-        ys = location.northing + dy
+        xs = location.x + dx
+        ys = location.y + dy
         return cls(location=location, theta=theta, r_m=r_m, xs=xs, ys=ys, crs=crs)
 
     def to_crs(self, crs: pyproj.CRS | None) -> tuple[RayGeometry, str | None]:
