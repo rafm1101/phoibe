@@ -51,7 +51,7 @@ class RegularGridXYSampler:
     """Interpolation method. One of 'linear' and 'nearest'."""
 
     def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS):
-        if not {"x", "y"}.issubset(da.coords):
+        if not {"x", "y"}.issubset(da.dims):
             raise ValueError("Field must have 'x' and 'y' coordinates.")
         self.da = da
         self.method = method

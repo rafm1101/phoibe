@@ -72,14 +72,9 @@ class RayProfile:
         RayProfile
             Immutable representation of the sampled field along `ray`.
         """
-        meta = dict(
-            crs_ray=ray.crs.to_authority() if ray.crs is not None else None,
-            crs_dem=sampler.crs.to_authority() if sampler.crs is not None else None,
-        )
         ray_in_sampler_crs, message = ray.to_crs(crs=sampler.crs)
-        meta["message"] = message
         z, nan_count = sampler.sample(xs=ray_in_sampler_crs.xs, ys=ray_in_sampler_crs.ys)
-        meta["nan_count"] = nan_count
+        meta = cls._build_meta(crs_ray=ray.crs, crs_sampler=sampler.crs, message=message, nan_count=nan_count)
         r_m, z = _apply_nan_policy(r_m=ray.r_m, z=z, theta=ray.theta, policy=nan_policy)
         return cls(ray_=ray, r_m=r_m, z=z, meta=meta)
 
@@ -111,14 +106,9 @@ class RayProfile:
         RayProfile
             Immutable representation of the sampled field along `ray`.
         """
-        meta = dict(
-            crs_ray=ray.crs.to_authority() if ray.crs is not None else None,
-            crs_dem=sampler.crs.to_authority() if sampler.crs is not None else None,
-        )
         ray_in_sampler_crs, message = ray.to_crs(crs=sampler.crs)
-        meta["message"] = message
         z_regular, nan_count = sampler.sample(xs=ray_in_sampler_crs.xs, ys=ray_in_sampler_crs.ys)
-        meta["nan_count"] = nan_count
+        meta = cls._build_meta(crs_ray=ray.crs, crs_sampler=sampler.crs, message=message, nan_count=nan_count)
         r_regular, z_regular = _apply_nan_policy(r_m=ray.r_m, z=z_regular, theta=ray.theta, policy=nan_policy)
 
         levels = np.asarray(levels, dtype=float)
@@ -126,6 +116,16 @@ class RayProfile:
 
         ray_resampled = RayGeometry.from_compass(location=ray.location, theta=ray.theta, r_m=r_crossings, crs=ray.crs)
         return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings, meta=meta)
+
+    @staticmethod
+    def _build_meta(crs_ray, crs_sampler, message, nan_count):
+        meta = dict(
+            crs_ray=crs_ray.to_authority() if crs_ray is not None else None,
+            crs_dem=crs_sampler.to_authority() if crs_sampler is not None else None,
+        )
+        meta["message"] = message
+        meta["nan_count"] = nan_count
+        return meta
 
 
 def _apply_nan_policy(

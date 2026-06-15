@@ -14,6 +14,7 @@ import yaml
 
 from . import trix
 from .analyse import compute_regular_rix
+from .config import ANALYZER_DEFAULTS
 from .fieldsampler import RegularGridXYSampler
 from .results import RadialRixResult
 
@@ -21,16 +22,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 _REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical", "crs"}
-
-_DEFAULTS: dict = {
-    "version": "1.0",
-    "description": "TRIX, TR6 Rev.12",
-    "n_angles": 72,
-    "R_km": 3.5,
-    "dr_km": 0.05,
-    "slope_critical": 0.3,
-    "crs": None,
-}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -161,11 +152,7 @@ class RIXAnalyzer:
                 data=transferability_, index=locations_site["location_id"], columns=locations_reference["location_id"]
             )
 
-        meta = {
-            "timestamp": datetime.datetime.now(tz=datetime.UTC),
-            "config": self._config,
-            "site": radial_rix_site,
-        }
+        meta = self._build_meta(rix_results=radial_rix_site)
 
         return ResultSummary(
             locations_site=locations_site,
@@ -210,13 +197,10 @@ class RIXAnalyzer:
         self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame
     ) -> dict[object, RadialRixResult]:
         """Run RIX for every location. Returns dict keyed by location_id."""
-        cfg = self._config
+        cfg = self._config["parameters"]
         results = {}
 
         for location_id, row in locations.iterrows():
-            # point = row.geometry
-            # location_ccs = LocationCCS(easting=float(point.x), northing=float(point.y), zone=32)
-
             LOGGER.debug("Computing RIX for location_id=%s", location_id)
             results[location_id] = compute_regular_rix(
                 location=row.geometry,
@@ -280,11 +264,24 @@ class RIXAnalyzer:
         summary = pd.DataFrame(summary_rows)
         return summary
 
+    def _build_meta(self, rix_results: dict[object, RadialRixResult]) -> dict:
+        records = self._config.copy()
+        records["timestamp"] = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
+
+        crs_ray = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta["crs_ray"]))
+        crs_dem = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta["crs_dem"]))
+        message = list(
+            set(message for key, rix_result in rix_results.items() for message in rix_result.meta["message"])
+        )
+        nan_count = sum([rix_result.meta["nan_count"] for key, rix_result in rix_results.items()])
+        records["data"] = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
+        return records
+
     def _build_steep_segments(
         self, radial_results: dict[object, RadialRixResult], locations: gpd.GeoDataFrame
     ) -> tuple[pd.DataFrame, gpd.GeoDataFrame]:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
-        crs = self._config["crs"]
+        crs = self._config["parameters"]["crs"]
         steep_segments_rows = []
 
         for location_id, radial_rix in radial_results.items():
@@ -385,20 +382,21 @@ def _load_config(path: str | pathlib.Path) -> dict:
     with path.open() as f:
         raw = yaml.safe_load(f)
 
-    config = {**_DEFAULTS, **raw}
+    config = {**ANALYZER_DEFAULTS, **raw}
     _validate_config(config)
     return config
 
 
 def _validate_config(config: dict) -> None:
-    missing_keys = _REQUIRED_KEYS - config.keys()
+    parameters = config.get("parameters", {})
+    missing_keys = _REQUIRED_KEYS - parameters.keys()
     if missing_keys:
         raise ValueError(f"config.yaml is missing required keys: {missing_keys}")
     # if config["crs"] is None:
     #     raise ValueError("config.yaml must specify 'crs' (e.g. 'EPSG:2056').")
-    if config["dr_km"] >= config["R_km"]:
+    if parameters["dr_km"] >= parameters["R_km"]:
         raise ValueError("dr_km must be smaller than R_km.")
-    if not (1 <= config["n_angles"] <= 360):
-        raise ValueError(f"n_angles must be between 1 and 360, got {config['n_angles']}.")
-    if config["slope_critical"] <= 0:
-        raise ValueError(f"slope_critical must be positive, got {config['slope_critical']}.")
+    if not (1 <= parameters["n_angles"] <= 360):
+        raise ValueError(f"n_angles must be between 1 and 360, got {parameters['n_angles']}.")
+    if parameters["slope_critical"] <= 0:
+        raise ValueError(f"slope_critical must be positive, got {parameters['slope_critical']}.")

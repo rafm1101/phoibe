@@ -122,10 +122,9 @@ class RadialRixResult:
     of the data for inspection and validation.
     """
 
-    rays: tuple[RayResult, ...]
+    rays: tuple[RayResult, ...] = dataclasses.field(repr=False)
     """Collection of rays being evaluated."""
     _ray_by_angle: dict[float, RayResult] = dataclasses.field(init=False, repr=False, compare=False)
-    # messages: str = dataclasses.field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
         """Build internal index for fast theta lookups."""
@@ -183,7 +182,11 @@ class RadialRixResult:
 
     @property
     def meta(self) -> dict:
-        records = {ray.theta: ray.profile.meta for ray in self.rays}
+        crs_ray = list({ray.profile.meta["crs_ray"] for ray in self.rays})
+        crs_dem = list({ray.profile.meta["crs_dem"] for ray in self.rays})
+        message = list({ray.profile.meta["message"] for ray in self.rays})
+        nan_count = int(np.sum([ray.profile.meta["nan_count"] for ray in self.rays], dtype=float))
+        records = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
         return records
 
     def ray(self, theta: float) -> RayResult:

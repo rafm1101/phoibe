@@ -13,7 +13,14 @@ LOGGER = logging.getLogger(__name__)
 
 
 def compute_regular_rix(
-    location: shapely.Point, sampler: FieldSampler, n_angles: int, R_km, dr_km, crs, slope_critical=0.3
+    location: shapely.Point,
+    sampler: FieldSampler,
+    n_angles: int,
+    R_km,
+    dr_km,
+    crs,
+    slope_critical=0.3,
+    nan_policy="mask",
 ):
     """Compute the ruggedness index RIX of a location. The RIX assesses height profiles along
     rays originating at `location`.
@@ -45,7 +52,7 @@ def compute_regular_rix(
 
     for theta in angles:
         ray = RayGeometry.from_compass_regular(location=location, theta=theta, R_km=R_km, dr_km=dr_km, crs=crs)
-        ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
+        ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy(nan_policy))
         results.append(RayResult(profile=ray_profile, slope_critical=slope_critical))
 
     return RadialRixResult(rays=tuple(results))
