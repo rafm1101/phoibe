@@ -14,7 +14,7 @@ import yaml
 
 from . import trix
 from .analyse import compute_regular_rix
-from .config import ANALYZER_DEFAULTS
+from .config import ANALYZER_DEFAULTS, ColumnKeys
 from .fieldsampler import RegularGridXYSampler
 from .results import RadialRixResult
 
@@ -22,6 +22,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 _REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical", "crs"}
+COLUMN_KEYS = ColumnKeys()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -108,6 +109,7 @@ class RIXAnalyzer:
         dem: xarray.DataArray,
         locations_site: gpd.GeoDataFrame,
         locations_reference: gpd.GeoDataFrame | None = None,
+        keys: ColumnKeys = COLUMN_KEYS,
     ) -> ResultSummary:
         """Run the full RIX analysis.
 
@@ -120,6 +122,8 @@ class RIXAnalyzer:
             Point locations. Must have a unique index used as location_id.
         locations_reference
             Optional second collection for pairwise TRIX computation.
+        keys
+            Column keys for output.
 
         Returns
         -------
@@ -136,23 +140,23 @@ class RIXAnalyzer:
 
         sampler = RegularGridXYSampler(da=dem, method="linear")
 
-        radial_rix_site = self._compute_rix_results(sampler, locations_site)
-        steep_segments_site = self._build_steep_segments(radial_rix_site)
-        rix_roses = self._build_rix_rose(radial_rix_site, locations_site)
-        summary_site = self._build_summary(radial_rix_site, locations_site)
+        radial_rix_site = self._compute_rix_results(sampler, locations_site, keys=keys)
+        steep_segments_site = self._build_steep_segments(radial_rix_site, keys=keys)
+        rix_roses = self._build_rix_rose(radial_rix_site)
+        summary_site = self._build_summary(radial_rix_site, keys=keys)
 
         trix_values, transferability, A, B = None, None, None, None
         if locations_reference is not None:
-            radial_rix_reference = self._compute_rix_results(sampler, locations_reference)
-            summary_reference = self._build_summary(radial_rix_reference, locations_reference)
+            radial_rix_reference = self._compute_rix_results(sampler, locations_reference, keys=keys)
+            summary_reference = self._build_summary(radial_rix_reference, keys=keys)
             trix_values, A, B = self._compute_trix(summary_site, summary_reference)
             distances = self._compute_pairwise_distances_m(locations_site.geometry, locations_reference.geometry) / 1000
             transferability_ = trix.evaluate_transferability_limits(distances=distances.values, A=A.values, B=B.values)
             transferability = pd.DataFrame(
-                data=transferability_, index=locations_site["location_id"], columns=locations_reference["location_id"]
+                data=transferability_, index=locations_site[keys.site_id], columns=locations_reference[keys.site_id]
             )
 
-        meta = self._build_meta(rix_results=radial_rix_site)
+        meta = self._build_meta(rix_results=radial_rix_site, keys=keys)
 
         return ResultSummary(
             locations_site=locations_site,
@@ -168,7 +172,11 @@ class RIXAnalyzer:
         )
 
     def _validate_inputs(
-        self, dem: xarray.DataArray, locations_site: gpd.GeoDataFrame, locations_wind: gpd.GeoDataFrame | None
+        self,
+        dem: xarray.DataArray,
+        locations_site: gpd.GeoDataFrame,
+        locations_wind: gpd.GeoDataFrame | None,
+        keys: ColumnKeys,
     ) -> None:
         """Check CRS consistency and index uniqueness."""
         expected_crs = self._config["crs"]
@@ -190,11 +198,11 @@ class RIXAnalyzer:
             if not locations_wind.index.is_unique:
                 raise ValueError("locations_reference index must be unique.")
 
-        if not {"x", "y"}.issubset(dem.coords):
+        if not {keys.x, keys.y}.issubset(dem.dims):
             raise ValueError("DEM must have 'x' and 'y' coordinates.")
 
     def _compute_rix_results(
-        self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame
+        self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame, keys: ColumnKeys
     ) -> dict[object, RadialRixResult]:
         """Run RIX for every location. Returns dict keyed by location_id."""
         cfg = self._config["parameters"]
@@ -210,6 +218,7 @@ class RIXAnalyzer:
                 dr_km=cfg["dr_km"],
                 slope_critical=cfg["slope_critical"],
                 crs=locations.crs,
+                keys=keys,
             )
 
         return results
@@ -224,9 +233,7 @@ class RIXAnalyzer:
 
         return steep_segments
 
-    def _build_rix_rose(
-        self, radial_results: dict[object, RadialRixResult], locations: gpd.GeoDataFrame
-    ) -> pd.DataFrame:
+    def _build_rix_rose(self, radial_results: dict[object, RadialRixResult]) -> pd.DataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
         rix_rose_rows = []
 
@@ -239,7 +246,7 @@ class RIXAnalyzer:
         return rix_roses
 
     def _build_summary(
-        self, radial_results: dict[object, RadialRixResult], locations: gpd.GeoDataFrame
+        self, radial_results: dict[object, RadialRixResult], keys: ColumnKeys = COLUMN_KEYS
     ) -> pd.DataFrame:
         """Build summary DataFrame from radial results."""
         summary_rows = []
@@ -248,35 +255,37 @@ class RIXAnalyzer:
             description = radial_rix.describe()
             summary_rows.append(
                 {
-                    "location_id": location_id,
-                    "elevation": radial_rix.z[0],
-                    "elevation_std": radial_rix.z[1],
-                    "rix": radial_rix.rix,
-                    "rix_std": description["rix_std"],
-                    "rix_min": description["rix_min"],
-                    "rix_max": description["rix_max"],
-                    "n_rays": radial_rix.n_rays,
-                    "slope_critical": radial_rix.slope_critical,
+                    keys.site_id: location_id,
+                    keys.elevation: radial_rix.z[0],
+                    keys.elevation_std: radial_rix.z[1],
+                    keys.rix: radial_rix.rix,
+                    keys.rix_std: description[keys.rix_std],
+                    keys.rix_min: description[keys.rix_min],
+                    keys.rix_max: description[keys.rix_max],
+                    keys.n_rays: radial_rix.n_rays,
+                    keys.slope_critical: radial_rix.slope_critical,
                 }
             )
 
         summary = pd.DataFrame(summary_rows)
         return summary
 
-    def _build_meta(self, rix_results: dict[object, RadialRixResult]) -> dict:
+    def _build_meta(self, rix_results: dict[object, RadialRixResult], keys: ColumnKeys) -> dict:
         records = self._config.copy()
-        records["timestamp"] = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
+        records[keys.created_at] = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
 
-        crs_ray = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta["crs_ray"]))
-        crs_dem = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta["crs_dem"]))
+        crs_ray = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_ray]))
+        crs_dem = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_dem]))
         message = list(
-            set(message for key, rix_result in rix_results.items() for message in rix_result.meta["message"])
+            set(message for key, rix_result in rix_results.items() for message in rix_result.meta[keys.message])
         )
-        nan_count = sum([rix_result.meta["nan_count"] for key, rix_result in rix_results.items()])
-        records["data"] = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
+        nan_count = sum([rix_result.meta[keys.nan_count] for key, rix_result in rix_results.items()])
+        records[keys.data_sources] = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
         return records
 
-    def _build_steep_segments(self, radial_results: dict[object, RadialRixResult]) -> gpd.GeoDataFrame:
+    def _build_steep_segments(
+        self, radial_results: dict[object, RadialRixResult], keys: ColumnKeys = COLUMN_KEYS
+    ) -> gpd.GeoDataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
         crs = self._config["parameters"]["crs"]
         steep_segments_rows = []
@@ -284,7 +293,7 @@ class RIXAnalyzer:
         for location_id, radial_rix in radial_results.items():
             gdf_segments = radial_rix.steep_segments_geodataframe()
             crs = gdf_segments.crs
-            gdf_segments.insert(0, "location_id", location_id)
+            gdf_segments.insert(0, keys.site_id, location_id)
             steep_segments_rows.append(gdf_segments)
 
         if steep_segments_rows:
@@ -293,13 +302,13 @@ class RIXAnalyzer:
             )
         else:
             steep_segments = gpd.GeoDataFrame(
-                columns=["location_id", "theta", "segment_id", "geometry"], geometry="geometry", crs=crs
+                columns=[keys.site_id, keys.theta, keys.segment_id, "geometry"], geometry="geometry", crs=crs
             )
 
         return steep_segments
 
     def _compute_trix(
-        self, summary_site: pd.DataFrame, summary_reference: pd.DataFrame
+        self, summary_site: pd.DataFrame, summary_reference: pd.DataFrame, keys: ColumnKeys = COLUMN_KEYS
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Compute pairwise TRIX as Cartesian product of summary_site × summary_reference.
 
@@ -310,18 +319,18 @@ class RIXAnalyzer:
             and reference locations in columns.
         """
         trix_records = trix.compute_trix(
-            rix_site=np.array(summary_site["rix"]),
-            elevation_site=np.array(summary_site["elevation"]),
-            rix_wind=np.array(summary_reference["rix"]),
-            elevation_wind=np.array(summary_reference["elevation"]),
+            rix_site=np.array(summary_site[keys.rix]),
+            elevation_site=np.array(summary_site[keys.elevation]),
+            rix_wind=np.array(summary_reference[keys.rix]),
+            elevation_wind=np.array(summary_reference[keys.elevation]),
         )
         trix_result = pd.DataFrame(
-            data=trix_records, index=summary_site["location_id"], columns=summary_reference["location_id"]
+            data=trix_records, index=summary_site[keys.site_id], columns=summary_reference[keys.site_id]
         )
 
         _A, _B = trix.compute_trix_limit_distances(trix=trix_records, decimals=1)
-        A = pd.DataFrame(data=_A, index=summary_site["location_id"], columns=summary_reference["location_id"])
-        B = pd.DataFrame(data=_B, index=summary_site["location_id"], columns=summary_reference["location_id"])
+        A = pd.DataFrame(data=_A, index=summary_site[keys.site_id], columns=summary_reference[keys.site_id])
+        B = pd.DataFrame(data=_B, index=summary_site[keys.site_id], columns=summary_reference[keys.site_id])
 
         return trix_result, A, B
 

@@ -5,7 +5,10 @@ import numpy as np
 import shapely
 
 from . import analyse
+from .config import ColumnKeys
 from .profiles import RayProfile
+
+COLUMN_KEYS = ColumnKeys()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -28,15 +31,16 @@ class RayResult:
     """Ray profile of some field."""
     slope_critical: float
     """Slope [m/m] above which a segment is consideres as steep."""
+    keys: ColumnKeys = dataclasses.field(repr=False, default=COLUMN_KEYS)
 
     @property
     def meta(self) -> RayProfileMeta:
         a = RayProfileMeta(
-            crs_ray=self.profile.meta.get("crs_ray", None),
-            crs_dem=self.profile.meta.get("crs_dem", None),
+            crs_ray=self.profile.meta.get(self.keys.crs_ray, None),
+            crs_dem=self.profile.meta.get(self.keys.crs_dem, None),
             resolution=0,
-            n_oob=str(self.profile.meta.get("nan_count", None)),
-            messages=str(self.profile.meta.get("message", None)),
+            n_oob=str(self.profile.meta.get(self.keys.nan_count, None)),
+            messages=str(self.profile.meta.get(self.keys.message, None)),
         )
         return a
 
@@ -83,7 +87,7 @@ class RayResult:
     def describe(self) -> dict[str, float]:
         """Summary statistics for this ray."""
         return {
-            "theta": self.theta,
+            self.keys.theta: self.theta,
             "ruggedness": self.ruggedness,
             "total_length_m": self.total_length_m,
             "steep_length_m": self.steep_length_m,
@@ -109,13 +113,13 @@ class RayResult:
         except ImportError as exception:
             raise ImportError("RayResult.steep_segments_geodataframe() requires geopandas.") from exception
 
-        records = [{"segment_id": i, "geometry": seg} for i, seg in enumerate(self.steep_segments)]
+        records = [{self.keys.segment_id: i, "geometry": seg} for i, seg in enumerate(self.steep_segments)]
 
         if records:
             steep_segments = gpd.GeoDataFrame(records, geometry="geometry", crs=self.profile.ray.crs)
         else:
             steep_segments = gpd.GeoDataFrame(
-                columns=["segment_id", "geometry"], geometry="geometry", crs=self.profile.ray.crs
+                columns=[self.keys.segment_id, "geometry"], geometry="geometry", crs=self.profile.ray.crs
             )
 
         return steep_segments
@@ -132,6 +136,7 @@ class RadialRixResult:
     rays: tuple[RayResult, ...] = dataclasses.field(repr=False)
     """Collection of rays being evaluated."""
     _ray_by_angle: dict[float, RayResult] = dataclasses.field(init=False, repr=False, compare=False)
+    keys: ColumnKeys = dataclasses.field(repr=False, default=COLUMN_KEYS)
 
     def __post_init__(self):
         """Build internal index for fast theta lookups."""
@@ -189,11 +194,16 @@ class RadialRixResult:
 
     @property
     def meta(self) -> dict:
-        crs_ray = list({ray.profile.meta["crs_ray"] for ray in self.rays})
-        crs_dem = list({ray.profile.meta["crs_dem"] for ray in self.rays})
-        message = list({ray.profile.meta["message"] for ray in self.rays})
-        nan_count = int(np.sum([ray.profile.meta["nan_count"] for ray in self.rays], dtype=float))
-        records = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
+        crs_ray = list({ray.profile.meta[self.keys.crs_ray] for ray in self.rays})
+        crs_dem = list({ray.profile.meta[self.keys.crs_dem] for ray in self.rays})
+        message = list({ray.profile.meta[self.keys.message] for ray in self.rays})
+        nan_count = int(np.sum([ray.profile.meta[self.keys.nan_count] for ray in self.rays], dtype=float))
+        records = {
+            self.keys.crs_ray: crs_ray,
+            self.keys.crs_dem: crs_dem,
+            self.keys.message: message,
+            self.keys.nan_count: nan_count,
+        }
         return records
 
     def ray(self, theta: float) -> RayResult:
@@ -262,9 +272,12 @@ class RadialRixResult:
         records = []
         for ray in self.rays:
             for i, segment in enumerate(ray.steep_segments):
-                records.append({"theta": ray.theta, "segment_id": i, "geometry": segment})
+                records.append({self.keys.theta: ray.theta, self.keys.segment_id: i, "geometry": segment})
         return gpd.GeoDataFrame(
-            records, columns=["theta", "segment_id", "geometry"], geometry="geometry", crs=self.rays[0].profile.ray.crs
+            records,
+            columns=[self.keys.theta, self.keys.segment_id, "geometry"],
+            geometry="geometry",
+            crs=self.rays[0].profile.ray.crs,
         )
 
     def describe(self) -> dict[str, float]:
@@ -278,12 +291,12 @@ class RadialRixResult:
         rix_values = [ray.ruggedness for ray in self.rays]
 
         return {
-            "rix_mean": float(np.mean(rix_values)),
-            "rix_std": float(np.std(rix_values)),
-            "rix_min": float(np.min(rix_values)),
-            "rix_max": float(np.max(rix_values)),
-            "n_rays": self.n_rays,
-            "slope_critical": self.slope_critical,
+            self.keys.rix: float(np.mean(rix_values)),
+            self.keys.rix_std: float(np.std(rix_values)),
+            self.keys.rix_min: float(np.min(rix_values)),
+            self.keys.rix_max: float(np.max(rix_values)),
+            self.keys.n_rays: self.n_rays,
+            self.keys.slope_critical: self.slope_critical,
         }
 
     def plot_polar(self, ax=None):

@@ -7,7 +7,11 @@ import scipy.interpolate
 import xarray
 from numpy.typing import NDArray
 
+from .config import ColumnKeys
+
 LOGGER = logging.getLogger(__name__)
+
+COLUMN_KEYS = ColumnKeys()
 
 INTERPOLATION_METHODS = Literal["linear", "nearest"]
 
@@ -49,17 +53,23 @@ class RegularGridXYSampler:
     """Field to be sampled from. Assume that coordinates are 'x' and 'y'."""
     method: INTERPOLATION_METHODS
     """Interpolation method. One of 'linear' and 'nearest'."""
+    keys: ColumnKeys
+    """Keys identifying dimensions."""
 
-    def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS):
-        if not {"x", "y"}.issubset(da.dims):
-            raise ValueError("Field must have 'x' and 'y' coordinates.")
+    def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS, keys: ColumnKeys = COLUMN_KEYS):
+        if not {keys.x, keys.y}.issubset(da.dims):
+            raise ValueError(f"Field must have '{keys.x}' and '{keys.y}' coordinates.")
         self.da = da
         self.method = method
 
-        x = da["x"].values
-        y = da["y"].values
+        x = da[keys.x].values
+        y = da[keys.y].values
         self._interpolator = scipy.interpolate.RegularGridInterpolator(
-            points=(y, x), values=da.transpose("y", "x").values, method=method, bounds_error=False, fill_value=np.nan
+            points=(y, x),
+            values=da.transpose(keys.y, keys.x).values,
+            method=method,
+            bounds_error=False,
+            fill_value=np.nan,
         )
 
     @property
