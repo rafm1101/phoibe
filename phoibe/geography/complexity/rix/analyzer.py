@@ -68,7 +68,7 @@ class ResultSummary:
     meta: dict
 
 
-class RIXAnalyzer:
+class TRIXAnalyzer:
     """Compute RIX (and optionally TRIX) for one or two GeoDataFrame collections.
 
     Parameters
@@ -89,7 +89,7 @@ class RIXAnalyzer:
         self._config = config
 
     @classmethod
-    def from_config(cls, path: str | pathlib.Path) -> RIXAnalyzer:
+    def from_config(cls, path: str | pathlib.Path) -> TRIXAnalyzer:
         """Create an analyzer from a YAML config file.
 
         Parameters

@@ -4,24 +4,22 @@
 
 Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_, _bright_ and _prophet_. She received control of the Oracle of Delphi from Themis before gifting it to her grandson Apollo. She collects high-level tools for tasks that occur in the data science workflow. Typically, these high-level tools require additional dependencies which are not desired in `ergaleiothiki`.
 
-Tools comprise:
+**Overview**:
 
-- The **complexity assessment of terrain and transferability of wind statistics** for wind energy projects in one go. Follows TR6Rev12.
-- A **data validation framework** following a progressive issue detection and transformation approach subdivided into layers for (more than just) scada data.
+- **Quantify terrain complexity at any location and wind transferability.** This toolkit computes the Ruggedness Index (RIX) and wind representability (TRIX) following TR6Rev12. Use it for **site assessments for wind park projects**.
+- **Profile and validate machine data.** following a progressive issue detection and transformation approach subdivided into layers for (more than just) scada data.
+- **Generate synthetic data.** This includes 2D fields, sample points and messy scada data timeseries.
 
-## Structure
+## Architecture
 
-### Actual
-
-- `geography`:
-  - `complexity`: Assessment of terrain complexity and wind transferability.
-    - `rix`: Ruggedness index computation.
-  - `crs`:
-    - `reproject`: Simplify reprojections of raster data.
-  - `plot`: Visualisations.
-    - `raster`: Show raster data w/ or w/o CRS attached.
-- `layered`: Assistant for a layered profiling and validation of data and report creation. Prototype.
-- `synthetic_data`: Collection of synthetic 2D-fields and wtg scada data timeseries (including data mess) for demonstration.
+| Package | Subpackage | Purpose |
+|---------|------------|---------|
+| `geography` |  |  |
+|  | `complexity` | Assess of terrain complexity and wind transferability. |
+|  | `crs` | Reproject raster data. |
+|  | `plot` | Visualise. |
+| `layered` |   | Profile and validate data in layers. Prototype. |
+| `synthetic_data` |  | Generate 2D-fields and wtg scada data timeseries (including data mess) for demonstration. |
 
 <!--### Guidelines-->
 
