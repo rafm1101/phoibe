@@ -112,7 +112,7 @@ class RayGeometry:
     def _from_compass_r_m(cls, location, theta, r_m, crs):
         r_m = np.asarray(r_m, dtype=float)
         _validate_positive(np.diff(r_m), "dr_m")
-        crs = pyproj.CRS.from_user_input(crs)
+        crs = None if crs is None else pyproj.CRS.from_user_input(crs)
 
         dx, dy = ergaleiothiki.kiklos.circle.compass_polar_to_cartesian(theta, r_m)
         xs = location.x + dx

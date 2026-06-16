@@ -137,7 +137,8 @@ class RIXAnalyzer:
         sampler = RegularGridXYSampler(da=dem, method="linear")
 
         radial_rix_site = self._compute_rix_results(sampler, locations_site)
-        steep_segments_site = self._build_steep_segments(radial_rix_site, locations_site)
+        steep_segments_site = self._build_steep_segments(radial_rix_site)
+        print("Steep segments:", steep_segments_site.crs.to_authority())
         rix_roses = self._build_rix_rose(radial_rix_site, locations_site)
         summary_site = self._build_summary(radial_rix_site, locations_site)
 
@@ -277,15 +278,14 @@ class RIXAnalyzer:
         records["data"] = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
         return records
 
-    def _build_steep_segments(
-        self, radial_results: dict[object, RadialRixResult], locations: gpd.GeoDataFrame
-    ) -> tuple[pd.DataFrame, gpd.GeoDataFrame]:
+    def _build_steep_segments(self, radial_results: dict[object, RadialRixResult]) -> gpd.GeoDataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
         crs = self._config["parameters"]["crs"]
         steep_segments_rows = []
 
         for location_id, radial_rix in radial_results.items():
             gdf_segments = radial_rix.steep_segments_geodataframe()
+            crs = gdf_segments.crs
             gdf_segments.insert(0, "location_id", location_id)
             steep_segments_rows.append(gdf_segments)
 

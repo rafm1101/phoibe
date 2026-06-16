@@ -111,7 +111,14 @@ class RayResult:
 
         records = [{"segment_id": i, "geometry": seg} for i, seg in enumerate(self.steep_segments)]
 
-        return gpd.GeoDataFrame(records, geometry="geometry", crs=self.profile.ray.crs)
+        if records:
+            steep_segments = gpd.GeoDataFrame(records, geometry="geometry", crs=self.profile.ray.crs)
+        else:
+            steep_segments = gpd.GeoDataFrame(
+                columns=["segment_id", "geometry"], geometry="geometry", crs=self.profile.ray.crs
+            )
+
+        return steep_segments
 
 
 @dataclasses.dataclass(frozen=True)
@@ -135,7 +142,7 @@ class RadialRixResult:
         if len(slope_criticals) > 1:
             raise ValueError(f"All rays must use same slope_critical, got: {slope_criticals}")
 
-        crss = {ray.profile.ray.crs.to_authority() for ray in self.rays}
+        crss = {None if ray.profile.ray.crs is None else ray.profile.ray.crs.to_authority() for ray in self.rays}
 
         if len(crss) > 1:
             raise ValueError(f"All rays must have the same crs, got: {crss}")
@@ -256,7 +263,7 @@ class RadialRixResult:
         for ray in self.rays:
             for i, segment in enumerate(ray.steep_segments):
                 records.append({"theta": ray.theta, "segment_id": i, "geometry": segment})
-
+        print(self.rays[0].profile.ray.crs)
         return gpd.GeoDataFrame(
             records, columns=["theta", "segment_id", "geometry"], geometry="geometry", crs=self.rays[0].profile.ray.crs
         )
