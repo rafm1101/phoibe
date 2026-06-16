@@ -142,6 +142,10 @@ def make_field_rio(
 
     field = np.asarray(da.values, dtype=dtype_to)
     dario = xarray.DataArray(data=field, dims=("y", "x"), name="band1")
+    x_coords = np.linspace(transform.c, transform.c + (width - 1) * transform.a, width)
+    y_coords = np.linspace(transform.f, transform.f + (height - 1) * transform.e, height)
+    dario.coords["x"] = x_coords
+    dario.coords["y"] = y_coords
 
     dario.rio.write_crs(crs_to, inplace=True)
     dario.rio.write_transform(transform, inplace=True)

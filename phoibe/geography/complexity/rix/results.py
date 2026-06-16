@@ -263,7 +263,6 @@ class RadialRixResult:
         for ray in self.rays:
             for i, segment in enumerate(ray.steep_segments):
                 records.append({"theta": ray.theta, "segment_id": i, "geometry": segment})
-        print(self.rays[0].profile.ray.crs)
         return gpd.GeoDataFrame(
             records, columns=["theta", "segment_id", "geometry"], geometry="geometry", crs=self.rays[0].profile.ray.crs
         )

@@ -138,7 +138,6 @@ class RIXAnalyzer:
 
         radial_rix_site = self._compute_rix_results(sampler, locations_site)
         steep_segments_site = self._build_steep_segments(radial_rix_site)
-        print("Steep segments:", steep_segments_site.crs.to_authority())
         rix_roses = self._build_rix_rose(radial_rix_site, locations_site)
         summary_site = self._build_summary(radial_rix_site, locations_site)
 
@@ -217,7 +216,6 @@ class RIXAnalyzer:
 
     def _get_steep_segments(self, rix_results: dict[object, RadialRixResult]) -> dict[object, RadialRixResult]:
         """Run RIX for every location. Returns dict keyed by location_id."""
-        # cfg = self._config
         steep_segments = {}
 
         for location_id, rix_result in rix_results.items():

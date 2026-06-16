@@ -13,6 +13,9 @@ ANALYZER_DEFAULTS: dict = {
         "slope_critical": 0.3,
         "crs": None,
     },
+    "sampling": {
+        "method": "linear",
+    },
 }
 
 
