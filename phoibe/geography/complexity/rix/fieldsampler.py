@@ -2,17 +2,27 @@ import logging
 from typing import Literal, Protocol
 
 import numpy as np
+import pyproj
 import scipy.interpolate
 import xarray
 from numpy.typing import NDArray
 
+from .config import ColumnKeys
+
 LOGGER = logging.getLogger(__name__)
+
+COLUMN_KEYS = ColumnKeys()
 
 INTERPOLATION_METHODS = Literal["linear", "nearest"]
 
 
 class FieldSampler(Protocol):
-    def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> NDArray[np.floating]:
+    @property
+    def crs(self) -> pyproj.CRS | None:
+        """Return the sampler's CRS in case it has one."""
+        raise NotImplementedError
+
+    def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         """Sample field values along a path.
 
         Parameters
@@ -22,9 +32,16 @@ class FieldSampler(Protocol):
         ys
             Array of y coordinates of same length.
 
+        Returns
+        -------
+        NDArray[np.floating], int
+            Sampled values and NaN count.
+
         Notes
         -----
         1. Implementation may truncate the result if NaN values are encountered.
+        2. NaN counts shall be passed for diagnosis reasons.
+           They may the user to check the map bounds or data gaps.
         """
         raise NotImplementedError
 
@@ -36,20 +53,33 @@ class RegularGridXYSampler:
     """Field to be sampled from. Assume that coordinates are 'x' and 'y'."""
     method: INTERPOLATION_METHODS
     """Interpolation method. One of 'linear' and 'nearest'."""
+    keys: ColumnKeys
+    """Keys identifying dimensions."""
 
-    def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS):
-        if not {"x", "y"}.issubset(da.coords):
-            raise ValueError("Field must have 'x' and 'y' coordinates.")
+    def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS, keys: ColumnKeys = COLUMN_KEYS):
+        if not {keys.x, keys.y}.issubset(da.dims):
+            raise ValueError(f"Field must have '{keys.x}' and '{keys.y}' coordinates.")
         self.da = da
         self.method = method
 
-        x = da["x"].values
-        y = da["y"].values
+        x = da[keys.x].values
+        y = da[keys.y].values
         self._interpolator = scipy.interpolate.RegularGridInterpolator(
-            points=(y, x), values=da.transpose("y", "x").values, method=method, bounds_error=False, fill_value=np.nan
+            points=(y, x),
+            values=da.transpose(keys.y, keys.x).values,
+            method=method,
+            bounds_error=False,
+            fill_value=np.nan,
         )
 
-    def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> NDArray[np.floating]:
+    @property
+    def crs(self) -> pyproj.CRS | None:
+        if hasattr(self.da, "rio"):
+            return self.da.rio.crs
+        else:
+            return None
+
+    def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         _xs = np.asarray(xs, dtype=float)
         _ys = np.asarray(ys, dtype=float)
 
@@ -65,7 +95,7 @@ class RegularGridXYSampler:
                 np.isnan(z).sum(),
                 z.size,
             )
-        return z
+        return z, np.isnan(z).sum()
 
 
 # TODO: tididi candidate.

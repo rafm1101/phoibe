@@ -1,74 +1,99 @@
 # Geography
 
-## Summary
+## Overview
 
-Tools for assessing different aspects of geospatial data.
+**Quantify terrain complexity at any location and wind transferability.** This toolkit computes the Ruggedness Index (RIX) and wind representability (TRIX) -- metrics that measure how steep and broken terrain is based on slope analysis along radial rays and how applicable a transfer of wind measurements between sites is. Use it for **site suitability assessment for wind parks**.
 
-## Structure
+Key insights:
 
-### Actual
+1. **Single complexity score**.
+1. **Composed complexity score and representativity tables**.
+1. **Detailed ray-by-ray breakdowns** to understand exactly where terrain becomes problematic.
 
-- `complexity`: Assessment of terrain complexity.
-  - `rix`: Ruggedness index computation.
-    - `geometry`: Definition of rays as representatives in 2D world.
-    - `fieldsampler`: Sample from 2D fields.
-    - `profiles`: Generate profiles along rays.
-    - `analyse`: Computations.
-    - `results`: Gather and provide results.
-- `crs`: Manipulations incorporating coordinate reference systems.
-  - `reproject`: Reproject raster data.
-- `plot`: Visualisations of 2D fields.
-  - `raster`: Plot raster data bringing their own CRS or not.
+## What You Can Do
 
-## Topics
+- **Assess terrain complexity** with RIX: a single 0-1 score indicating proportion of steep slopes.
+- **Drill into results** with per-ray statistics, elevation profiles, and steep-segment geometry.
+- **Work across coordinate systems**: your site and elevation model can use different CRS; the toolkit handles conversion.
+- **Visualize findings**: Plot polar diagrams, overlay steep segments on maps, export results as GeoDataFrames
+- **Customize analysis**: Adjust ray count, search radius, grid spacing, and slope thresholds to your use case
 
-### RIX computation
+## Quick Start
 
-The RIX assesses terrain complexity via evaluation slopes along rays originating from some source location. Roughly speaking, it is the proportion of steep segments given the total length of all rays.
-
-This implementation provides some tools to assess more detailed results than just the single number between zero and one.
-
-Dependencies that do not provide core functionalities are loaded lazily (`geopandas` and `matplotlib`). Install them in your working environment in case you want to use them.
-
-1. **Quick access:** Ensure your elevation map is given in Cartesian coordinates.
+1. **Quick access:**
 
 ```python
-LOCATION = ergaleiothiki.perdix.LocationCCS(easting=0, northing=0, zone=32)
-elevation_sampler = RegularGridXYSampler(da=elevation_map, method="linear")
-kwargs_rix = {"sampler": elevation_sampler, "n_angles": 72, "R_km": 3.5, "dr_km": 0.01}
+from complexity.rix import RegularGridXYSampler, compute_regular_rix
+import shapely
 
-result = compute_regular_rix(LOCATION, slope_critical=0.033, **kwargs_rix)
-result.rix
+location = shapely.Point(0, 0)
+sampler = RegularGridXYSampler(da=elevation_map, method="linear")
+
+result = compute_regular_rix(
+    location, slope_critical=0.033, crs=None, sampler=sampler, n_angles=72, R_km=3.5, dr_km=0.01
+)
+
+print(result.rix)
 ```
-2. **Retrieve detailed results:** `.describe()` shows some summary statistics, while `.to_dataframe()` provides results for each ray. For even more details, `.steep_segments_geodataframe()` provides a Geodataframe holding all steep segments as geometric objects (`shapely.geometry.LineString`) ready to be plotted on maps. Pass the CRS to align coordinates w/ w map.
+
+2. **Explore your results:**
 
 ```python
 result.describe()
 
 result.to_dataframe()
 
-result.steep_segments_geodataframe(crs=None)
+result.steep_segments_geodataframe()
 ```
 
-3. **Plots:** The individual ray's ruggednesses can be plotted via `.plot_polar()`. Assuming `plot_geodata` plots some elevation map given as some `xarray.DataArray` w/ CRS information, steep parts may be plotted on top of the map. _Note: `geopandas` and `matplotlib` are not default dependencies in this package._
+3. **Plots:**
+_Note: `geopandas` and `matplotlib` are not default dependencies in this package._
 
 ```python
 result.plot_polar()
 
 _, ax = plot_geodata(da=elevation_map)
-CRS = elevations.rio.crs
-result_regular.steep_segments_geodataframe(crs=CRS).plot(ax=ax, color="r", linewidth=1, label="ray's steep parts")
+result_regular.steep_segments_geodataframe().plot(ax=ax, color="r", linewidth=1, label="ray's steep parts")
 ```
-### RIX discussions
 
-1. The assessment requires several approximations to be aware of:
-   1. If the elevation map is given in a GCS coordinate system, a conversion to a Cartesian CRS is necessary beforehand. Typically, there is a natural choice given by the context.
-      - The reprojection is an upcoming subject.
-      - The current choice is `scipy.interpolate.RegularGridInterpolator` w/ a linear interpolation.
-   1. Along the individual rays, two basic philosophies lead to different kinds of grids:
-      - Regular: Equidistant discretisation along the ray.
-      - Level crossing: A vertical discretisation pinning available elevations to a given discrete set of values. This seems to be more prone to loosing details.
-   1. Along the individual rays, resampling the elevations at its internal grid points, may have some hidden sensitivities. The following combinations should be used carefully:
-      - Interpolation method `nearest` w/ a small grid spacing (leads to jumps on short segments).
-      - Level crossing profiles w/ a coarse grid of levels (loss of information).
-      - Interpolation method `nearest` for level crossing profiles (loads of jumps).
+## Architecture
+
+| Subpackage | Purpose |
+| ------------| ---------|
+| **complexity.rix** | Core RIX computations and result objects |
+| **crs** | Coordinate system reprojections |
+| **plot** | Raster visualization with CRS awareness |
+
+Within `rix`:
+
+- `config`: Gathered configurations used throughout the subpackage.
+- `geometry`: Definition of rays as representatives in 2D world.
+- `fieldsampler`: Sample from 2D fields.
+- `profiles`: Generate 1D profiles along rays.
+- `analyse`: Computations: Functional interface for single locations.
+- `results`: Gather and provide results.
+- `analyzer`: Computations: Interface for full T-RIX assessment.
+- `trix`: T-RIX computations and evaluations.
+
+Within `crs`:
+
+- `reproject`: Reproject raster data.
+
+Within `plot`:
+
+- `raster`: Plot raster data bringing their own CRS or not.
+
+### Best practices and considerations
+
+1. Multi-CRS supported. Provide assessed sites in a projected CRS measuring in meters. Maps in a geographic CRS are handled accordingly by transforming the sites' coordinates and sampling these.
+1. Interpolation and grid spacing matter: Along the individual rays, resampling the elevations at its internal grid points, may have some hidden sensitivities. The following combinations should be used carefully:
+   - Interpolation method `nearest` w/ a small grid spacing (leads to jumps on short segments).
+   - Level crossing profiles w/ a coarse grid of levels (loss of information).
+   - Interpolation method `nearest` for level crossing profiles (loads of jumps).
+1. Along the individual rays, two basic philosophies lead to different kinds of grids:
+   - Regular: Equidistant discretisation along the ray.
+   - Level crossing: A vertical discretisation pinning available elevations to a given discrete set of values. This seems to be more prone to loosing details.
+1. Pitfalls:
+   1. The assessment permits computing RIX in GCS coordinates. However, expect serious distortions in the computations. _Avoid unless you have a specific reason._
+   1. Coarse level-crossing grids + nearest-neighbor: Extreme loss of slope detail. Use linear interpolation and finer grids instead.
+   1. Mismatched ray resolution: Very short `dr_km` with coarse elevation data means you're interpolating between widely-spaced source points. Choose consistent scales.

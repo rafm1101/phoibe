@@ -2,9 +2,9 @@ import logging
 
 import numpy as np
 import shapely.geometry
-from ergaleiothiki.perdix import LocationCCS
 from numpy.typing import NDArray
 
+from .config import ColumnKeys
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
 from .profiles import NaNPolicy, RayProfile
@@ -12,16 +12,26 @@ from .results import RadialRixResult, RayResult
 
 LOGGER = logging.getLogger(__name__)
 
+COLUMN_KEYS = ColumnKeys()
+
 
 def compute_regular_rix(
-    location_ccs: LocationCCS, sampler: FieldSampler, n_angles: int, R_km, dr_km, slope_critical=0.3
+    location: shapely.Point,
+    sampler: FieldSampler,
+    n_angles: int,
+    R_km,
+    dr_km,
+    crs,
+    slope_critical=0.3,
+    nan_policy="mask",
+    keys: ColumnKeys = COLUMN_KEYS,
 ):
     """Compute the ruggedness index RIX of a location. The RIX assesses height profiles along
-    rays originating at `location_ccs`.
+    rays originating at `location`.
 
     Parameters
     ----------
-    location_ccs
+    location
         Coordinates of the location to be assessed.
     sampler
         A sampler of field values from a regular, metric grid.
@@ -31,8 +41,12 @@ def compute_regular_rix(
         Distance [km] to which the profiles are considered.
     dr_km
         Stepsize [km] to sample from the field.
+    crs
+        CRS of the location.
     slope_critical
         Threshold on the slope between two points for a segment to be considered steep.
+    keys
+        Column keys for the output.
 
     Returns
     -------
@@ -43,9 +57,9 @@ def compute_regular_rix(
     results = []
 
     for theta in angles:
-        ray = RayGeometry.from_compass_regular(location=location_ccs, theta=theta, R_km=R_km, dr_km=dr_km)
-        ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
-        results.append(RayResult(profile=ray_profile, slope_critical=slope_critical))
+        ray = RayGeometry.from_compass_regular(location=location, theta=theta, R_km=R_km, dr_km=dr_km, crs=crs)
+        ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy(nan_policy), keys=keys)
+        results.append(RayResult(profile=ray_profile, slope_critical=slope_critical, keys=keys))
 
     return RadialRixResult(rays=tuple(results))
 

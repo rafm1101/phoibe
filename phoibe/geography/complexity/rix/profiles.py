@@ -6,10 +6,13 @@ import numpy as np
 from ergaleiothiki.tididi.validate_numerics import _validate_positive
 from numpy.typing import NDArray
 
+from .config import ColumnKeys
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
 
 LOGGER = logging.getLogger(__name__)
+
+COLUMN_KEYS = ColumnKeys()
 
 
 class NaNPolicy(enum.StrEnum):
@@ -43,6 +46,7 @@ class RayProfile:
     """Distances [m] from the ray origin at which the field is evaluated. Must be strictly increasing."""
     z: NDArray[np.floating]
     """Sampled scalar field values along the ray. Each value corresponds to the same index in `r_m`."""
+    meta: dict
 
     def __post_init__(self):
         if len(self.r_m) != len(self.z):
@@ -52,8 +56,12 @@ class RayProfile:
             _validate_positive(dr, "delta r_m")
 
     @classmethod
-    def create_regular(cls, ray: RayGeometry, sampler: FieldSampler, nan_policy: NaNPolicy):
+    def create_regular(
+        cls, ray: RayGeometry, sampler: FieldSampler, nan_policy: NaNPolicy, keys: ColumnKeys = COLUMN_KEYS
+    ):
         """Generate `RayProfile` from a regular grid.
+
+        If CRSs differ, ray is reprojected for sampling.
 
         Parameters
         ----------
@@ -63,15 +71,21 @@ class RayProfile:
             Sampler of the field to sample from.
         nan_policy
             NaN handling policy.
+        keys
+            Column keys for the output.
 
         Returns
         -------
         RayProfile
             Immutable representation of the sampled field along `ray`.
         """
-        z = sampler.sample(xs=ray.xs, ys=ray.ys)
+        ray_in_sampler_crs, message = ray.to_crs(crs=sampler.crs)
+        z, nan_count = sampler.sample(xs=ray_in_sampler_crs.xs, ys=ray_in_sampler_crs.ys)
+        meta = cls._build_meta(
+            crs_ray=ray.crs, crs_sampler=sampler.crs, message=message, nan_count=nan_count, keys=keys
+        )
         r_m, z = _apply_nan_policy(r_m=ray.r_m, z=z, theta=ray.theta, policy=nan_policy)
-        return cls(ray_=ray, r_m=r_m, z=z)
+        return cls(ray_=ray, r_m=r_m, z=z, meta=meta)
 
     @property
     def ray(self) -> RayGeometry:
@@ -79,9 +93,16 @@ class RayProfile:
 
     @classmethod
     def create_levelcrossing(
-        cls, ray: RayGeometry, sampler: FieldSampler, levels: NDArray[np.floating], nan_policy: NaNPolicy
+        cls,
+        ray: RayGeometry,
+        sampler: FieldSampler,
+        levels: NDArray[np.floating],
+        nan_policy: NaNPolicy,
+        keys: ColumnKeys = COLUMN_KEYS,
     ):
         """Generate `RayProfile` from a level crossings.
+
+        If CRSs differ, ray is reprojected for sampling.
 
         Parameters
         ----------
@@ -93,20 +114,36 @@ class RayProfile:
             Levels at which crossings shall be recognised.
         nan_policy
             NaN handling policy.
+        keys
+            Column keys for the output.
 
         Returns
         -------
         RayProfile
             Immutable representation of the sampled field along `ray`.
         """
-        z_regular = sampler.sample(xs=ray.xs, ys=ray.ys)
+        ray_in_sampler_crs, message = ray.to_crs(crs=sampler.crs)
+        z_regular, nan_count = sampler.sample(xs=ray_in_sampler_crs.xs, ys=ray_in_sampler_crs.ys)
+        meta = cls._build_meta(
+            crs_ray=ray.crs, crs_sampler=sampler.crs, message=message, nan_count=nan_count, keys=keys
+        )
         r_regular, z_regular = _apply_nan_policy(r_m=ray.r_m, z=z_regular, theta=ray.theta, policy=nan_policy)
 
         levels = np.asarray(levels, dtype=float)
         r_crossings, z_crossings = _compute_level_crossings(r=r_regular, z=z_regular, levels=levels)
 
-        ray_resampled = RayGeometry.from_compass(location=ray.location, theta=ray.theta, r_m=r_crossings)
-        return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings)
+        ray_resampled = RayGeometry.from_compass(location=ray.location, theta=ray.theta, r_m=r_crossings, crs=ray.crs)
+        return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings, meta=meta)
+
+    @staticmethod
+    def _build_meta(crs_ray, crs_sampler, message, nan_count, keys: ColumnKeys):
+        meta = {
+            keys.crs_ray: crs_ray.to_authority() if crs_ray is not None else None,
+            keys.crs_dem: crs_sampler.to_authority() if crs_sampler is not None else None,
+        }
+        meta[keys.message] = message
+        meta[keys.nan_count] = nan_count
+        return meta
 
 
 def _apply_nan_policy(
