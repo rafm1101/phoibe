@@ -42,6 +42,9 @@ class ResultSummary:
     trix
         Pairwise TRIX table (site x reference) if reference is provided. Otherwise `None`.
         Columns: id_a, id_b, rix_a, rix_b, trix_diff, trix_ratio.
+    trix_table
+        Table containing all pairwise metrics required for transferability.
+        Columns: transferability, distance, trix, A, B.
     transferability
         Transferability matrix between site and reference.
         Values from 2 (below distance threshold A) to 0 (above limit threshold B).
@@ -61,6 +64,7 @@ class ResultSummary:
     summary: pd.DataFrame
     ruggedness_roses: pd.DataFrame
     trix: pd.DataFrame | None
+    trix_table: pd.DataFrame | None
     transferability: pd.DataFrame | None
     distance_A: pd.DataFrame | None
     distance_B: pd.DataFrame | None
@@ -145,15 +149,20 @@ class TRIXAnalyzer:
         rix_roses = self._build_rix_rose(radial_rix_site)
         summary_site = self._build_summary(radial_rix_site, keys=keys)
 
-        trix_values, transferability, A, B = None, None, None, None
+        trix_values, transferability, A, B, trix_table = None, None, None, None, None
         if locations_reference is not None:
             radial_rix_reference = self._compute_rix_results(sampler, locations_reference, keys=keys)
             summary_reference = self._build_summary(radial_rix_reference, keys=keys)
             trix_values, A, B = self._compute_trix(summary_site, summary_reference)
-            distances = self._compute_pairwise_distances_m(locations_site.geometry, locations_reference.geometry) / 1000
+            distances = self._compute_pairwise_distances_km(
+                locations_site.geometry, locations_reference.geometry, keys=keys
+            )
             transferability_ = trix.evaluate_transferability_limits(distances=distances.values, A=A.values, B=B.values)
-            transferability = pd.DataFrame(
-                data=transferability_, index=locations_site[keys.site_id], columns=locations_reference[keys.site_id]
+            index = locations_site[keys.site_id].rename("site_id")
+            columns = locations_reference[keys.site_id].rename("reference_id")
+            transferability = pd.DataFrame(data=transferability_, index=index, columns=columns)
+            trix_table = self._build_trix_results(
+                trix=trix_values, A=A, B=B, distances=distances, transferability=transferability, keys=keys
             )
 
         meta = self._build_meta(rix_results=radial_rix_site, keys=keys)
@@ -164,6 +173,7 @@ class TRIXAnalyzer:
             summary=summary_site,
             ruggedness_roses=rix_roses,
             trix=trix_values,
+            trix_table=trix_table,
             transferability=transferability,
             distance_A=A,
             distance_B=B,
@@ -279,7 +289,7 @@ class TRIXAnalyzer:
         message = list(
             set(message for _, rix_result in rix_results.items() for message in rix_result.meta[keys.message])
         )
-        nan_count = sum([rix_result.meta[keys.nan_count] for key, rix_result in rix_results.items()])
+        nan_count = sum([rix_result.meta[keys.nan_count] for _, rix_result in rix_results.items()])
         records[keys.data_sources] = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
         return records
 
@@ -324,28 +334,38 @@ class TRIXAnalyzer:
             rix_wind=np.array(summary_reference[keys.rix]),
             elevation_wind=np.array(summary_reference[keys.elevation]),
         )
-        trix_result = pd.DataFrame(
-            data=trix_records, index=summary_site[keys.site_id], columns=summary_reference[keys.site_id]
-        )
+        index = summary_site[keys.site_id].rename("site_id")
+        columns = summary_reference[keys.site_id].rename("reference_id")
+
+        trix_result = pd.DataFrame(data=trix_records, index=index, columns=columns)
 
         _A, _B = trix.compute_trix_limit_distances(trix=trix_records, decimals=1)
-        A = pd.DataFrame(data=_A, index=summary_site[keys.site_id], columns=summary_reference[keys.site_id])
-        B = pd.DataFrame(data=_B, index=summary_site[keys.site_id], columns=summary_reference[keys.site_id])
+        A = pd.DataFrame(data=_A, index=index, columns=columns)
+        B = pd.DataFrame(data=_B, index=index, columns=columns)
 
         return trix_result, A, B
 
-    def _compute_pairwise_distances_m(
-        self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries
+    def _compute_pairwise_distances_km(
+        self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries, keys: ColumnKeys
     ) -> pd.DataFrame:
-        """Compute pairwise Euclidean distances between site and wind locations."""
+        """Compute pairwise Euclidean distances [km] between site and wind locations."""
         coords_a = np.vstack([point.coords[0] for point in location_site])
         coords_b = np.vstack([point.coords[0] for point in location_reference])
         distances = pd.DataFrame(
-            data=scipy.spatial.distance.cdist(coords_a, coords_b, metric="euclidean"),
-            index=location_site.index,
-            columns=location_reference.index,
+            data=scipy.spatial.distance.cdist(coords_a, coords_b, metric="euclidean") / 1000,
+            index=location_site.index.rename(keys.site_id),
+            columns=location_reference.index.rename(keys.reference_id),
         )
         return distances
+
+    def _build_trix_results(self, trix, A, B, distances, transferability, keys: ColumnKeys):
+        trix_ = trix.stack().rename(keys.trix)
+        A_ = A.stack().rename(keys.A)
+        B_ = B.stack().rename(keys.B)
+        distances_ = distances.stack().rename(keys.distance)
+        transferability_ = transferability.stack().rename(keys.transferability)
+        result = pd.concat([transferability_, distances_, trix_, A_, B_], axis=1)
+        return result
 
 
 def _epsg_int(crs_str: str) -> int | None:
