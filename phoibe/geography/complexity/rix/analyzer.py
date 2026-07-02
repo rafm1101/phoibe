@@ -37,7 +37,7 @@ class ResultSummary:
         Assessed reference locations, e.g. of a wind data base.
     summary
         Sites' RIX assessment including location_id, rix, rix_std, n_rays, slope_critical.
-    roses
+    ruggedness_roses
         RIX rose for all sites.
     trix
         Pairwise TRIX table (site x reference) if reference is provided. Otherwise `None`.
@@ -59,7 +59,7 @@ class ResultSummary:
     locations_site: gpd.GeoDataFrame
     locations_reference: gpd.GeoDataFrame | None
     summary: pd.DataFrame
-    roses: pd.DataFrame
+    ruggedness_roses: pd.DataFrame
     trix: pd.DataFrame | None
     transferability: pd.DataFrame | None
     distance_A: pd.DataFrame | None
@@ -162,7 +162,7 @@ class TRIXAnalyzer:
             locations_site=locations_site,
             locations_reference=locations_reference,
             summary=summary_site,
-            roses=rix_roses,
+            ruggedness_roses=rix_roses,
             trix=trix_values,
             transferability=transferability,
             distance_A=A,
@@ -274,10 +274,10 @@ class TRIXAnalyzer:
         records = self._config.copy()
         records[keys.created_at] = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
 
-        crs_ray = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_ray]))
-        crs_dem = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_dem]))
+        crs_ray = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_ray]))
+        crs_dem = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_dem]))
         message = list(
-            set(message for key, rix_result in rix_results.items() for message in rix_result.meta[keys.message])
+            set(message for _, rix_result in rix_results.items() for message in rix_result.meta[keys.message])
         )
         nan_count = sum([rix_result.meta[keys.nan_count] for key, rix_result in rix_results.items()])
         records[keys.data_sources] = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
