@@ -27,7 +27,7 @@ class WriterProfile(enum.StrEnum):
 _FILENAMES = {
     "manifest": "summary.yaml",
     "rix_summary": "rix_summary.csv",
-    "trix": "trix.csv",
+    "trix_table": "trix.csv",
     "geopackage": "rix_results.gpkg",
 }
 
@@ -124,7 +124,8 @@ class RIXWriter:
 
         self._write_rix_summary(out=out, summary=self._result.summary)
 
-        if (trix := self._result.trix) is not None:
+        if (trix := self._result.trix_table) is not None:
+            print("summary")
             self._write_trix(out=out, trix=trix)
 
         if self._profile is WriterProfile.FULL:
@@ -142,8 +143,10 @@ class RIXWriter:
 
     def _write_trix(self, out: Path, trix: pd.DataFrame) -> None:
         """Write pairwise trix-results."""
-        path = out / self._filenames["trix"]
-        trix.to_csv(path, index=False)
+        print("summary")
+        path = out / self._filenames["trix_table"]
+        print("summary")
+        trix.reset_index().to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)
 
     def _write_manifest(self, out: Path, result: ResultSummary) -> None:
@@ -153,7 +156,7 @@ class RIXWriter:
             "rix_summary": self._filenames["rix_summary"],
         }
         if result.trix is not None:
-            artifacts["trix"] = self._filenames["trix"]
+            artifacts["trix"] = self._filenames["trix_table"]
         if self._profile is WriterProfile.FULL:
             artifacts["geopackage"] = self._filenames["geopackage"]
 
