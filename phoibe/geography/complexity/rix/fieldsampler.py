@@ -87,7 +87,7 @@ class RegularGridXYSampler:
     def meta(self) -> dict:
         result = {}
         if hasattr(self.da, "rio"):
-            result[self.keys.crs_dem] = self.da.rio.crs.to_authority()
+            result[self.keys.crs_dem] = crs.to_authority() if (crs := self.da.rio.crs) is not None else None
             result[self.keys.extent_dem] = self.da.rio.bounds()
             result[self.keys.resolution_dem] = self.da.rio.resolution()
         return result

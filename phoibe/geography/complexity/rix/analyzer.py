@@ -143,8 +143,8 @@ class TRIXAnalyzer:
                 locations_site.geometry, locations_reference.geometry, keys=keys
             )
             transferability_ = trix.evaluate_transferability_limits(distances=distances.values, A=A.values, B=B.values)
-            index = locations_site[keys.site_id].rename("site_id")
-            columns = locations_reference[keys.site_id].rename("reference_id")
+            index = locations_site[keys.site_id].rename(keys.site_id)
+            columns = locations_reference[keys.site_id].rename(keys.reference_id)
             transferability = pd.DataFrame(data=transferability_, index=index, columns=columns)
             trix_table = self._build_trix_results(
                 trix=trix_values, A=A, B=B, distances=distances, transferability=transferability, keys=keys
@@ -325,8 +325,8 @@ class TRIXAnalyzer:
             rix_wind=np.array(summary_reference[keys.rix]),
             elevation_wind=np.array(summary_reference[keys.elevation]),
         )
-        index = summary_site[keys.site_id].rename("site_id")
-        columns = summary_reference[keys.site_id].rename("reference_id")
+        index = summary_site[keys.site_id].rename(keys.site_id)
+        columns = summary_reference[keys.site_id].rename(keys.reference_id)
 
         trix_result = pd.DataFrame(data=trix_records, index=index, columns=columns)
 
@@ -359,9 +359,9 @@ class TRIXAnalyzer:
         distances_ = distances.stack().rename(keys.distance)
         transferability_ = transferability.stack().rename(keys.transferability)
 
-        result = pd.concat([transferability_, distances_, trix_, A_, B_], axis=1)
+        table = pd.concat([transferability_, distances_, trix_, A_, B_], axis=1)
 
-        return result
+        return table
 
 
 def _epsg_int(crs_str: str) -> int | None:
