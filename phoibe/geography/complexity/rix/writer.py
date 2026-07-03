@@ -3,8 +3,8 @@ from __future__ import annotations
 import datetime
 import enum
 import logging
+import pathlib
 import typing
-from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -28,7 +28,7 @@ _FILENAMES = {
     "manifest": "summary.yaml",
     "rix_summary": "rix_summary.csv",
     "trix_table": "trix.csv",
-    "geopackage": "rix_results.gpkg",
+    "geopackage": "rix_details.gpkg",
 }
 
 _GPKG_LAYERS = {
@@ -40,7 +40,7 @@ _GPKG_LAYERS = {
 
 
 class RIXWriter:
-    """Serialize a :class:`ResultSummary` to disk.
+    """Serialize a `ResultSummary` to disk.
 
     Parameters
     ----------
@@ -48,9 +48,9 @@ class RIXWriter:
         Completed analysis result.
     profile
         Controls which artifacts are written. See :class:`WriterProfile`.
-    locations_a
+    locations_site
         Original point GeoDataFrame for collection A (required for FULL profile).
-    locations_b
+    locations_reference
         Original point GeoDataFrame for collection B (required for FULL profile
         when TRIX was computed).
     filenames
@@ -61,20 +61,16 @@ class RIXWriter:
     Notes
     -----
     1. Profiles:
-       1. SUMMARY profile writes:
+       1. Profile SUMMARY writes:
             summary.yaml      - manifest: metadata, config, artifact references
             rix_summary.csv   - RIX per location + per-angle ruggednesses
             trix.csv          - pairwise TRIX table (omitted if result.trix is None)
-       1. FULL profile writes everything in SUMMARY plus:
-            rix_results.gpkg  - GeoPackage with four layers:
-                                standorte          (Point)
-                                windmessungen      (Point)
-                                rix_detail         (LineString)
-                                trix_entscheidungen (attribute table, no geometry)
-    ``locations_a`` and ``locations_b`` are kept separate from
-    :class:`ResultSummary` intentionally: the result contains derived data
-    only. Raw input geometries and their metadata columns are passed here
-    when spatial output is needed.
+       1. Profile FULL writes everything in SUMMARY plus:
+            rix_details.gpkg  - GeoPackage with four layers:
+                                locations_site                 (Point)
+                                locations_reference            (Point)
+                                ruggedness                (LineString)
+                                trix    (attribute table, no geometry)
 
     Examples
     --------
@@ -106,7 +102,7 @@ class RIXWriter:
             if result.trix is not None and locations_reference is None:
                 raise ValueError("WriterProfile.FULL with TRIX requires locations_b.")
 
-    def write(self, directory: str | Path) -> None:
+    def write(self, directory: str | pathlib.Path) -> None:
         """Write all artifacts for the configured profile to ``directory``.
 
         Parameters
@@ -119,13 +115,12 @@ class RIXWriter:
         ValueError
             If FULL profile is requested but required inputs are missing.
         """
-        out = Path(directory)
+        out = pathlib.Path(directory)
         out.mkdir(parents=True, exist_ok=True)
 
         self._write_rix_summary(out=out, summary=self._result.summary)
 
         if (trix := self._result.trix_table) is not None:
-            print("summary")
             self._write_trix(out=out, trix=trix)
 
         if self._profile is WriterProfile.FULL:
@@ -135,21 +130,19 @@ class RIXWriter:
 
         LOGGER.info("RIXWriter(%s): wrote artifacts to %s", self._profile, out)
 
-    def _write_rix_summary(self, out: Path, summary: pd.DataFrame) -> None:
+    def _write_rix_summary(self, out: pathlib.Path, summary: pd.DataFrame) -> None:
         """Write summary of rix assessment."""
         path = out / self._filenames["rix_summary"]
         summary.to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)
 
-    def _write_trix(self, out: Path, trix: pd.DataFrame) -> None:
+    def _write_trix(self, out: pathlib.Path, trix: pd.DataFrame) -> None:
         """Write pairwise trix-results."""
-        print("summary")
         path = out / self._filenames["trix_table"]
-        print("summary")
         trix.reset_index().to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)
 
-    def _write_manifest(self, out: Path, result: ResultSummary) -> None:
+    def _write_manifest(self, out: pathlib.Path, result: ResultSummary) -> None:
         """Write result summary and manifest including metadata and config."""
 
         artifacts: dict = {
@@ -172,7 +165,7 @@ class RIXWriter:
             yaml.safe_dump(manifest, filestream, sort_keys=False, allow_unicode=True)
         LOGGER.debug("Wrote %s", path)
 
-    def _write_geopackage(self, out: Path) -> None:
+    def _write_geopackage(self, out: pathlib.Path) -> None:
         """Write all spatial layers to a single GeoPackage."""
         filepath = out / self._filenames["geopackage"]
 
@@ -194,7 +187,7 @@ class RIXWriter:
         LOGGER.debug("Wrote GeoPackage %s", filepath)
 
 
-def _write_dataframe_to_gpkg(df: pd.DataFrame, path: Path, layer: str) -> None:
+def _write_dataframe_to_gpkg(df: pd.DataFrame, path: pathlib.Path, layer: str) -> None:
     """Write a vanilla DataFrame w/o geometry as a table layer in a GeoPackage.
 
     Parameters

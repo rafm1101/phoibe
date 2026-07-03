@@ -13,8 +13,8 @@ import xarray
 import yaml
 
 from . import trix
-from .analyse import compute_regular_rix
 from .config import ANALYZER_DEFAULTS, ColumnKeys
+from .evaluate import compute_regular_rix
 from .fieldsampler import RegularGridXYSampler
 from .results import RadialRixResult
 
