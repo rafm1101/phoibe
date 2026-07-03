@@ -147,7 +147,9 @@ class RayGeometry:
             return self, message
 
         elif self.crs == crs:
-            return self, None
+            message = f"All coordinates are in the same CRS {crs.to_authority()}. "
+            message += "No guarantee unless sites are presented in a metric CRS." if crs.to_epsg() == 4326 else ""
+            return self, message
 
         else:
             transformer = pyproj.Transformer.from_crs(crs_from=self.crs, crs_to=crs, always_xy=True)
