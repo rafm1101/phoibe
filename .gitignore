@@ -19,6 +19,7 @@ __pycache__
 *.zip
 *.xml
 *.dt2
+*.csv
 
 # latex artifacts
 ls-R
@@ -36,6 +37,7 @@ ls-R
 *.blg
 
 # other artifacts
+*.png
 *.fls
 *.fdb_latexmk
 *.vrb

@@ -5,7 +5,7 @@ import pytest
 
 from phoibe.geography.complexity.rix.geometry import RayGeometry
 from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile
-from phoibe.geography.complexity.rix.results import RadialRixResult, RayResult
+from phoibe.geography.complexity.rix.results import RadialRuggedness, RayRuggedness
 
 
 @dataclasses.dataclass(frozen=True)
@@ -57,7 +57,7 @@ def make_ray_result(ray_north):
 
     def _make(sampler, slope_critical=0.3, nan_policy=NaNPolicy.ERROR):
         profile = RayProfile.create_regular(ray=ray_north, sampler=sampler, nan_policy=nan_policy)
-        return RayResult(profile=profile, slope_critical=slope_critical)
+        return RayRuggedness(profile=profile, slope_critical=slope_critical)
 
     return _make
 
@@ -78,8 +78,8 @@ def make_radial_result(origin):
         for theta in angles:
             ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=0.1)
             profile = RayProfile.create_regular(ray=ray, sampler=sampler_factory(), nan_policy=NaNPolicy.ERROR)
-            ray_results.append(RayResult(profile=profile, slope_critical=slope_critical))
+            ray_results.append(RayRuggedness(profile=profile, slope_critical=slope_critical))
 
-        return RadialRixResult(rays=tuple(ray_results))
+        return RadialRuggedness(rays=tuple(ray_results))
 
     return _make

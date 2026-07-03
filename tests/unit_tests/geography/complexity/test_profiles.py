@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix import analyse
+from phoibe.geography.complexity.rix import evaluate
 from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile, _compute_level_crossings
 
 
@@ -42,7 +42,7 @@ def invalid_profile_sampler(request):
 )
 def test_ray_profile_contracts_lengths(ray_01km, dummy_sampler, nan_policy, expected_n_slopes):
     ray_profile = RayProfile.create_regular(ray_01km, dummy_sampler, nan_policy)
-    slope_values = analyse.slopes(ray_profile)
+    slope_values = evaluate.slopes(ray_profile)
     assert len(slope_values) == expected_n_slopes
     assert len(ray_profile.r_m) == expected_n_slopes + 1
     assert len(ray_profile.z) == expected_n_slopes + 1
@@ -64,12 +64,12 @@ def test_ray_profile_returns_correct_intermediate_values_given_valid_profile(
     ray_01km, profile_sampler, nan_policy, critical_slope, expected_mask, expected_rix
 ):
     ray_profile = RayProfile.create_regular(ray_01km, profile_sampler, nan_policy)
-    slope_values = analyse.slopes(ray_profile)
+    slope_values = evaluate.slopes(ray_profile)
     assert np.allclose(slope_values, [0.1, 0.0, 0.0, -0.1, 0.0, 0.0, 0.2, 0.0, -0.1, -0.1])
 
-    mask = analyse.steep_mask(ray_profile, critical_slope)
+    mask = evaluate.steep_mask(ray_profile, critical_slope)
     assert np.all(mask == expected_mask)
-    ruggedness = analyse.ruggedness(ray_profile, critical_slope)
+    ruggedness = evaluate.ruggedness(ray_profile, critical_slope)
     assert np.isclose(ruggedness, expected_rix)
 
 
@@ -95,12 +95,12 @@ def test_ray_profile_returns_correct_intermediate_values(
     ray_01km, invalid_profile_sampler, nan_policy, critical_slope, expected_slopes, expected_mask, expected_rix
 ):
     ray_profile = RayProfile.create_regular(ray_01km, invalid_profile_sampler, nan_policy)
-    slope_values = analyse.slopes(ray_profile)
+    slope_values = evaluate.slopes(ray_profile)
     assert np.allclose(slope_values, expected_slopes, equal_nan=True)
 
-    mask = analyse.steep_mask(ray_profile, critical_slope)
+    mask = evaluate.steep_mask(ray_profile, critical_slope)
     assert np.all(mask == expected_mask)
-    ruggedness = analyse.ruggedness(ray_profile, critical_slope)
+    ruggedness = evaluate.ruggedness(ray_profile, critical_slope)
     assert np.isclose(ruggedness, expected_rix)
 
 
@@ -134,13 +134,13 @@ def test_profile_analysis_with_nan_handling(
     ray_01km, invalid_profile_sampler, nan_policy, critical_slope, expected_slopes, expected_mask, expected_rix
 ):
     profile = RayProfile.create_regular(ray=ray_01km, sampler=invalid_profile_sampler, nan_policy=nan_policy)
-    slope_arr = analyse.slopes(profile)
+    slope_arr = evaluate.slopes(profile)
     assert np.allclose(slope_arr, expected_slopes, equal_nan=True)
 
-    mask = analyse.steep_mask(profile, critical_slope)
+    mask = evaluate.steep_mask(profile, critical_slope)
     assert np.all(mask == expected_mask)
 
-    ruggedness = analyse.ruggedness(profile, critical_slope)
+    ruggedness = evaluate.ruggedness(profile, critical_slope)
     assert np.isclose(ruggedness, expected_rix)
 
 

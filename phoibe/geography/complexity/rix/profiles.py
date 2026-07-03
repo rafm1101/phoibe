@@ -82,7 +82,7 @@ class RayProfile:
         ray_in_sampler_crs, message = ray.to_crs(crs=sampler.crs)
         z, nan_count = sampler.sample(xs=ray_in_sampler_crs.xs, ys=ray_in_sampler_crs.ys)
         meta = cls._build_meta(
-            crs_ray=ray.crs, crs_sampler=sampler.crs, message=message, nan_count=nan_count, keys=keys
+            crs_ray=ray.crs, meta_sampler=sampler.meta, message=message, nan_count=nan_count, keys=keys
         )
         r_m, z = _apply_nan_policy(r_m=ray.r_m, z=z, theta=ray.theta, policy=nan_policy)
         return cls(ray_=ray, r_m=r_m, z=z, meta=meta)
@@ -125,7 +125,7 @@ class RayProfile:
         ray_in_sampler_crs, message = ray.to_crs(crs=sampler.crs)
         z_regular, nan_count = sampler.sample(xs=ray_in_sampler_crs.xs, ys=ray_in_sampler_crs.ys)
         meta = cls._build_meta(
-            crs_ray=ray.crs, crs_sampler=sampler.crs, message=message, nan_count=nan_count, keys=keys
+            crs_ray=ray.crs, meta_sampler=sampler.meta, message=message, nan_count=nan_count, keys=keys
         )
         r_regular, z_regular = _apply_nan_policy(r_m=ray.r_m, z=z_regular, theta=ray.theta, policy=nan_policy)
 
@@ -136,11 +136,11 @@ class RayProfile:
         return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings, meta=meta)
 
     @staticmethod
-    def _build_meta(crs_ray, crs_sampler, message, nan_count, keys: ColumnKeys):
+    def _build_meta(crs_ray, meta_sampler, message, nan_count, keys: ColumnKeys):
         meta = {
             keys.crs_ray: crs_ray.to_authority() if crs_ray is not None else None,
-            keys.crs_dem: crs_sampler.to_authority() if crs_sampler is not None else None,
         }
+        meta.update(meta_sampler.copy())
         meta[keys.message] = message
         meta[keys.nan_count] = nan_count
         return meta

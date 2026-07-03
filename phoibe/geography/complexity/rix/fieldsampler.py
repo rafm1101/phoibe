@@ -1,5 +1,5 @@
 import logging
-from typing import Literal, Protocol
+import typing
 
 import numpy as np
 import pyproj
@@ -7,19 +7,22 @@ import scipy.interpolate
 import xarray
 from numpy.typing import NDArray
 
-from .config import ColumnKeys
+from .config import INTERPOLATION_METHODS, ColumnKeys
 
 LOGGER = logging.getLogger(__name__)
 
 COLUMN_KEYS = ColumnKeys()
 
-INTERPOLATION_METHODS = Literal["linear", "nearest"]
 
-
-class FieldSampler(Protocol):
+class FieldSampler(typing.Protocol):
     @property
     def crs(self) -> pyproj.CRS | None:
         """Return the sampler's CRS in case it has one."""
+        raise NotImplementedError
+
+    @property
+    def meta(self) -> pyproj.CRS | None:
+        """Return the sampler's meta information in case it is `rasterio`."""
         raise NotImplementedError
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
@@ -61,6 +64,7 @@ class RegularGridXYSampler:
             raise ValueError(f"Field must have '{keys.x}' and '{keys.y}' coordinates.")
         self.da = da
         self.method = method
+        self.keys = keys
 
         x = da[keys.x].values
         y = da[keys.y].values
@@ -78,6 +82,15 @@ class RegularGridXYSampler:
             return self.da.rio.crs
         else:
             return None
+
+    @property
+    def meta(self) -> dict:
+        result = {}
+        if hasattr(self.da, "rio"):
+            result[self.keys.crs_dem] = crs.to_authority() if (crs := self.da.rio.crs) is not None else None
+            result[self.keys.extent_dem] = self.da.rio.bounds()
+            result[self.keys.resolution_dem] = self.da.rio.resolution()
+        return result
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         _xs = np.asarray(xs, dtype=float)

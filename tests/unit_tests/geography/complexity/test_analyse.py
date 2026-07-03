@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix import analyse
+from phoibe.geography.complexity.rix import evaluate
 from phoibe.geography.complexity.rix.geometry import RayGeometry
 from phoibe.geography.complexity.rix.profiles import RayProfile
 
@@ -22,7 +22,7 @@ def dummy_profile(request, origin):
     indirect=["dummy_profile"],
 )
 def test_slopes_returns_nan_given_single_point(dummy_profile, expected_length):
-    result = analyse.slopes(dummy_profile)
+    result = evaluate.slopes(dummy_profile)
     assert len(result) == expected_length
     assert np.isnan(result[0])
 
@@ -37,14 +37,14 @@ def test_slopes_returns_nan_given_single_point(dummy_profile, expected_length):
     indirect=["dummy_profile"],
 )
 def test_slopes_returns_correct_values(dummy_profile, expected_length, expected_slopes):
-    result = analyse.slopes(dummy_profile)
+    result = evaluate.slopes(dummy_profile)
     assert len(result) == expected_length
     assert np.allclose(result, expected_slopes)
 
 
 @pytest.mark.parametrize("dummy_profile", [([0.0], [5.0])], indirect=["dummy_profile"])
 def test_rix_handles_empty_profile(dummy_profile):
-    result = analyse.ruggedness(dummy_profile, slope_critical=0.3)
+    result = evaluate.ruggedness(dummy_profile, slope_critical=0.3)
     assert np.isnan(result)
 
 
@@ -59,13 +59,13 @@ def test_rix_handles_empty_profile(dummy_profile):
     indirect=["dummy_profile"],
 )
 def test_rix_returns_correct_values(dummy_profile, slope_critical, expected_rix):
-    result = analyse.ruggedness(dummy_profile, slope_critical)
+    result = evaluate.ruggedness(dummy_profile, slope_critical)
     assert np.isclose(result, expected_rix)
 
 
 @pytest.mark.parametrize("dummy_profile", [([0.0, 1.0], [np.nan, np.nan])], indirect=["dummy_profile"])
 def test_steep_mask_with_all_nan_slopes(dummy_profile):
-    result = analyse.steep_mask(dummy_profile, slope_critical=0.3)
+    result = evaluate.steep_mask(dummy_profile, slope_critical=0.3)
     assert len(result) == 1
     assert not result[0]
 
@@ -81,5 +81,5 @@ def test_steep_mask_with_all_nan_slopes(dummy_profile):
 )
 def test_steep_segment_indices(dummy_profile, slope_critical, expected_indices):
     """steep_segment_indices() finds correct contiguous steep runs."""
-    result = analyse.steep_segment_indices(dummy_profile, slope_critical)
+    result = evaluate.steep_segment_indices(dummy_profile, slope_critical)
     assert result == expected_indices

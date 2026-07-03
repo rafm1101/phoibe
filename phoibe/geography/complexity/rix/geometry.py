@@ -147,11 +147,13 @@ class RayGeometry:
             return self, message
 
         elif self.crs == crs:
-            return self, None
+            message = f"All coordinates are in the same CRS {crs.to_authority()}. "
+            message += "No guarantee unless sites are presented in a metric CRS." if crs.to_epsg() == 4326 else ""
+            return self, message
 
         else:
             transformer = pyproj.Transformer.from_crs(crs_from=self.crs, crs_to=crs, always_xy=True)
             xs_to, ys_to = transformer.transform(self.xs, self.ys)
             location = shapely.geometry.Point(xs_to[0], ys_to[0])
             ray = RayGeometry(location=location, theta=self.theta, r_m=self.r_m, xs=xs_to, ys=ys_to, crs=crs)
-            return ray, f"Transformed {self.crs.to_authority()} to {crs.to_authority()}."
+            return ray, f"Transformed ray CRS{self.crs.to_authority()} to DEM CRS{crs.to_authority()} for sampling."

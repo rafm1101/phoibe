@@ -12,11 +12,10 @@ import scipy.spatial.distance
 import xarray
 import yaml
 
-from . import trix
-from .analyse import compute_regular_rix
+from . import evaluate, trix
 from .config import ANALYZER_DEFAULTS, ColumnKeys
 from .fieldsampler import RegularGridXYSampler
-from .results import RadialRixResult
+from .results import RadialRuggedness
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,45 +26,23 @@ COLUMN_KEYS = ColumnKeys()
 
 @dataclasses.dataclass(frozen=True)
 class ResultSummary:
-    """Immutable container for a completed RIX analysis run.
-
-    Attributes
-    ----------
-    locations_site
-        Assessed sites.
-    locations_reference
-        Assessed reference locations, e.g. of a wind data base.
-    summary
-        Sites' RIX assessment including location_id, rix, rix_std, n_rays, slope_critical.
-    roses
-        RIX rose for all sites.
-    trix
-        Pairwise TRIX table (site x reference) if reference is provided. Otherwise `None`.
-        Columns: id_a, id_b, rix_a, rix_b, trix_diff, trix_ratio.
-    transferability
-        Transferability matrix between site and reference.
-        Values from 2 (below distance threshold A) to 0 (above limit threshold B).
-    distance_A
-        Distance treshold matrix A if reference is provided. Otherwise `None`.
-    distance_B
-        Distance treshold matrix B if reference is provided. Otherwise `None`.
-    steep_segments
-        Steep segments of sites as LineStrings. Columns: location_id, theta,
-        segment_id, geometry.
-    meta
-        Meta information including config, timestamp.
-    """
+    """Immutable container for a completed RIX analysis run."""
 
     locations_site: gpd.GeoDataFrame
+    """Assessed sites."""
     locations_reference: gpd.GeoDataFrame | None
+    """Assessed reference locations, e.g. of a wind data base."""
     summary: pd.DataFrame
-    roses: pd.DataFrame
-    trix: pd.DataFrame | None
-    transferability: pd.DataFrame | None
-    distance_A: pd.DataFrame | None
-    distance_B: pd.DataFrame | None
+    """Sites' RIX assessment including location_id, rix, rix_std, n_rays, slope_critical."""
+    ruggedness_roses: pd.DataFrame
+    """Ruggedness rose for all sites."""
+    trix_table: pd.DataFrame | None
+    """Table containing all pairwise metrics and threshold matrices A and B required for transferability.
+       Columns: transferability, distance, trix, A, B."""
     steep_segments: gpd.GeoDataFrame
+    """Steep segments of sites as LineStrings. Columns: location_id, theta, segment_id, geometry."""
     meta: dict
+    """Meta information including config, timestamp and processing information."""
 
 
 class TRIXAnalyzer:
@@ -138,6 +115,12 @@ class TRIXAnalyzer:
         # TODO: Add failed validations to messages, and add messages to meta.
         # self._validate_inputs(dem=dem, locations_site=locations_site, locations_wind=locations_wind)
 
+        locations_site = locations_site.copy()
+        if not keys.site_id == "index":
+            locations_site = locations_site.set_index(keys.site_id)
+            if locations_reference is not None:
+                locations_reference = locations_reference.copy().set_index(keys.site_id)
+
         sampler = RegularGridXYSampler(da=dem, method="linear")
 
         radial_rix_site = self._compute_rix_results(sampler, locations_site, keys=keys)
@@ -145,15 +128,20 @@ class TRIXAnalyzer:
         rix_roses = self._build_rix_rose(radial_rix_site)
         summary_site = self._build_summary(radial_rix_site, keys=keys)
 
-        trix_values, transferability, A, B = None, None, None, None
+        trix_values, transferability, A, B, trix_table = None, None, None, None, None
         if locations_reference is not None:
             radial_rix_reference = self._compute_rix_results(sampler, locations_reference, keys=keys)
             summary_reference = self._build_summary(radial_rix_reference, keys=keys)
             trix_values, A, B = self._compute_trix(summary_site, summary_reference)
-            distances = self._compute_pairwise_distances_m(locations_site.geometry, locations_reference.geometry) / 1000
+            distances = self._compute_pairwise_distances_km(
+                locations_site.geometry, locations_reference.geometry, keys=keys
+            )
             transferability_ = trix.evaluate_transferability_limits(distances=distances.values, A=A.values, B=B.values)
-            transferability = pd.DataFrame(
-                data=transferability_, index=locations_site[keys.site_id], columns=locations_reference[keys.site_id]
+            index = locations_site.index.rename(keys.site_id)
+            columns = locations_reference.index.rename(keys.reference_id)
+            transferability = pd.DataFrame(data=transferability_, index=index, columns=columns)
+            trix_table = self._build_trix_results(
+                trix=trix_values, A=A, B=B, distances=distances, transferability=transferability, keys=keys
             )
 
         meta = self._build_meta(rix_results=radial_rix_site, keys=keys)
@@ -162,11 +150,8 @@ class TRIXAnalyzer:
             locations_site=locations_site,
             locations_reference=locations_reference,
             summary=summary_site,
-            roses=rix_roses,
-            trix=trix_values,
-            transferability=transferability,
-            distance_A=A,
-            distance_B=B,
+            ruggedness_roses=rix_roses,
+            trix_table=trix_table,
             steep_segments=steep_segments_site,
             meta=meta,
         )
@@ -203,14 +188,14 @@ class TRIXAnalyzer:
 
     def _compute_rix_results(
         self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame, keys: ColumnKeys
-    ) -> dict[object, RadialRixResult]:
+    ) -> dict[object, RadialRuggedness]:
         """Run RIX for every location. Returns dict keyed by location_id."""
         cfg = self._config["parameters"]
         results = {}
 
         for location_id, row in locations.iterrows():
             LOGGER.debug("Computing RIX for location_id=%s", location_id)
-            results[location_id] = compute_regular_rix(
+            results[location_id] = evaluate.compute_regular_rix(
                 location=row.geometry,
                 sampler=sampler,
                 n_angles=cfg["n_angles"],
@@ -223,7 +208,7 @@ class TRIXAnalyzer:
 
         return results
 
-    def _get_steep_segments(self, rix_results: dict[object, RadialRixResult]) -> dict[object, RadialRixResult]:
+    def _get_steep_segments(self, rix_results: dict[object, RadialRuggedness]) -> dict[object, RadialRuggedness]:
         """Run RIX for every location. Returns dict keyed by location_id."""
         steep_segments = {}
 
@@ -233,7 +218,7 @@ class TRIXAnalyzer:
 
         return steep_segments
 
-    def _build_rix_rose(self, radial_results: dict[object, RadialRixResult]) -> pd.DataFrame:
+    def _build_rix_rose(self, radial_results: dict[object, RadialRuggedness]) -> pd.DataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
         rix_rose_rows = []
 
@@ -246,7 +231,7 @@ class TRIXAnalyzer:
         return rix_roses
 
     def _build_summary(
-        self, radial_results: dict[object, RadialRixResult], keys: ColumnKeys = COLUMN_KEYS
+        self, radial_results: dict[object, RadialRuggedness], keys: ColumnKeys = COLUMN_KEYS
     ) -> pd.DataFrame:
         """Build summary DataFrame from radial results."""
         summary_rows = []
@@ -267,24 +252,34 @@ class TRIXAnalyzer:
                 }
             )
 
-        summary = pd.DataFrame(summary_rows)
+        summary = pd.DataFrame(summary_rows).set_index(keys.site_id)
         return summary
 
-    def _build_meta(self, rix_results: dict[object, RadialRixResult], keys: ColumnKeys) -> dict:
+    def _build_meta(self, rix_results: dict[object, RadialRuggedness], keys: ColumnKeys) -> dict:
         records = self._config.copy()
         records[keys.created_at] = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
 
-        crs_ray = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_ray]))
-        crs_dem = list(set(crs for key, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_dem]))
-        message = list(
-            set(message for key, rix_result in rix_results.items() for message in rix_result.meta[keys.message])
+        crs_ray = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_ray]))
+        crs_dem = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_dem]))
+        extent_dem = list(
+            set(extent for _, rix_result in rix_results.items() for extent in rix_result.meta[keys.extent_dem])
         )
-        nan_count = sum([rix_result.meta[keys.nan_count] for key, rix_result in rix_results.items()])
-        records[keys.data_sources] = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
+        resolution_dem = list(
+            set(res for _, rix_result in rix_results.items() for res in rix_result.meta[keys.resolution_dem])
+        )
+        message = list(
+            set(message for _, rix_result in rix_results.items() for message in rix_result.meta[keys.message])
+        )
+        nan_count = sum([rix_result.meta[keys.nan_count] for _, rix_result in rix_results.items()])
+        records[keys.spatial_context] = {
+            keys.source_dem: dict(crs=crs_dem, extent=extent_dem, resolution=resolution_dem, nan_count=nan_count),
+            keys.source_ray: dict(crs=crs_ray),
+            keys.alignment: dict(messages=message),
+        }
         return records
 
     def _build_steep_segments(
-        self, radial_results: dict[object, RadialRixResult], keys: ColumnKeys = COLUMN_KEYS
+        self, radial_results: dict[object, RadialRuggedness], keys: ColumnKeys = COLUMN_KEYS
     ) -> gpd.GeoDataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
         crs = self._config["parameters"]["crs"]
@@ -303,7 +298,7 @@ class TRIXAnalyzer:
         else:
             steep_segments = gpd.GeoDataFrame(
                 columns=[keys.site_id, keys.theta, keys.segment_id, "geometry"], geometry="geometry", crs=crs
-            )
+            ).set_index(keys.site_id)
 
         return steep_segments
 
@@ -324,28 +319,43 @@ class TRIXAnalyzer:
             rix_wind=np.array(summary_reference[keys.rix]),
             elevation_wind=np.array(summary_reference[keys.elevation]),
         )
-        trix_result = pd.DataFrame(
-            data=trix_records, index=summary_site[keys.site_id], columns=summary_reference[keys.site_id]
-        )
+        index = summary_site.index.rename(keys.site_id)
+        columns = summary_reference.index.rename(keys.reference_id)
+
+        trix_result = pd.DataFrame(data=trix_records, index=index, columns=columns)
 
         _A, _B = trix.compute_trix_limit_distances(trix=trix_records, decimals=1)
-        A = pd.DataFrame(data=_A, index=summary_site[keys.site_id], columns=summary_reference[keys.site_id])
-        B = pd.DataFrame(data=_B, index=summary_site[keys.site_id], columns=summary_reference[keys.site_id])
+        A = pd.DataFrame(data=_A, index=index, columns=columns)
+        B = pd.DataFrame(data=_B, index=index, columns=columns)
 
         return trix_result, A, B
 
-    def _compute_pairwise_distances_m(
-        self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries
+    def _compute_pairwise_distances_km(
+        self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries, keys: ColumnKeys
     ) -> pd.DataFrame:
-        """Compute pairwise Euclidean distances between site and wind locations."""
+        """Compute pairwise Euclidean distances [km] between site and wind locations."""
         coords_a = np.vstack([point.coords[0] for point in location_site])
         coords_b = np.vstack([point.coords[0] for point in location_reference])
         distances = pd.DataFrame(
-            data=scipy.spatial.distance.cdist(coords_a, coords_b, metric="euclidean"),
-            index=location_site.index,
-            columns=location_reference.index,
+            data=scipy.spatial.distance.cdist(coords_a, coords_b, metric="euclidean") / 1000,
+            index=location_site.index.rename(keys.site_id),
+            columns=location_reference.index.rename(keys.reference_id),
         )
         return distances
+
+    def _build_trix_results(self, trix, A, B, distances, transferability, keys: ColumnKeys):
+        """Build the T-RIX table containing the transferability, distances between wind data base and site, T-RIX
+        and threshold distances A and B.
+        """
+        trix_ = trix.stack().rename(keys.trix)
+        A_ = A.stack().rename(keys.A)
+        B_ = B.stack().rename(keys.B)
+        distances_ = distances.stack().rename(keys.distance)
+        transferability_ = transferability.stack().rename(keys.transferability)
+
+        table = pd.concat([transferability_, distances_, trix_, A_, B_], axis=1)
+
+        return table
 
 
 def _epsg_int(crs_str: str) -> int | None:

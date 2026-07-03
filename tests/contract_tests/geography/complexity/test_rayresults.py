@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix.results import RayResult
+from phoibe.geography.complexity.rix.results import RayRuggedness
 
 
 class RayResultContract:
@@ -121,7 +121,7 @@ class RadialRixResultContract:
     def test_verify_ray_access_returns_valid_ray(self, radial_result):
         theta = radial_result.angles[0]
         ray_result = radial_result.ray(theta)
-        assert isinstance(ray_result, RayResult)
+        assert isinstance(ray_result, RayRuggedness)
         assert ray_result.theta == theta
 
     def test_verify_ray_access_fails_for_invalid_angle(self, radial_result):

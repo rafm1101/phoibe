@@ -1,4 +1,5 @@
 import dataclasses
+import typing
 
 ANALYZER_DEFAULTS: dict = {
     "name": "T-RIX assessment",
@@ -18,6 +19,8 @@ ANALYZER_DEFAULTS: dict = {
     },
 }
 
+INTERPOLATION_METHODS = typing.Literal["linear", "nearest"]
+
 
 @dataclasses.dataclass(frozen=True)
 class ColumnKeys:
@@ -32,12 +35,22 @@ class ColumnKeys:
     """Metainformation:"""
     created_at: str = "created_at"
     """Creation timestamp."""
-    data_sources: str = "data_sources"
+    spatial_context: str = "spatial_context" ""
     """Information about data sources evaluated."""
-    crs_dem: str = "crs_ray"
+    source_dem: str = "source_dem"
+    """Context about the DEM."""
+    source_ray: str = "source_ray"
+    """Context about the rays."""
+    alignment: str = "internal_alignment"
+    """Context about the alignment of DEM and rays."""
+    crs_dem: str = "crs_dem"
     """CRS of the digital elevation model."""
     crs_ray: str = "crs_ray"
     """CRS of the ray's coordinates."""
+    extent_dem: str = "extent_dem"
+    """Spatial extent of the digital elevation model."""
+    resolution_dem: str = "resolution_dem"
+    """Spatial resolution of the digital elevation model."""
     message: str = "message"
     """Messages appearing during processing."""
     nan_count: str = "nan_count"
@@ -80,3 +93,19 @@ class ColumnKeys:
     """Maximum of directional rix values."""
     slope_critical: str = "slope_critical"
     """Slope threshold considered as steepness."""
+
+    """TRIX evaluation:"""
+    # site_id: str = "site_id"
+    # """ID of assessed site"""
+    reference_id: str = "reference_id"
+    """ID of reference site"""
+    transferability: str = "transferability"
+    """Transferability according to the distance thresholds."""
+    distance: str = "distance"
+    """Distance [km] between site and reference."""
+    trix: str = "trix"
+    """T-RIX."""
+    A: str = "A"
+    """Distance A [km]."""
+    B: str = "B"
+    """Distance B [km]."""

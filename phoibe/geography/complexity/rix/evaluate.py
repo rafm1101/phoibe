@@ -8,7 +8,7 @@ from .config import ColumnKeys
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
 from .profiles import NaNPolicy, RayProfile
-from .results import RadialRixResult, RayResult
+from .results import RadialRuggedness, RayRuggedness
 
 LOGGER = logging.getLogger(__name__)
 
@@ -59,9 +59,9 @@ def compute_regular_rix(
     for theta in angles:
         ray = RayGeometry.from_compass_regular(location=location, theta=theta, R_km=R_km, dr_km=dr_km, crs=crs)
         ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy(nan_policy), keys=keys)
-        results.append(RayResult(profile=ray_profile, slope_critical=slope_critical, keys=keys))
+        results.append(RayRuggedness(profile=ray_profile, slope_critical=slope_critical, keys=keys))
 
-    return RadialRixResult(rays=tuple(results))
+    return RadialRuggedness(rays=tuple(results))
 
 
 def segment_lengths(profile: RayProfile) -> NDArray[np.floating]:

@@ -58,9 +58,13 @@ def plot_raster(
 
     mesh = ax.pcolormesh(X, Y, da_clean.values, **kwargs_pcolormesh)
 
-    ax.grid(visible=True)
     if hasattr(ax, "gridlines"):
-        ax.gridlines(draw_labels=True)
+        gridlines = ax.gridlines(draw_labels=False)  # Erst ohne Labels
+        gridlines.bottom_labels = True
+        gridlines.left_labels = True
+    else:
+        ax.grid(visible=True)
+
     if title is not None:
         ax.set_title(title)
 
