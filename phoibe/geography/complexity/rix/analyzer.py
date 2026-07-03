@@ -267,7 +267,7 @@ class TRIXAnalyzer:
 
         crs_ray = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_ray]))
         crs_dem = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_dem]))
-        bounds_dem = list(
+        extent_dem = list(
             set(extent for _, rix_result in rix_results.items() for extent in rix_result.meta[keys.extent_dem])
         )
         resolution_dem = list(
@@ -278,7 +278,7 @@ class TRIXAnalyzer:
         )
         nan_count = sum([rix_result.meta[keys.nan_count] for _, rix_result in rix_results.items()])
         records[keys.spatial_context] = {
-            keys.source_dem: dict(crs=crs_dem, extent=bounds_dem, resolution=resolution_dem, nan_count=nan_count),
+            keys.source_dem: dict(crs=crs_dem, extent=extent_dem, resolution=resolution_dem, nan_count=nan_count),
             keys.source_ray: dict(crs=crs_ray),
             keys.alignment: dict(messages=message),
         }
