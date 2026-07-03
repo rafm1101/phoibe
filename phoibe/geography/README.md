@@ -22,6 +22,22 @@ Key insights:
 
 1. **Quick access:**
 
+Analyzer:
+
+```python
+import geopandas as gpd
+import shapely
+from complexity.rix import analyzer
+
+sites = gpd.GeoDataFrame(data={"location_id":["WTG1"], "geometry":[shapely.Point(0,0)]}, geometry="geometry)
+references = gpd.GeoDataFrame(data={"location_id":["WDB"], "geometry":[shapely.Point(5,3)]}, geometry="geometry)
+
+rix_analyzer = analyzer.TRIXAnalyzer()
+results = rix_analyzer.run(dem=elevation_map, locations_site=sites, locations_reference=references)
+```
+
+Functional:
+
 ```python
 from complexity.rix import RegularGridXYSampler, compute_regular_rix
 import shapely
@@ -37,6 +53,15 @@ print(result.rix)
 ```
 
 2. **Explore your results:**
+
+Analyzer:
+
+```python
+results.summary
+results.trix_table
+```
+
+Functional:
 
 ```python
 result.describe()
@@ -68,12 +93,13 @@ Within `rix`:
 
 - `config`: Gathered configurations used throughout the subpackage.
 - `geometry`: Definition of rays as representatives in 2D world.
-- `fieldsampler`: Sample from 2D fields.
 - `profiles`: Generate 1D profiles along rays.
-- `analyse`: Computations: Functional interface for single locations.
-- `results`: Gather and provide results.
-- `analyzer`: Computations: Interface for full T-RIX assessment.
+- `fieldsampler`: Sample from 2D fields.
+- `results`: Gather and provide results for single locations.
+- `evaluate`: Computations, functional interface for single locations.
 - `trix`: T-RIX computations and evaluations.
+- `analyzer`: Interface for full T-RIX assessment.
+- `writer`: Serialise the assessment results.
 
 Within `crs`:
 
@@ -82,6 +108,7 @@ Within `crs`:
 Within `plot`:
 
 - `raster`: Plot raster data bringing their own CRS or not.
+- `landmarks`: Plot landmarks (on some raster plot).
 
 ### Best practices and considerations
 
@@ -97,3 +124,11 @@ Within `plot`:
    1. The assessment permits computing RIX in GCS coordinates. However, expect serious distortions in the computations. _Avoid unless you have a specific reason._
    1. Coarse level-crossing grids + nearest-neighbor: Extreme loss of slope detail. Use linear interpolation and finer grids instead.
    1. Mismatched ray resolution: Very short `dr_km` with coarse elevation data means you're interpolating between widely-spaced source points. Choose consistent scales.
+1. Objects separate concerns:
+   - `RayGeometry` represents a ray only. It may change its representation to another CRS.
+   - `RayProfile` represents the elevation profile along its ray. For its instantiation, a `FieldSampler` is required.
+   - `FieldSampler` samples coordinates from a 2D field. In case of a CRS mismatch, it requests a matching representation of the coordinates in its own CRS.
+   - `RayResult` evaluates a single `RayProfile` instance.
+   - `RadialRixResult` collects multiples `RayResult`s.
+   - `RIXAnalyzer` manages the RIX assessment, and if also reference locations are provided, also the full TRIX assessment of representativity.
+   - `RIXWriter` serializes the results.
