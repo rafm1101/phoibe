@@ -1,4 +1,5 @@
 import dataclasses
+import typing
 
 ANALYZER_DEFAULTS: dict = {
     "name": "T-RIX assessment",
@@ -17,6 +18,8 @@ ANALYZER_DEFAULTS: dict = {
         "method": "linear",
     },
 }
+
+INTERPOLATION_METHODS = typing.Literal["linear", "nearest"]
 
 
 @dataclasses.dataclass(frozen=True)

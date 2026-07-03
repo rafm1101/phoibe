@@ -4,7 +4,7 @@ import functools
 import numpy as np
 import shapely
 
-from . import analyse
+from . import evaluate
 from .config import ColumnKeys
 from .profiles import RayProfile
 
@@ -13,11 +13,18 @@ COLUMN_KEYS = ColumnKeys()
 
 @dataclasses.dataclass(frozen=True)
 class RayProfileMeta:
+    """Information about a RayProfile."""
+
     crs_ray: tuple[str, str] | None
+    """CRS for the ray coordinates."""
     crs_dem: tuple[str, str] | None
+    """CRS for the DEM coordinates."""
     resolution: float
+    """Resolution of the DEM."""
     n_oob: str
+    """Number of ray point that are out of the DEM bounds."""
     messages: str
+    """Messages related to the ray."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -52,24 +59,24 @@ class RayResult:
     @functools.cached_property
     def total_length_m(self) -> float:
         """Total physical length of the ray [m]."""
-        return analyse.total_length_m(self.profile)
+        return evaluate.total_length_m(self.profile)
 
     @functools.cached_property
     def steep_length_m(self) -> float:
         """Total length of steep segments [m]."""
-        seg_lengths = analyse.segment_lengths(self.profile)
-        mask = analyse.steep_mask(self.profile, self.slope_critical)
+        seg_lengths = evaluate.segment_lengths(self.profile)
+        mask = evaluate.steep_mask(self.profile, self.slope_critical)
         return float(np.sum(seg_lengths[mask]))
 
     @functools.cached_property
     def steep_segments(self) -> tuple[shapely.geometry.LineString, ...]:
         """Geometric LineStrings of steep segments."""
-        return tuple(analyse.steep_ray_segments(self.profile, self.slope_critical))
+        return tuple(evaluate.steep_ray_segments(self.profile, self.slope_critical))
 
     @functools.cached_property
     def max_abs_slope(self) -> float:
         """Maximum absolute slope along the ray."""
-        slope_arr = analyse.slopes(self.profile)
+        slope_arr = evaluate.slopes(self.profile)
         if slope_arr.size == 0 or np.isnan(slope_arr).all():
             return np.nan
         return float(np.nanmax(np.abs(slope_arr)))
@@ -82,7 +89,7 @@ class RayResult:
     @property
     def ruggedness(self) -> float:
         """Fraction of ray length that is steep (= RIX for this ray)."""
-        return analyse.ruggedness(self.profile, self.slope_critical)
+        return evaluate.ruggedness(self.profile, self.slope_critical)
 
     def describe(self) -> dict[str, float]:
         """Summary statistics for this ray."""
@@ -136,7 +143,9 @@ class RadialRixResult:
     rays: tuple[RayResult, ...] = dataclasses.field(repr=False)
     """Collection of rays being evaluated."""
     _ray_by_angle: dict[float, RayResult] = dataclasses.field(init=False, repr=False, compare=False)
+    """Access ray results by their angle."""
     keys: ColumnKeys = dataclasses.field(repr=False, default=COLUMN_KEYS)
+    """Column keys to employ."""
 
     def __post_init__(self):
         """Build internal index for fast theta lookups."""

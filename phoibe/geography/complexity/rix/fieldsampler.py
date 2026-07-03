@@ -1,5 +1,5 @@
 import logging
-from typing import Literal, Protocol
+import typing
 
 import numpy as np
 import pyproj
@@ -7,16 +7,14 @@ import scipy.interpolate
 import xarray
 from numpy.typing import NDArray
 
-from .config import ColumnKeys
+from .config import INTERPOLATION_METHODS, ColumnKeys
 
 LOGGER = logging.getLogger(__name__)
 
 COLUMN_KEYS = ColumnKeys()
 
-INTERPOLATION_METHODS = Literal["linear", "nearest"]
 
-
-class FieldSampler(Protocol):
+class FieldSampler(typing.Protocol):
     @property
     def crs(self) -> pyproj.CRS | None:
         """Return the sampler's CRS in case it has one."""
