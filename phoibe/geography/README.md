@@ -29,8 +29,8 @@ import geopandas as gpd
 import shapely
 from complexity.rix import analyzer
 
-sites = gpd.GeoDataFrame(data={"location_id":["WTG1"], "geometry":[shapely.Point(0,0)]}, geometry="geometry)
-references = gpd.GeoDataFrame(data={"location_id":["WDB"], "geometry":[shapely.Point(5,3)]}, geometry="geometry)
+sites = gpd.GeoDataFrame(data={"location_id":["WTG1"], "geometry":[shapely.Point(0,0)]}, geometry="geometry")
+references = gpd.GeoDataFrame(data={"location_id":["WDB"], "geometry":[shapely.Point(5,3)]}, geometry="geometry")
 
 rix_analyzer = analyzer.TRIXAnalyzer()
 results = rix_analyzer.run(dem=elevation_map, locations_site=sites, locations_reference=references)
@@ -128,7 +128,7 @@ Within `plot`:
    - `RayGeometry` represents a ray only. It may change its representation to another CRS.
    - `RayProfile` represents the elevation profile along its ray. For its instantiation, a `FieldSampler` is required.
    - `FieldSampler` samples coordinates from a 2D field. In case of a CRS mismatch, it requests a matching representation of the coordinates in its own CRS.
-   - `RayResult` evaluates a single `RayProfile` instance.
-   - `RadialRixResult` collects multiples `RayResult`s.
-   - `RIXAnalyzer` manages the RIX assessment, and if also reference locations are provided, also the full TRIX assessment of representativity.
+   - `RayRuggedness` evaluates a single `RayProfile` instance.
+   - `RadialRuggedness` collects multiples `RayRuggedness`es.
+   - `TRIXAnalyzer` manages the RIX assessment, and if also reference locations are provided, also the full TRIX assessment of representativity.
    - `RIXWriter` serializes the results.
