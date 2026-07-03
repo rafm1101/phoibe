@@ -26,35 +26,23 @@ COLUMN_KEYS = ColumnKeys()
 
 @dataclasses.dataclass(frozen=True)
 class ResultSummary:
-    """Immutable container for a completed RIX analysis run.
-
-    Attributes
-    ----------
-    locations_site
-        Assessed sites.
-    locations_reference
-        Assessed reference locations, e.g. of a wind data base.
-    summary
-        Sites' RIX assessment including location_id, rix, rix_std, n_rays, slope_critical.
-    ruggedness_roses
-        RIX rose for all sites.
-    trix_table
-        Table containing all pairwise metrics and threshold matrices A and B required for transferability.
-        Columns: transferability, distance, trix, A, B.
-    steep_segments
-        Steep segments of sites as LineStrings. Columns: location_id, theta,
-        segment_id, geometry.
-    meta
-        Meta information including config, timestamp.
-    """
+    """Immutable container for a completed RIX analysis run."""
 
     locations_site: gpd.GeoDataFrame
+    """Assessed sites."""
     locations_reference: gpd.GeoDataFrame | None
+    """Assessed reference locations, e.g. of a wind data base."""
     summary: pd.DataFrame
+    """Sites' RIX assessment including location_id, rix, rix_std, n_rays, slope_critical."""
     ruggedness_roses: pd.DataFrame
+    """Ruggedness rose for all sites."""
     trix_table: pd.DataFrame | None
+    """Table containing all pairwise metrics and threshold matrices A and B required for transferability.
+       Columns: transferability, distance, trix, A, B."""
     steep_segments: gpd.GeoDataFrame
+    """Steep segments of sites as LineStrings. Columns: location_id, theta, segment_id, geometry."""
     meta: dict
+    """Meta information including config, timestamp and processing information."""
 
 
 class TRIXAnalyzer:
