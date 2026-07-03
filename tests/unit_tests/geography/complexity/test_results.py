@@ -3,7 +3,7 @@ import pytest
 import shapely.geometry
 
 from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayGeometry, RayProfile
-from phoibe.geography.complexity.rix.results import RadialRixResult, RayResult
+from phoibe.geography.complexity.rix.results import RadialRuggedness, RayRuggedness
 
 
 class DummySampler:
@@ -24,7 +24,7 @@ def ray_result(request, origin):
     ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=dr_km)
     sampler = DummySampler(z=z_values)
     profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=nan_policy)
-    return RayResult(profile=profile, slope_critical=slope_critical)
+    return RayRuggedness(profile=profile, slope_critical=slope_critical)
 
 
 @pytest.fixture
@@ -40,9 +40,9 @@ def radial_result(request, origin):
         ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=dr_km)
         sampler = DummySampler(z=z_values)
         profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
-        ray_results.append(RayResult(profile=profile, slope_critical=slope_critical))
+        ray_results.append(RayRuggedness(profile=profile, slope_critical=slope_critical))
 
-    return RadialRixResult(rays=tuple(ray_results))
+    return RadialRuggedness(rays=tuple(ray_results))
 
 
 @pytest.mark.parametrize("ray_result", [([0, 1, 2], 0.5, 45.0, NaNPolicy.ERROR, 0.03)], indirect=["ray_result"])
@@ -125,14 +125,14 @@ def test_ray_result_caches_properties(ray_result):
 
 def test_radial_result_raises_valueerrer_given_empty_rays():
     with pytest.raises(ValueError, match="at least one ray"):
-        RadialRixResult(rays=tuple())
+        RadialRuggedness(rays=tuple())
 
 
 @pytest.mark.parametrize("ray_result", [([0, 1, 2], 0.5, 45.0, NaNPolicy.ERROR, 0.3)], indirect=["ray_result"])
 def test_radial_result_rejects_given_mixed_slope_critical(ray_result):
-    other_ray_result = RayResult(profile=ray_result.profile, slope_critical=0.7)
+    other_ray_result = RayRuggedness(profile=ray_result.profile, slope_critical=0.7)
     with pytest.raises(ValueError, match="same slope_critical"):
-        RadialRixResult(rays=(ray_result, other_ray_result))
+        RadialRuggedness(rays=(ray_result, other_ray_result))
 
 
 @pytest.mark.parametrize("radial_result", [(4, [0, 1, 2], 0.5, 0.3)], indirect=["radial_result"])

@@ -28,7 +28,7 @@ class RayProfileMeta:
 
 
 @dataclasses.dataclass(frozen=True)
-class RayResult:
+class RayRuggedness:
     """Analysis result for a single ray direction.
 
     Combines the profile with computed metrics for inspection and debugging.
@@ -134,16 +134,16 @@ class RayResult:
 
 
 @dataclasses.dataclass(frozen=True)
-class RadialRixResult:
+class RadialRuggedness:
     """Radial RIX analysis aggregating multiple ray directions.
 
     Provides access to individual rays, aggregate metrics, messages, and various views
     of the data for inspection and validation.
     """
 
-    rays: tuple[RayResult, ...] = dataclasses.field(repr=False)
+    rays: tuple[RayRuggedness, ...] = dataclasses.field(repr=False)
     """Collection of rays being evaluated."""
-    _ray_by_angle: dict[float, RayResult] = dataclasses.field(init=False, repr=False, compare=False)
+    _ray_by_angle: dict[float, RayRuggedness] = dataclasses.field(init=False, repr=False, compare=False)
     """Access ray results by their angle."""
     keys: ColumnKeys = dataclasses.field(repr=False, default=COLUMN_KEYS)
     """Column keys to employ."""
@@ -220,7 +220,7 @@ class RadialRixResult:
         }
         return records
 
-    def ray(self, theta: float) -> RayResult:
+    def ray(self, theta: float) -> RayRuggedness:
         """Get RayResult for a specific angle.
 
         Parameters

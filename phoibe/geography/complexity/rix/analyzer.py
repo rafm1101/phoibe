@@ -15,7 +15,7 @@ import yaml
 from . import evaluate, trix
 from .config import ANALYZER_DEFAULTS, ColumnKeys
 from .fieldsampler import RegularGridXYSampler
-from .results import RadialRixResult
+from .results import RadialRuggedness
 
 LOGGER = logging.getLogger(__name__)
 
@@ -186,7 +186,7 @@ class TRIXAnalyzer:
 
     def _compute_rix_results(
         self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame, keys: ColumnKeys
-    ) -> dict[object, RadialRixResult]:
+    ) -> dict[object, RadialRuggedness]:
         """Run RIX for every location. Returns dict keyed by location_id."""
         cfg = self._config["parameters"]
         results = {}
@@ -206,7 +206,7 @@ class TRIXAnalyzer:
 
         return results
 
-    def _get_steep_segments(self, rix_results: dict[object, RadialRixResult]) -> dict[object, RadialRixResult]:
+    def _get_steep_segments(self, rix_results: dict[object, RadialRuggedness]) -> dict[object, RadialRuggedness]:
         """Run RIX for every location. Returns dict keyed by location_id."""
         steep_segments = {}
 
@@ -216,7 +216,7 @@ class TRIXAnalyzer:
 
         return steep_segments
 
-    def _build_rix_rose(self, radial_results: dict[object, RadialRixResult]) -> pd.DataFrame:
+    def _build_rix_rose(self, radial_results: dict[object, RadialRuggedness]) -> pd.DataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
         rix_rose_rows = []
 
@@ -229,7 +229,7 @@ class TRIXAnalyzer:
         return rix_roses
 
     def _build_summary(
-        self, radial_results: dict[object, RadialRixResult], keys: ColumnKeys = COLUMN_KEYS
+        self, radial_results: dict[object, RadialRuggedness], keys: ColumnKeys = COLUMN_KEYS
     ) -> pd.DataFrame:
         """Build summary DataFrame from radial results."""
         summary_rows = []
@@ -253,7 +253,7 @@ class TRIXAnalyzer:
         summary = pd.DataFrame(summary_rows)
         return summary
 
-    def _build_meta(self, rix_results: dict[object, RadialRixResult], keys: ColumnKeys) -> dict:
+    def _build_meta(self, rix_results: dict[object, RadialRuggedness], keys: ColumnKeys) -> dict:
         records = self._config.copy()
         records[keys.created_at] = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
 
@@ -277,7 +277,7 @@ class TRIXAnalyzer:
         return records
 
     def _build_steep_segments(
-        self, radial_results: dict[object, RadialRixResult], keys: ColumnKeys = COLUMN_KEYS
+        self, radial_results: dict[object, RadialRuggedness], keys: ColumnKeys = COLUMN_KEYS
     ) -> gpd.GeoDataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
         crs = self._config["parameters"]["crs"]
