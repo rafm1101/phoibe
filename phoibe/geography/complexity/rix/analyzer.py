@@ -127,8 +127,12 @@ class TRIXAnalyzer:
             radial_rix_reference = self._compute_rix_results(sampler, locations_reference, keys=keys)
             summary_reference = self._build_summary(radial_rix_reference, keys=keys)
             trix_values, A, B = self._compute_trix(summary_site, summary_reference)
+            # TODO: Fix index/id-column behaviour. Here location_id-columns get lost.
+            # TODO: Possibly set index for the internal stuff at a very start.
             distances = self._compute_pairwise_distances_km(
-                locations_site.geometry, locations_reference.geometry, keys=keys
+                locations_site.set_index(keys.site_id).geometry,
+                locations_reference.set_index(keys.site_id).geometry,
+                keys=keys,
             )
             transferability_ = trix.evaluate_transferability_limits(distances=distances.values, A=A.values, B=B.values)
             index = locations_site[keys.site_id].rename(keys.site_id)
@@ -187,7 +191,7 @@ class TRIXAnalyzer:
         cfg = self._config["parameters"]
         results = {}
 
-        for location_id, row in locations.iterrows():
+        for location_id, row in locations.set_index(keys=keys.site_id).iterrows():
             LOGGER.debug("Computing RIX for location_id=%s", location_id)
             results[location_id] = evaluate.compute_regular_rix(
                 location=row.geometry,
