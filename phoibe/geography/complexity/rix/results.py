@@ -42,6 +42,7 @@ class RayResult:
 
     @property
     def meta(self) -> RayProfileMeta:
+        """Metadata relating to `RayProfile`. Includes CRS, (resolution), out-of-bound point count, messages."""
         a = RayProfileMeta(
             crs_ray=self.profile.meta.get(self.keys.crs_ray, None),
             crs_dem=self.profile.meta.get(self.keys.crs_dem, None),
@@ -205,11 +206,15 @@ class RadialRixResult:
     def meta(self) -> dict:
         crs_ray = list({ray.profile.meta[self.keys.crs_ray] for ray in self.rays})
         crs_dem = list({ray.profile.meta[self.keys.crs_dem] for ray in self.rays})
+        extent_dem = list({ray.profile.meta[self.keys.extent_dem] for ray in self.rays})
+        resolution_dem = list({ray.profile.meta[self.keys.resolution_dem] for ray in self.rays})
         message = list({ray.profile.meta[self.keys.message] for ray in self.rays})
         nan_count = int(np.sum([ray.profile.meta[self.keys.nan_count] for ray in self.rays], dtype=float))
         records = {
             self.keys.crs_ray: crs_ray,
             self.keys.crs_dem: crs_dem,
+            self.keys.extent_dem: extent_dem,
+            self.keys.resolution_dem: resolution_dem,
             self.keys.message: message,
             self.keys.nan_count: nan_count,
         }

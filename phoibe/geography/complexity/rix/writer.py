@@ -64,7 +64,7 @@ class RIXWriter:
        1. Profile SUMMARY writes:
             summary.yaml      - manifest: metadata, config, artifact references
             rix_summary.csv   - RIX per location + per-angle ruggednesses
-            trix.csv          - pairwise TRIX table (omitted if result.trix is None)
+            trix.csv          - pairwise TRIX table (omitted if result.trix_table is None)
        1. Profile FULL writes everything in SUMMARY plus:
             rix_details.gpkg  - GeoPackage with four layers:
                                 locations_site                 (Point)
@@ -99,7 +99,7 @@ class RIXWriter:
         if self._profile is WriterProfile.FULL:
             if locations_site is None:
                 raise ValueError("WriterProfile.FULL requires locations_a.")
-            if result.trix is not None and locations_reference is None:
+            if result.trix_table is not None and locations_reference is None:
                 raise ValueError("WriterProfile.FULL with TRIX requires locations_b.")
 
     def write(self, directory: str | pathlib.Path) -> None:
@@ -148,7 +148,7 @@ class RIXWriter:
         artifacts: dict = {
             "rix_summary": self._filenames["rix_summary"],
         }
-        if result.trix is not None:
+        if result.trix_table is not None:
             artifacts["trix"] = self._filenames["trix_table"]
         if self._profile is WriterProfile.FULL:
             artifacts["geopackage"] = self._filenames["geopackage"]
@@ -180,8 +180,8 @@ class RIXWriter:
         self._result.steep_segments.to_file(filepath, layer=self._gpkg_layers["ruggedness"], driver="GPKG")
         LOGGER.debug("Wrote layer '%s'", self._gpkg_layers["ruggedness"])
 
-        if self._result.trix is not None:
-            _write_dataframe_to_gpkg(self._result.trix, filepath, layer=self._gpkg_layers["trix"])
+        if self._result.trix_table is not None:
+            _write_dataframe_to_gpkg(self._result.trix_table, filepath, layer=self._gpkg_layers["trix"])
             LOGGER.debug("Wrote layer '%s'", self._gpkg_layers["trix"])
 
         LOGGER.debug("Wrote GeoPackage %s", filepath)

@@ -12,9 +12,8 @@ import scipy.spatial.distance
 import xarray
 import yaml
 
-from . import trix
+from . import evaluate, trix
 from .config import ANALYZER_DEFAULTS, ColumnKeys
-from .evaluate import compute_regular_rix
 from .fieldsampler import RegularGridXYSampler
 from .results import RadialRixResult
 
@@ -39,19 +38,9 @@ class ResultSummary:
         Sites' RIX assessment including location_id, rix, rix_std, n_rays, slope_critical.
     ruggedness_roses
         RIX rose for all sites.
-    trix
-        Pairwise TRIX table (site x reference) if reference is provided. Otherwise `None`.
-        Columns: id_a, id_b, rix_a, rix_b, trix_diff, trix_ratio.
     trix_table
-        Table containing all pairwise metrics required for transferability.
+        Table containing all pairwise metrics and threshold matrices A and B required for transferability.
         Columns: transferability, distance, trix, A, B.
-    transferability
-        Transferability matrix between site and reference.
-        Values from 2 (below distance threshold A) to 0 (above limit threshold B).
-    distance_A
-        Distance treshold matrix A if reference is provided. Otherwise `None`.
-    distance_B
-        Distance treshold matrix B if reference is provided. Otherwise `None`.
     steep_segments
         Steep segments of sites as LineStrings. Columns: location_id, theta,
         segment_id, geometry.
@@ -63,11 +52,7 @@ class ResultSummary:
     locations_reference: gpd.GeoDataFrame | None
     summary: pd.DataFrame
     ruggedness_roses: pd.DataFrame
-    trix: pd.DataFrame | None
     trix_table: pd.DataFrame | None
-    transferability: pd.DataFrame | None
-    distance_A: pd.DataFrame | None
-    distance_B: pd.DataFrame | None
     steep_segments: gpd.GeoDataFrame
     meta: dict
 
@@ -172,11 +157,7 @@ class TRIXAnalyzer:
             locations_reference=locations_reference,
             summary=summary_site,
             ruggedness_roses=rix_roses,
-            trix=trix_values,
             trix_table=trix_table,
-            transferability=transferability,
-            distance_A=A,
-            distance_B=B,
             steep_segments=steep_segments_site,
             meta=meta,
         )
@@ -220,7 +201,7 @@ class TRIXAnalyzer:
 
         for location_id, row in locations.iterrows():
             LOGGER.debug("Computing RIX for location_id=%s", location_id)
-            results[location_id] = compute_regular_rix(
+            results[location_id] = evaluate.compute_regular_rix(
                 location=row.geometry,
                 sampler=sampler,
                 n_angles=cfg["n_angles"],
@@ -286,11 +267,21 @@ class TRIXAnalyzer:
 
         crs_ray = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_ray]))
         crs_dem = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_dem]))
+        bounds_dem = list(
+            set(extent for _, rix_result in rix_results.items() for extent in rix_result.meta[keys.extent_dem])
+        )
+        resolution_dem = list(
+            set(res for _, rix_result in rix_results.items() for res in rix_result.meta[keys.resolution_dem])
+        )
         message = list(
             set(message for _, rix_result in rix_results.items() for message in rix_result.meta[keys.message])
         )
         nan_count = sum([rix_result.meta[keys.nan_count] for _, rix_result in rix_results.items()])
-        records[keys.data_sources] = dict(crs_ray=crs_ray, crs_dem=crs_dem, message=message, nan_count=nan_count)
+        records[keys.spatial_context] = {
+            keys.source_dem: dict(crs=crs_dem, extent=bounds_dem, resolution=resolution_dem, nan_count=nan_count),
+            keys.source_ray: dict(crs=crs_ray),
+            keys.alignment: dict(messages=message),
+        }
         return records
 
     def _build_steep_segments(
@@ -359,12 +350,17 @@ class TRIXAnalyzer:
         return distances
 
     def _build_trix_results(self, trix, A, B, distances, transferability, keys: ColumnKeys):
+        """Build the T-RIX table containing the transferability, distances between wind data base and site, T-RIX
+        and threshold distances A and B.
+        """
         trix_ = trix.stack().rename(keys.trix)
         A_ = A.stack().rename(keys.A)
         B_ = B.stack().rename(keys.B)
         distances_ = distances.stack().rename(keys.distance)
         transferability_ = transferability.stack().rename(keys.transferability)
+
         result = pd.concat([transferability_, distances_, trix_, A_, B_], axis=1)
+
         return result
 
 

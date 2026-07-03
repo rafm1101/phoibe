@@ -20,6 +20,11 @@ class FieldSampler(typing.Protocol):
         """Return the sampler's CRS in case it has one."""
         raise NotImplementedError
 
+    @property
+    def meta(self) -> pyproj.CRS | None:
+        """Return the sampler's meta information in case it is `rasterio`."""
+        raise NotImplementedError
+
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         """Sample field values along a path.
 
@@ -59,6 +64,7 @@ class RegularGridXYSampler:
             raise ValueError(f"Field must have '{keys.x}' and '{keys.y}' coordinates.")
         self.da = da
         self.method = method
+        self.keys = keys
 
         x = da[keys.x].values
         y = da[keys.y].values
@@ -76,6 +82,15 @@ class RegularGridXYSampler:
             return self.da.rio.crs
         else:
             return None
+
+    @property
+    def meta(self) -> dict:
+        result = {}
+        if hasattr(self.da, "rio"):
+            result[self.keys.crs_dem] = self.da.rio.crs.to_authority()
+            result[self.keys.extent_dem] = self.da.rio.bounds()
+            result[self.keys.resolution_dem] = self.da.rio.resolution()
+        return result
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         _xs = np.asarray(xs, dtype=float)
