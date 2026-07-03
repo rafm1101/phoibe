@@ -115,6 +115,12 @@ class TRIXAnalyzer:
         # TODO: Add failed validations to messages, and add messages to meta.
         # self._validate_inputs(dem=dem, locations_site=locations_site, locations_wind=locations_wind)
 
+        locations_site = locations_site.copy()
+        if not keys.site_id == "index":
+            locations_site = locations_site.set_index(keys.site_id)
+            if locations_reference is not None:
+                locations_reference = locations_reference.copy().set_index(keys.site_id)
+
         sampler = RegularGridXYSampler(da=dem, method="linear")
 
         radial_rix_site = self._compute_rix_results(sampler, locations_site, keys=keys)
@@ -127,16 +133,12 @@ class TRIXAnalyzer:
             radial_rix_reference = self._compute_rix_results(sampler, locations_reference, keys=keys)
             summary_reference = self._build_summary(radial_rix_reference, keys=keys)
             trix_values, A, B = self._compute_trix(summary_site, summary_reference)
-            # TODO: Fix index/id-column behaviour. Here location_id-columns get lost.
-            # TODO: Possibly set index for the internal stuff at a very start.
             distances = self._compute_pairwise_distances_km(
-                locations_site.set_index(keys.site_id).geometry,
-                locations_reference.set_index(keys.site_id).geometry,
-                keys=keys,
+                locations_site.geometry, locations_reference.geometry, keys=keys
             )
             transferability_ = trix.evaluate_transferability_limits(distances=distances.values, A=A.values, B=B.values)
-            index = locations_site[keys.site_id].rename(keys.site_id)
-            columns = locations_reference[keys.site_id].rename(keys.reference_id)
+            index = locations_site.index.rename(keys.site_id)
+            columns = locations_reference.index.rename(keys.reference_id)
             transferability = pd.DataFrame(data=transferability_, index=index, columns=columns)
             trix_table = self._build_trix_results(
                 trix=trix_values, A=A, B=B, distances=distances, transferability=transferability, keys=keys
@@ -191,7 +193,7 @@ class TRIXAnalyzer:
         cfg = self._config["parameters"]
         results = {}
 
-        for location_id, row in locations.set_index(keys=keys.site_id).iterrows():
+        for location_id, row in locations.iterrows():
             LOGGER.debug("Computing RIX for location_id=%s", location_id)
             results[location_id] = evaluate.compute_regular_rix(
                 location=row.geometry,
@@ -250,7 +252,7 @@ class TRIXAnalyzer:
                 }
             )
 
-        summary = pd.DataFrame(summary_rows)
+        summary = pd.DataFrame(summary_rows).set_index(keys.site_id)
         return summary
 
     def _build_meta(self, rix_results: dict[object, RadialRuggedness], keys: ColumnKeys) -> dict:
@@ -296,7 +298,7 @@ class TRIXAnalyzer:
         else:
             steep_segments = gpd.GeoDataFrame(
                 columns=[keys.site_id, keys.theta, keys.segment_id, "geometry"], geometry="geometry", crs=crs
-            )
+            ).set_index(keys.site_id)
 
         return steep_segments
 
@@ -317,8 +319,8 @@ class TRIXAnalyzer:
             rix_wind=np.array(summary_reference[keys.rix]),
             elevation_wind=np.array(summary_reference[keys.elevation]),
         )
-        index = summary_site[keys.site_id].rename(keys.site_id)
-        columns = summary_reference[keys.site_id].rename(keys.reference_id)
+        index = summary_site.index.rename(keys.site_id)
+        columns = summary_reference.index.rename(keys.reference_id)
 
         trix_result = pd.DataFrame(data=trix_records, index=index, columns=columns)
 
