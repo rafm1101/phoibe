@@ -21,6 +21,16 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
 | `layered` |   | Profile and validate data in layers. Prototype. |
 | `synthetic_data` |  | Generate 2D-fields and wtg scada data timeseries (including data mess) for demonstration. |
 
+## Demonstrations
+
+Notebooks demonstrate how to use certain parts of the package. Their prefixes mean:
+
+| Prefix | Contents |
+|--------|----------|
+| `00-` | Purely experimental code w/o any guarantee, i.e. fun with something. |
+| `01-` | Introduction to and demonstration of package functionality. As such comes with explanations. |
+| `02-` | Examples of package behaviour with edge cases. |
+
 <!--### Guidelines-->
 
 ## Observed code sweets and sours
