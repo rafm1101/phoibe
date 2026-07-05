@@ -109,3 +109,5 @@ class ColumnKeys:
     """Distance A [km]."""
     B: str = "B"
     """Distance B [km]."""
+    geometry: str = "geometry"
+    """Coordinates of geometric objects."""
