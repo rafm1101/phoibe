@@ -139,7 +139,8 @@ PRODUCT_DEFINITION_TRIX = {
                     "unit": "m",
                 },
                 COLUMN_KEYS.rix: {
-                    "description": "Mean ruggedness index across all ray directions (Riley et al.).",
+                    "description": "Mean ruggedness index across all ray directions. "
+                    "Proportion of the total length of all steep segments among the total length of all rays.",
                     "unit": None,
                 },
                 COLUMN_KEYS.rix_std: {
