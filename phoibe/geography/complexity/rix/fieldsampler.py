@@ -7,7 +7,8 @@ import scipy.interpolate
 import xarray
 from numpy.typing import NDArray
 
-from .config import INTERPOLATION_METHODS, ColumnKeys
+from .config import INTERPOLATION_METHODS
+from .keys import ColumnKeys
 
 LOGGER = logging.getLogger(__name__)
 

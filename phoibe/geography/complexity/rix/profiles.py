@@ -6,9 +6,9 @@ import numpy as np
 from ergaleiothiki.tididi.validate_numerics import _validate_positive
 from numpy.typing import NDArray
 
-from .config import ColumnKeys
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
+from .keys import ColumnKeys
 
 LOGGER = logging.getLogger(__name__)
 

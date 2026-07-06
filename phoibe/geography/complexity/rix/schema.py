@@ -1,6 +1,6 @@
-from . import config
+from .keys import ColumnKeys
 
-COLUMN_KEYS = config.ColumnKeys()
+COLUMN_KEYS = ColumnKeys()
 
 PRODUCT_DEFINITION_TRIX = {
     "name": "T-RIX assessment",

@@ -13,8 +13,9 @@ import xarray
 import yaml
 
 from . import evaluate, trix
-from .config import ANALYZER_DEFAULTS, ColumnKeys
+from .config import ANALYZER_DEFAULTS
 from .fieldsampler import RegularGridXYSampler
+from .keys import ColumnKeys
 from .results import RadialRuggedness
 
 LOGGER = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ import numpy as np
 import shapely
 
 from . import evaluate
-from .config import ColumnKeys
+from .keys import ColumnKeys
 from .profiles import RayProfile
 
 COLUMN_KEYS = ColumnKeys()
