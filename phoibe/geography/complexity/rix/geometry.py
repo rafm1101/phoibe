@@ -156,4 +156,4 @@ class RayGeometry:
             xs_to, ys_to = transformer.transform(self.xs, self.ys)
             location = shapely.geometry.Point(xs_to[0], ys_to[0])
             ray = RayGeometry(location=location, theta=self.theta, r_m=self.r_m, xs=xs_to, ys=ys_to, crs=crs)
-            return ray, f"Transformed ray CRS{self.crs.to_authority()} to DEM CRS{crs.to_authority()} for sampling."
+            return ray, f"Transformed ray CRS {self.crs.to_string()} to DEM CRS {crs.to_string()} for sampling."

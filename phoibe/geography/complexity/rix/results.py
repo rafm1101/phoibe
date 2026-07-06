@@ -5,7 +5,7 @@ import numpy as np
 import shapely
 
 from . import evaluate
-from .keys import ColumnKeys
+from .keys import ColumnKeys, _get_parameter
 from .profiles import RayProfile
 
 COLUMN_KEYS = ColumnKeys()
@@ -44,11 +44,11 @@ class RayRuggedness:
     def meta(self) -> RayProfileMeta:
         """Metadata relating to `RayProfile`. Includes CRS, (resolution), out-of-bound point count, messages."""
         ray_profile_meta = RayProfileMeta(
-            crs_ray=self.profile.meta.get(self.keys.crs_ray, None),
-            crs_dem=self.profile.meta.get(self.keys.crs_dem, None),
+            crs_ray=_get_parameter(self.profile.meta, "rays", self.keys.crs_ray, strict=False),
+            crs_dem=_get_parameter(self.profile.meta, "dem", self.keys.crs_dem, strict=False),
             resolution=0,
-            n_oob=str(self.profile.meta.get(self.keys.nan_count, None)),
-            messages=str(self.profile.meta.get(self.keys.message, None)),
+            n_oob=_get_parameter(self.profile.meta, "rays", self.keys.nan_count, strict=False),
+            messages=str(_get_parameter(self.profile.meta, "algnment", self.keys.message, strict=False)),
         )
         return ray_profile_meta
 
@@ -206,19 +206,27 @@ class RadialRuggedness:
 
     @property
     def meta(self) -> dict:
-        crs_ray = list({ray.profile.meta[self.keys.crs_ray] for ray in self.rays})
-        crs_dem = list({ray.profile.meta[self.keys.crs_dem] for ray in self.rays})
-        extent_dem = list({ray.profile.meta[self.keys.extent_dem] for ray in self.rays})
-        resolution_dem = list({ray.profile.meta[self.keys.resolution_dem] for ray in self.rays})
-        message = list({ray.profile.meta[self.keys.message] for ray in self.rays})
-        nan_count = int(np.sum([ray.profile.meta[self.keys.nan_count] for ray in self.rays], dtype=float))
+        crs_ray = list({_get_parameter(ray.profile.meta, "rays", self.keys.crs_ray) for ray in self.rays})
+        crs_dem = list({_get_parameter(ray.profile.meta, "dem", self.keys.crs_dem) for ray in self.rays})
+        extent_dem = list({_get_parameter(ray.profile.meta, "dem", self.keys.extent_dem) for ray in self.rays})
+        resolution_dem = list({_get_parameter(ray.profile.meta, "dem", self.keys.resolution_dem) for ray in self.rays})
+        message = list({_get_parameter(ray.profile.meta, "alignment", self.keys.message) for ray in self.rays})
+        nan_count = int(
+            np.sum([_get_parameter(ray.profile.meta, "rays", self.keys.nan_count) for ray in self.rays], dtype=float)
+        )
         records = {
-            self.keys.crs_ray: crs_ray,
-            self.keys.crs_dem: crs_dem,
-            self.keys.extent_dem: extent_dem,
-            self.keys.resolution_dem: resolution_dem,
-            self.keys.message: message,
-            self.keys.nan_count: nan_count,
+            "rays": {
+                self.keys.crs_ray: crs_ray,
+                self.keys.nan_count: nan_count,
+            },
+            "dem": {
+                self.keys.crs_dem: crs_dem,
+                self.keys.extent_dem: extent_dem,
+                self.keys.resolution_dem: resolution_dem,
+            },
+            "alignment": {
+                self.keys.message: message,
+            },
         }
         return records
 

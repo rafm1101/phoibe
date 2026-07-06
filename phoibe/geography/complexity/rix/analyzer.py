@@ -13,9 +13,9 @@ import xarray
 import yaml
 
 from . import evaluate, trix
-from .config import ANALYZER_DEFAULTS
+from .config import ANALYZER_DEFAULTS, DEM_METADATA
 from .fieldsampler import RegularGridXYSampler
-from .keys import ColumnKeys
+from .keys import ColumnKeys, _get_parameter
 from .results import RadialRuggedness
 
 LOGGER = logging.getLogger(__name__)
@@ -57,8 +57,8 @@ class TRIXAnalyzer:
 
     Notes
     -----
-    CRS responsibility lies with the caller: ``dem``, ``locations_a``, and
-    ``locations_b`` must all share the projected metric CRS specified in
+    CRS responsibility lies with the caller: ``dem``, ``locations_site``, and
+    ``locations_reference`` must all share the projected metric CRS specified in
     ``config["crs"]``.
     """
 
@@ -87,6 +87,7 @@ class TRIXAnalyzer:
         dem: xarray.DataArray,
         locations_site: gpd.GeoDataFrame,
         locations_reference: gpd.GeoDataFrame | None = None,
+        dem_metadata: dict = DEM_METADATA,
         keys: ColumnKeys = COLUMN_KEYS,
     ) -> ResultSummary:
         """Run the full RIX analysis.
@@ -100,6 +101,8 @@ class TRIXAnalyzer:
             Point locations. Must have a unique index used as location_id.
         locations_reference
             Optional second collection for pairwise TRIX computation.
+        dem_metadata
+            Metadata of the `dem`.
         keys
             Column keys for output.
 
@@ -122,7 +125,7 @@ class TRIXAnalyzer:
             if locations_reference is not None:
                 locations_reference = locations_reference.copy().set_index(keys.site_id)
 
-        sampler = RegularGridXYSampler(da=dem, method="linear")
+        sampler = RegularGridXYSampler(da=dem, method=_get_parameter(self._config, "sampler", "interpolation_method"))
 
         radial_rix_site = self._compute_rix_results(sampler, locations_site, keys=keys)
         steep_segments_site = self._build_steep_segments(radial_rix_site, keys=keys)
@@ -145,7 +148,7 @@ class TRIXAnalyzer:
                 trix=trix_values, A=A, B=B, distances=distances, transferability=transferability, keys=keys
             )
 
-        meta = self._build_meta(rix_results=radial_rix_site, keys=keys)
+        meta = self._build_meta(rix_results=radial_rix_site, dem_metadata=dem_metadata, keys=keys)
 
         return ResultSummary(
             locations_site=locations_site,
@@ -256,25 +259,62 @@ class TRIXAnalyzer:
         summary = pd.DataFrame(summary_rows).set_index(keys.site_id)
         return summary
 
-    def _build_meta(self, rix_results: dict[object, RadialRuggedness], keys: ColumnKeys) -> dict:
-        records = self._config.copy()
-        records[keys.created_at] = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z")
+    def _build_meta(
+        self, rix_results: dict[object, RadialRuggedness], dem_metadata: dict[str, str], keys: ColumnKeys
+    ) -> dict:
+        records: dict = {
+            "meta": {key: self._config[key] for key in ["name", "version", "description"]}
+            | {
+                keys.created_at: datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z"),
+            }
+        }
+        records["parameters"] = {
+            "ray": {key: _get_parameter(self._config, "parameters", key) for key in ["n_angles", "R_km", "dr_km"]},
+            "slope": {key: _get_parameter(self._config, "parameters", key) for key in ["slope_critical"]},
+            "sampler": _get_parameter(self._config, "sampler").copy(),
+        }
 
-        crs_ray = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_ray]))
-        crs_dem = list(set(crs for _, rix_result in rix_results.items() for crs in rix_result.meta[keys.crs_dem]))
+        crs_ray = list(
+            set(
+                crs
+                for _, rix_result in rix_results.items()
+                for crs in _get_parameter(rix_result.meta, "rays", keys.crs_ray)
+            )
+        )
+        crs_dem = list(
+            set(
+                crs
+                for _, rix_result in rix_results.items()
+                for crs in _get_parameter(rix_result.meta, "dem", keys.crs_dem)
+            )
+        )
+        unique_extends_dem = set(
+            extent
+            for _, rix_result in rix_results.items()
+            for extent in _get_parameter(rix_result.meta, "dem", keys.extent_dem)
+        )
         extent_dem = list(
-            set(extent for _, rix_result in rix_results.items() for extent in rix_result.meta[keys.extent_dem])
+            dict(zip(["west", "south", "east", "north"], extent, strict=True)) for extent in unique_extends_dem
         )
-        resolution_dem = list(
-            set(res for _, rix_result in rix_results.items() for res in rix_result.meta[keys.resolution_dem])
+        unique_resolution_dem = set(
+            res
+            for _, rix_result in rix_results.items()
+            for res in _get_parameter(rix_result.meta, "dem", keys.resolution_dem)
         )
+        resolution_dem = list(dict(zip(["dx", "dy"], resolution, strict=True)) for resolution in unique_resolution_dem)
         message = list(
-            set(message for _, rix_result in rix_results.items() for message in rix_result.meta[keys.message])
+            set(
+                message
+                for _, rix_result in rix_results.items()
+                for message in _get_parameter(rix_result.meta, "alignment", keys.message)
+            )
         )
-        nan_count = sum([rix_result.meta[keys.nan_count] for _, rix_result in rix_results.items()])
+        nan_count = sum(
+            [_get_parameter(rix_result.meta, "rays", keys.nan_count) for _, rix_result in rix_results.items()]
+        )
         records[keys.spatial_context] = {
-            keys.source_dem: dict(crs=crs_dem, extent=extent_dem, resolution=resolution_dem, nan_count=nan_count),
-            keys.source_ray: dict(crs=crs_ray),
+            keys.source_dem: dem_metadata.copy() | dict(crs=crs_dem, extent=extent_dem, resolution=resolution_dem),
+            keys.source_ray: dict(crs=crs_ray, nan_count=nan_count),
             keys.alignment: dict(messages=message),
         }
         return records
@@ -294,11 +334,11 @@ class TRIXAnalyzer:
 
         if steep_segments_rows:
             steep_segments = gpd.GeoDataFrame(
-                pd.concat(steep_segments_rows, ignore_index=True), geometry="geometry", crs=crs
+                pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry, crs=crs
             )
         else:
             steep_segments = gpd.GeoDataFrame(
-                columns=[keys.site_id, keys.theta, keys.segment_id, "geometry"], geometry="geometry", crs=crs
+                columns=[keys.site_id, keys.theta, keys.segment_id, keys.geometry], geometry=keys.geometry, crs=crs
             ).set_index(keys.site_id)
 
         return steep_segments
@@ -390,17 +430,18 @@ def _load_config(path: str | pathlib.Path) -> dict:
 
     Example config.yaml
     -------------------
-    n_angles: 36
-    R_km: 5.0
-    dr_km: 0.05
-    slope_critical: 0.3
-    crs: "EPSG:2056"
+    parameters:
+      n_angles: 36
+      R_km: 5.0
+      dr_km: 0.05
+      slope_critical: 0.3
+      crs: "EPSG:2056"
     """
     path = pathlib.Path(path)
     with path.open() as f:
         raw = yaml.safe_load(f)
 
-    config = {**ANALYZER_DEFAULTS, **raw}
+    config = {**ANALYZER_DEFAULTS, **_get_parameter(raw, "parameters")}
     _validate_config(config)
     return config
 

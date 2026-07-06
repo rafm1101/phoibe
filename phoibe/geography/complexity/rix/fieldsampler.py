@@ -86,12 +86,12 @@ class RegularGridXYSampler:
 
     @property
     def meta(self) -> dict:
-        result = {}
+        records: dict = {"dem": {}}
         if hasattr(self.da, "rio"):
-            result[self.keys.crs_dem] = crs.to_authority() if (crs := self.da.rio.crs) is not None else None
-            result[self.keys.extent_dem] = self.da.rio.bounds()
-            result[self.keys.resolution_dem] = self.da.rio.resolution()
-        return result
+            records["dem"][self.keys.crs_dem] = crs.to_string() if (crs := self.da.rio.crs) is not None else None
+            records["dem"][self.keys.extent_dem] = self.da.rio.bounds()
+            records["dem"][self.keys.resolution_dem] = self.da.rio.resolution()
+        return records
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         _xs = np.asarray(xs, dtype=float)

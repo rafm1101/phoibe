@@ -5,10 +5,8 @@ from .schema import PRODUCT_DEFINITION_TRIX
 
 ANALYZER_DEFAULTS: dict = {
     "name": _get_parameter(PRODUCT_DEFINITION_TRIX, "name"),
-    "meta": {
-        "version": _get_parameter(PRODUCT_DEFINITION_TRIX, "version"),
-        "description": _get_parameter(PRODUCT_DEFINITION_TRIX, "description"),
-    },
+    "version": _get_parameter(PRODUCT_DEFINITION_TRIX, "version"),
+    "description": _get_parameter(PRODUCT_DEFINITION_TRIX, "description"),
     "parameters": {
         "n_angles": _get_parameter(PRODUCT_DEFINITION_TRIX, "parameters", "ray", "n_angles", "value"),
         "R_km": _get_parameter(PRODUCT_DEFINITION_TRIX, "parameters", "ray", "R_km", "value"),
@@ -16,8 +14,10 @@ ANALYZER_DEFAULTS: dict = {
         "slope_critical": _get_parameter(PRODUCT_DEFINITION_TRIX, "parameters", "slope", "slope_critical", "value"),
         "crs": _get_parameter(PRODUCT_DEFINITION_TRIX, "parameters", "ray", "crs", "value"),
     },
-    "sampling": {
-        "method": _get_parameter(PRODUCT_DEFINITION_TRIX, "parameters", "sampler", "interpolation_method", "value"),
+    "sampler": {
+        "interpolation_method": _get_parameter(
+            PRODUCT_DEFINITION_TRIX, "parameters", "sampler", "interpolation_method", "value"
+        ),
     },
 }
 
@@ -25,11 +25,17 @@ INTERPOLATION_METHODS = typing.Literal["linear", "nearest"]
 
 WRITER_DEFAULTS: dict = {
     "filenames": {
-        _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "filenames", file)
+        file: _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "filenames", file)
         for file in ["manifest", "rix_summary", "trix_table", "geopackage"]
     },
     "gpkg_layers": {
-        _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "geopackage_layers", layer)
+        layer: _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "geopackage_layers", layer)
         for layer in ["locations_site", "locations_reference", "ruggedness", "trix"]
     },
+}
+
+DEM_METADATA: dict = {
+    "name": "Copernicus DEM GLO-30",
+    "source": "Copernicus",
+    "description": "Downloaded 2026.",
 }

@@ -112,8 +112,20 @@ class ColumnKeys:
     """T-RIX layer key."""
 
 
-def _get_parameter(definition: dict, *path: str) -> typing.Any:
+def _get_parameter(definition: dict, *path: str, strict: bool = True) -> typing.Any:
     """Navigate nested dict.
+
+    Parameters
+    ----------
+    dictionary
+        Nested dictionary
+    *path
+        Path of keys.
+
+    Returns
+    -------
+    node
+        Value of the requested field.
 
     Raises
     ------
@@ -121,9 +133,12 @@ def _get_parameter(definition: dict, *path: str) -> typing.Any:
         In case a full path on miss.
     """
     node = definition
-    for key in path:
+    for n, key in enumerate(path):
         try:
             node = node[key]
         except KeyError:
-            raise KeyError(f"PRODUCT_DEFINITION missing expected key: {' -> '.join(path)}") from None
+            if not strict and n == len(path) - 1:
+                return None
+            else:
+                raise KeyError(f"PRODUCT_DEFINITION missing expected key {key}: {' -> '.join(path)}") from None
     return node

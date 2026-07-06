@@ -137,13 +137,12 @@ class RayProfile:
 
     @staticmethod
     def _build_meta(crs_ray, meta_sampler, message, nan_count, keys: ColumnKeys):
-        meta = {
-            keys.crs_ray: crs_ray.to_authority() if crs_ray is not None else None,
+        records: dict = {
+            "rays": {keys.crs_ray: crs_ray.to_string() if crs_ray is not None else None, keys.nan_count: nan_count},
         }
-        meta.update(meta_sampler.copy())
-        meta[keys.message] = message
-        meta[keys.nan_count] = nan_count
-        return meta
+        records.update(meta_sampler.copy())
+        records["alignment"] = {keys.message: message}
+        return records
 
 
 def _apply_nan_policy(

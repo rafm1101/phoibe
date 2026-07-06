@@ -132,27 +132,27 @@ class RIXWriter:
 
     def _write_trix(self, out: pathlib.Path, trix: pd.DataFrame) -> None:
         """Write pairwise trix-results."""
+        print(self._filenames)
         path = out / self._filenames[self._keys.trix_table]
         trix.reset_index().to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)
 
-    def _write_manifest(self, out: pathlib.Path, result: ResultSummary) -> None:
+    def _write_manifest(self, out: pathlib.Path, result: ResultSummary, project_name: str = "") -> None:
         """Write result summary and manifest including metadata and config."""
 
         artifacts: dict = {
-            self._keys.rix_summary: self._filenames[self._keys.rix_summary],
+            "profile": str(self._profile),
+            "files": {
+                self._keys.manifest: self._filenames[self._keys.manifest],
+                self._keys.rix_summary: self._filenames[self._keys.rix_summary],
+            },
         }
         if result.trix_table is not None:
-            artifacts[self._keys.trix_table] = self._filenames[self._keys.trix_table]
+            artifacts["files"][self._keys.trix_table] = self._filenames[self._keys.trix_table]
         if self._profile is WriterProfile.FULL:
-            artifacts[self._keys.geopackage] = self._filenames[self._keys.geopackage]
+            artifacts["files"][self._keys.geopackage] = self._filenames[self._keys.geopackage]
 
-        manifest = {
-            "profile": str(self._profile),
-            "timestamp": timestamp.isoformat() if _is_datetime(timestamp := result.meta.get("timestamp")) else None,
-            "meta": result.meta,
-            "artifacts": artifacts,
-        }
+        manifest = {"project_name": project_name} | result.meta | {"artifacts": artifacts}
 
         path = out / self._filenames[self._keys.manifest]
         with path.open("w") as filestream:
