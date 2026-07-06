@@ -115,8 +115,8 @@ PRODUCT_DEFINITION_TRIX = {
     },
     "artifacts": {
         "profiles": {
-            "summary": ["rix_summary", "trix", "manifest"],
-            "full": ["rix_summary", "trix", "manifest", "geopackage"],
+            "summary": ["rix_summary", "trix_table", "manifest"],
+            "full": ["rix_summary", "trix_table", "manifest", "geopackage"],
         },
         "filenames": {
             "manifest": "summary.yaml",

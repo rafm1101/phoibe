@@ -89,8 +89,27 @@ class ColumnKeys:
     """Distance A [km]."""
     B: str = "B"
     """Distance B [km]."""
+
     geometry: str = "geometry"
     """Coordinates of geometric objects."""
+
+    """Writer keys:"""
+    manifest: str = "manifest"
+    """Manifest file key."""
+    rix_summary: str = "rix_summary"
+    """Rix table file key."""
+    trix_table: str = "trix_table"
+    """T-RIX table file key."""
+    geopackage: str = "geopackage"
+    """Geopackage file key."""
+    locations_site: str = "locations_site"
+    """Assessed locations layer key."""
+    locations_reference: str = "locations_reference"
+    """Wind data base locations layer key."""
+    ruggedness_layer: str = "ruggedness"
+    """Ruggedness layer key."""
+    trix_layer: str = "trix"
+    """T-RIX layer key."""
 
 
 def _get_parameter(definition: dict, *path: str) -> typing.Any:
