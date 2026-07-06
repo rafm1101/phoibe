@@ -118,6 +118,18 @@ PRODUCT_DEFINITION_TRIX = {
             "summary": ["rix_summary", "trix", "manifest"],
             "full": ["rix_summary", "trix", "manifest", "geopackage"],
         },
+        "filenames": {
+            "manifest": "summary.yaml",
+            "rix_summary": "rix_summary.csv",
+            "trix_table": "trix.csv",
+            "geopackage": "rix_details.gpkg",
+        },
+        "geopackage_layers": {
+            "locations_site": "locations_site",
+            "locations_reference": "locations_reference",
+            "ruggedness": "ruggedness",
+            "trix": "trix",
+        },
     },
     "schema": {
         "manifest": {

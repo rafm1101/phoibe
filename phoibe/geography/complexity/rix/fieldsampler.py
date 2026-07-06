@@ -54,11 +54,11 @@ class RegularGridXYSampler:
     """Sample from a 2D field on a regular xy grid."""
 
     da: xarray.DataArray
-    """Field to be sampled from. Assume that coordinates are 'x' and 'y'."""
+    """Field to be sampled from. Assume that coordinates are `keys.x` and `keys.y`."""
     method: INTERPOLATION_METHODS
     """Interpolation method. One of 'linear' and 'nearest'."""
     keys: ColumnKeys
-    """Keys identifying dimensions."""
+    """Keys identifying dimensions. Requires: `x`, `y`."""
 
     def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS, keys: ColumnKeys = COLUMN_KEYS):
         if not {keys.x, keys.y}.issubset(da.dims):

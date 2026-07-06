@@ -11,6 +11,8 @@ import pandas as pd
 import yaml
 
 from .analyzer import ResultSummary
+from .config import WRITER_DEFAULTS
+from .keys import _get_parameter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,19 +26,8 @@ class WriterProfile(enum.StrEnum):
     """Detailed output: Summary plus additional detailed packaged for GIS inspection."""
 
 
-_FILENAMES = {
-    "manifest": "summary.yaml",
-    "rix_summary": "rix_summary.csv",
-    "trix_table": "trix.csv",
-    "geopackage": "rix_details.gpkg",
-}
-
-_GPKG_LAYERS = {
-    "locations_site": "locations_site",
-    "locations_reference": "locations_reference",
-    "ruggedness": "ruggedness",
-    "trix": "trix",
-}
+_FILENAMES = _get_parameter(WRITER_DEFAULTS, "filenames")
+_GPKG_LAYERS = _get_parameter(WRITER_DEFAULTS, "gpkg_layers")
 
 
 class RIXWriter:

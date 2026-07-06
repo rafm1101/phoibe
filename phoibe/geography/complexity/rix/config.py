@@ -22,3 +22,14 @@ ANALYZER_DEFAULTS: dict = {
 }
 
 INTERPOLATION_METHODS = typing.Literal["linear", "nearest"]
+
+WRITER_DEFAULTS: dict = {
+    "filenames": {
+        _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "filenames", file)
+        for file in ["manifest", "rix_summary", "trix_table", "geopackage"]
+    },
+    "gpkg_layers": {
+        _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "geopackage_layers", layer)
+        for layer in ["locations_site", "locations_reference", "ruggedness", "trix"]
+    },
+}
