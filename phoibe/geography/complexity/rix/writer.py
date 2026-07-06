@@ -96,7 +96,7 @@ class RIXWriter:
             if result.trix_table is not None and locations_reference is None:
                 raise ValueError("WriterProfile.FULL with TRIX requires `locations_reference`.")
 
-    def write(self, directory: str | pathlib.Path) -> None:
+    def write(self, directory: str | pathlib.Path, project_name: str = "") -> None:
         """Write all artifacts for the configured profile to `directory`.
 
         Parameters
@@ -120,14 +120,14 @@ class RIXWriter:
         if self._profile is WriterProfile.FULL:
             self._write_geopackage(out)
 
-        self._write_manifest(out=out, result=self._result)
+        self._write_manifest(out=out, result=self._result, project_name=project_name)
 
         LOGGER.info("RIXWriter(%s): wrote artifacts to %s", self._profile, out)
 
     def _write_rix_summary(self, out: pathlib.Path, summary: pd.DataFrame) -> None:
         """Write summary of rix assessment."""
         path = out / self._filenames[self._keys.rix_summary]
-        summary.to_csv(path, index=False)
+        summary.reset_index().to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)
 
     def _write_trix(self, out: pathlib.Path, trix: pd.DataFrame) -> None:
@@ -137,7 +137,7 @@ class RIXWriter:
         trix.reset_index().to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)
 
-    def _write_manifest(self, out: pathlib.Path, result: ResultSummary, project_name: str = "") -> None:
+    def _write_manifest(self, out: pathlib.Path, result: ResultSummary, project_name: str) -> None:
         """Write result summary and manifest including metadata and config."""
 
         artifacts: dict = {
