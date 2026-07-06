@@ -1,4 +1,5 @@
 import dataclasses
+import typing
 
 
 @dataclasses.dataclass(frozen=True)
@@ -90,3 +91,20 @@ class ColumnKeys:
     """Distance B [km]."""
     geometry: str = "geometry"
     """Coordinates of geometric objects."""
+
+
+def _get_parameter(definition: dict, *path: str) -> typing.Any:
+    """Navigate nested dict.
+
+    Raises
+    ------
+    KeyError
+        In case a full path on miss.
+    """
+    node = definition
+    for key in path:
+        try:
+            node = node[key]
+        except KeyError:
+            raise KeyError(f"PRODUCT_DEFINITION missing expected key: {' -> '.join(path)}") from None
+    return node

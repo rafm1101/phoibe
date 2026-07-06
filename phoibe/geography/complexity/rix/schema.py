@@ -70,7 +70,7 @@ PRODUCT_DEFINITION_TRIX = {
             },
         },
         "sampler": {
-            "method": {
+            "interpolation_method": {
                 "description": "Sampling method of the site elevations from the raster DEM.",
                 "value": "linear",
             },
