@@ -20,6 +20,8 @@ __pycache__
 *.xml
 *.dt2
 *.csv
+*.gpkg
+*.yaml
 
 # latex artifacts
 ls-R

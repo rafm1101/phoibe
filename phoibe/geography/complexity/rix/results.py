@@ -5,7 +5,7 @@ import numpy as np
 import shapely
 
 from . import evaluate
-from .config import ColumnKeys
+from .keys import ColumnKeys, _get_parameter
 from .profiles import RayProfile
 
 COLUMN_KEYS = ColumnKeys()
@@ -43,14 +43,14 @@ class RayRuggedness:
     @property
     def meta(self) -> RayProfileMeta:
         """Metadata relating to `RayProfile`. Includes CRS, (resolution), out-of-bound point count, messages."""
-        a = RayProfileMeta(
-            crs_ray=self.profile.meta.get(self.keys.crs_ray, None),
-            crs_dem=self.profile.meta.get(self.keys.crs_dem, None),
+        ray_profile_meta = RayProfileMeta(
+            crs_ray=_get_parameter(self.profile.meta, "rays", self.keys.crs_ray, strict=False),
+            crs_dem=_get_parameter(self.profile.meta, "dem", self.keys.crs_dem, strict=False),
             resolution=0,
-            n_oob=str(self.profile.meta.get(self.keys.nan_count, None)),
-            messages=str(self.profile.meta.get(self.keys.message, None)),
+            n_oob=_get_parameter(self.profile.meta, "rays", self.keys.nan_count, strict=False),
+            messages=str(_get_parameter(self.profile.meta, "algnment", self.keys.message, strict=False)),
         )
-        return a
+        return ray_profile_meta
 
     @property
     def theta(self) -> float:
@@ -96,11 +96,11 @@ class RayRuggedness:
         """Summary statistics for this ray."""
         return {
             self.keys.theta: self.theta,
-            "ruggedness": self.ruggedness,
-            "total_length_m": self.total_length_m,
-            "steep_length_m": self.steep_length_m,
-            "max_abs_slope": self.max_abs_slope,
-            "n_steep_segments": self.n_steep_segments,
+            self.keys.ruggedness: self.ruggedness,
+            self.keys.total_length_m: self.total_length_m,
+            self.keys.steep_length_m: self.steep_length_m,
+            self.keys.max_abs_slope: self.max_abs_slope,
+            self.keys.n_steep_segments: self.n_steep_segments,
         }
 
     def steep_segments_geodataframe(self):
@@ -121,13 +121,15 @@ class RayRuggedness:
         except ImportError as exception:
             raise ImportError("RayResult.steep_segments_geodataframe() requires geopandas.") from exception
 
-        records = [{self.keys.segment_id: i, "geometry": seg} for i, seg in enumerate(self.steep_segments)]
+        records = [{self.keys.segment_id: i, self.keys.geometry: seg} for i, seg in enumerate(self.steep_segments)]
 
         if records:
-            steep_segments = gpd.GeoDataFrame(records, geometry="geometry", crs=self.profile.ray.crs)
+            steep_segments = gpd.GeoDataFrame(records, geometry=self.keys.geometry, crs=self.profile.ray.crs)
         else:
             steep_segments = gpd.GeoDataFrame(
-                columns=[self.keys.segment_id, "geometry"], geometry="geometry", crs=self.profile.ray.crs
+                columns=[self.keys.segment_id, self.keys.geometry],
+                geometry=self.keys.geometry,
+                crs=self.profile.ray.crs,
             )
 
         return steep_segments
@@ -204,19 +206,27 @@ class RadialRuggedness:
 
     @property
     def meta(self) -> dict:
-        crs_ray = list({ray.profile.meta[self.keys.crs_ray] for ray in self.rays})
-        crs_dem = list({ray.profile.meta[self.keys.crs_dem] for ray in self.rays})
-        extent_dem = list({ray.profile.meta[self.keys.extent_dem] for ray in self.rays})
-        resolution_dem = list({ray.profile.meta[self.keys.resolution_dem] for ray in self.rays})
-        message = list({ray.profile.meta[self.keys.message] for ray in self.rays})
-        nan_count = int(np.sum([ray.profile.meta[self.keys.nan_count] for ray in self.rays], dtype=float))
+        crs_ray = list({_get_parameter(ray.profile.meta, "rays", self.keys.crs_ray) for ray in self.rays})
+        crs_dem = list({_get_parameter(ray.profile.meta, "dem", self.keys.crs_dem) for ray in self.rays})
+        extent_dem = list({_get_parameter(ray.profile.meta, "dem", self.keys.extent_dem) for ray in self.rays})
+        resolution_dem = list({_get_parameter(ray.profile.meta, "dem", self.keys.resolution_dem) for ray in self.rays})
+        message = list({_get_parameter(ray.profile.meta, "alignment", self.keys.message) for ray in self.rays})
+        nan_count = int(
+            np.sum([_get_parameter(ray.profile.meta, "rays", self.keys.nan_count) for ray in self.rays], dtype=float)
+        )
         records = {
-            self.keys.crs_ray: crs_ray,
-            self.keys.crs_dem: crs_dem,
-            self.keys.extent_dem: extent_dem,
-            self.keys.resolution_dem: resolution_dem,
-            self.keys.message: message,
-            self.keys.nan_count: nan_count,
+            "rays": {
+                self.keys.crs_ray: crs_ray,
+                self.keys.nan_count: nan_count,
+            },
+            "dem": {
+                self.keys.crs_dem: crs_dem,
+                self.keys.extent_dem: extent_dem,
+                self.keys.resolution_dem: resolution_dem,
+            },
+            "alignment": {
+                self.keys.message: message,
+            },
         }
         return records
 
@@ -286,11 +296,11 @@ class RadialRuggedness:
         records = []
         for ray in self.rays:
             for i, segment in enumerate(ray.steep_segments):
-                records.append({self.keys.theta: ray.theta, self.keys.segment_id: i, "geometry": segment})
+                records.append({self.keys.theta: ray.theta, self.keys.segment_id: i, self.keys.geometry: segment})
         return gpd.GeoDataFrame(
             records,
-            columns=[self.keys.theta, self.keys.segment_id, "geometry"],
-            geometry="geometry",
+            columns=[self.keys.theta, self.keys.segment_id, self.keys.geometry],
+            geometry=self.keys.geometry,
             crs=self.rays[0].profile.ray.crs,
         )
 

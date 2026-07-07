@@ -142,12 +142,12 @@ class RayGeometry:
         """
         if self.crs is None or crs is None:
             message = "Assume all coordinates are in the same CRS. "
-            message += "Ray-CRS None. " if self.crs is None else f"Ray-CRS {self.crs.to_authority()}. "
-            message += "DEM-CRS None. " if crs is None else f"DEM-CRS {crs.to_authority()}."
+            message += "Ray-CRS None. " if self.crs is None else f"Ray-CRS {self.crs.to_string()}. "
+            message += "DEM-CRS None. " if crs is None else f"DEM-CRS {crs.to_string()}."
             return self, message
 
         elif self.crs == crs:
-            message = f"All coordinates are in the same CRS {crs.to_authority()}. "
+            message = f"All coordinates are in the same CRS {crs.to_string()}. "
             message += "No guarantee unless sites are presented in a metric CRS." if crs.to_epsg() == 4326 else ""
             return self, message
 
@@ -156,4 +156,4 @@ class RayGeometry:
             xs_to, ys_to = transformer.transform(self.xs, self.ys)
             location = shapely.geometry.Point(xs_to[0], ys_to[0])
             ray = RayGeometry(location=location, theta=self.theta, r_m=self.r_m, xs=xs_to, ys=ys_to, crs=crs)
-            return ray, f"Transformed ray CRS{self.crs.to_authority()} to DEM CRS{crs.to_authority()} for sampling."
+            return ray, f"Transformed ray CRS {self.crs.to_string()} to DEM CRS {crs.to_string()} for sampling."

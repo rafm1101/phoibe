@@ -11,6 +11,8 @@ import pandas as pd
 import yaml
 
 from .analyzer import ResultSummary
+from .config import WRITER_DEFAULTS
+from .keys import ColumnKeys, _get_parameter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,19 +26,9 @@ class WriterProfile(enum.StrEnum):
     """Detailed output: Summary plus additional detailed packaged for GIS inspection."""
 
 
-_FILENAMES = {
-    "manifest": "summary.yaml",
-    "rix_summary": "rix_summary.csv",
-    "trix_table": "trix.csv",
-    "geopackage": "rix_details.gpkg",
-}
-
-_GPKG_LAYERS = {
-    "locations_site": "locations_site",
-    "locations_reference": "locations_reference",
-    "ruggedness": "ruggedness",
-    "trix": "trix",
-}
+_FILENAMES = _get_parameter(WRITER_DEFAULTS, "filenames")
+_GPKG_LAYERS = _get_parameter(WRITER_DEFAULTS, "gpkg_layers")
+KEYS = ColumnKeys()
 
 
 class RIXWriter:
@@ -86,6 +78,7 @@ class RIXWriter:
         locations_reference: gpd.GeoDataFrame | None = None,
         filenames: dict = _FILENAMES,
         gpkg_layers: dict = _GPKG_LAYERS,
+        keys: ColumnKeys = KEYS,
     ) -> None:
         self._result = result
         self._profile = WriterProfile(profile)
@@ -93,17 +86,18 @@ class RIXWriter:
         self._locations_reference = locations_reference
         self._filenames = filenames
         self._gpkg_layers = gpkg_layers
+        self._keys = keys
 
         # TODO: Validate configuration arguments for completeness depending on the profile.
 
         if self._profile is WriterProfile.FULL:
             if locations_site is None:
-                raise ValueError("WriterProfile.FULL requires locations_a.")
+                raise ValueError("WriterProfile.FULL requires `locations_site`.")
             if result.trix_table is not None and locations_reference is None:
-                raise ValueError("WriterProfile.FULL with TRIX requires locations_b.")
+                raise ValueError("WriterProfile.FULL with TRIX requires `locations_reference`.")
 
-    def write(self, directory: str | pathlib.Path) -> None:
-        """Write all artifacts for the configured profile to ``directory``.
+    def write(self, directory: str | pathlib.Path, project_name: str = "") -> None:
+        """Write all artifacts for the configured profile to `directory`.
 
         Parameters
         ----------
@@ -126,63 +120,66 @@ class RIXWriter:
         if self._profile is WriterProfile.FULL:
             self._write_geopackage(out)
 
-        self._write_manifest(out=out, result=self._result)
+        self._write_manifest(out=out, result=self._result, project_name=project_name)
 
         LOGGER.info("RIXWriter(%s): wrote artifacts to %s", self._profile, out)
 
     def _write_rix_summary(self, out: pathlib.Path, summary: pd.DataFrame) -> None:
         """Write summary of rix assessment."""
-        path = out / self._filenames["rix_summary"]
-        summary.to_csv(path, index=False)
+        path = out / self._filenames[self._keys.rix_summary]
+        summary.reset_index().to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)
 
     def _write_trix(self, out: pathlib.Path, trix: pd.DataFrame) -> None:
         """Write pairwise trix-results."""
-        path = out / self._filenames["trix_table"]
+        path = out / self._filenames[self._keys.trix_table]
         trix.reset_index().to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)
 
-    def _write_manifest(self, out: pathlib.Path, result: ResultSummary) -> None:
+    def _write_manifest(self, out: pathlib.Path, result: ResultSummary, project_name: str) -> None:
         """Write result summary and manifest including metadata and config."""
 
         artifacts: dict = {
-            "rix_summary": self._filenames["rix_summary"],
+            "profile": str(self._profile),
+            "files": {
+                self._keys.manifest: self._filenames[self._keys.manifest],
+                self._keys.rix_summary: self._filenames[self._keys.rix_summary],
+            },
         }
         if result.trix_table is not None:
-            artifacts["trix"] = self._filenames["trix_table"]
+            artifacts["files"][self._keys.trix_table] = self._filenames[self._keys.trix_table]
         if self._profile is WriterProfile.FULL:
-            artifacts["geopackage"] = self._filenames["geopackage"]
+            artifacts["files"][self._keys.geopackage] = self._filenames[self._keys.geopackage]
 
-        manifest = {
-            "profile": str(self._profile),
-            "timestamp": timestamp.isoformat() if _is_datetime(timestamp := result.meta.get("timestamp")) else None,
-            "meta": result.meta,
-            "artifacts": artifacts,
-        }
+        manifest = {"project_name": project_name} | result.meta | {"artifacts": artifacts}
 
-        path = out / self._filenames["manifest"]
+        path = out / self._filenames[self._keys.manifest]
         with path.open("w") as filestream:
             yaml.safe_dump(manifest, filestream, sort_keys=False, allow_unicode=True)
         LOGGER.debug("Wrote %s", path)
 
     def _write_geopackage(self, out: pathlib.Path) -> None:
         """Write all spatial layers to a single GeoPackage."""
-        filepath = out / self._filenames["geopackage"]
+        filepath = out / self._filenames[self._keys.geopackage]
 
         if self._locations_site is not None:
-            self._locations_site.to_file(filepath, layer=self._gpkg_layers["locations_site"], driver="GPKG")
+            self._locations_site.to_file(filepath, layer=self._gpkg_layers[self._keys.locations_site], driver="GPKG")
             LOGGER.debug("Wrote layer '%s'", self._gpkg_layers["locations_site"])
 
         if self._locations_reference is not None:
-            self._locations_reference.to_file(filepath, layer=self._gpkg_layers["locations_reference"], driver="GPKG")
-            LOGGER.debug("Wrote layer '%s'", self._gpkg_layers["locations_reference"])
+            self._locations_reference.to_file(
+                filepath, layer=self._gpkg_layers[self._keys.locations_reference], driver="GPKG"
+            )
+            LOGGER.debug("Wrote layer '%s'", self._gpkg_layers[self._keys.locations_reference])
 
-        self._result.steep_segments.to_file(filepath, layer=self._gpkg_layers["ruggedness"], driver="GPKG")
-        LOGGER.debug("Wrote layer '%s'", self._gpkg_layers["ruggedness"])
+        self._result.steep_segments.to_file(
+            filepath, layer=self._gpkg_layers[self._keys.ruggedness_layer], driver="GPKG"
+        )
+        LOGGER.debug("Wrote layer '%s'", self._gpkg_layers[self._keys.ruggedness_layer])
 
         if self._result.trix_table is not None:
-            _write_dataframe_to_gpkg(self._result.trix_table, filepath, layer=self._gpkg_layers["trix"])
-            LOGGER.debug("Wrote layer '%s'", self._gpkg_layers["trix"])
+            _write_dataframe_to_gpkg(self._result.trix_table, filepath, layer=self._gpkg_layers[self._keys.trix_layer])
+            LOGGER.debug("Wrote layer '%s'", self._gpkg_layers[self._keys.trix_layer])
 
         LOGGER.debug("Wrote GeoPackage %s", filepath)
 

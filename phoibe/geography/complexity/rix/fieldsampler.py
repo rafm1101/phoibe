@@ -7,7 +7,8 @@ import scipy.interpolate
 import xarray
 from numpy.typing import NDArray
 
-from .config import INTERPOLATION_METHODS, ColumnKeys
+from .config import INTERPOLATION_METHODS
+from .keys import ColumnKeys
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,11 +54,11 @@ class RegularGridXYSampler:
     """Sample from a 2D field on a regular xy grid."""
 
     da: xarray.DataArray
-    """Field to be sampled from. Assume that coordinates are 'x' and 'y'."""
+    """Field to be sampled from. Assume that coordinates are `keys.x` and `keys.y`."""
     method: INTERPOLATION_METHODS
     """Interpolation method. One of 'linear' and 'nearest'."""
     keys: ColumnKeys
-    """Keys identifying dimensions."""
+    """Keys identifying dimensions. Requires: `x`, `y`."""
 
     def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS, keys: ColumnKeys = COLUMN_KEYS):
         if not {keys.x, keys.y}.issubset(da.dims):
@@ -85,12 +86,12 @@ class RegularGridXYSampler:
 
     @property
     def meta(self) -> dict:
-        result = {}
+        records: dict = {"dem": {}}
         if hasattr(self.da, "rio"):
-            result[self.keys.crs_dem] = crs.to_authority() if (crs := self.da.rio.crs) is not None else None
-            result[self.keys.extent_dem] = self.da.rio.bounds()
-            result[self.keys.resolution_dem] = self.da.rio.resolution()
-        return result
+            records["dem"][self.keys.crs_dem] = crs.to_string() if (crs := self.da.rio.crs) is not None else None
+            records["dem"][self.keys.extent_dem] = self.da.rio.bounds()
+            records["dem"][self.keys.resolution_dem] = self.da.rio.resolution()
+        return records
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         _xs = np.asarray(xs, dtype=float)

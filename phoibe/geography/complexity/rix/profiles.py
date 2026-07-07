@@ -6,9 +6,9 @@ import numpy as np
 from ergaleiothiki.tididi.validate_numerics import _validate_positive
 from numpy.typing import NDArray
 
-from .config import ColumnKeys
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
+from .keys import ColumnKeys
 
 LOGGER = logging.getLogger(__name__)
 
@@ -137,13 +137,12 @@ class RayProfile:
 
     @staticmethod
     def _build_meta(crs_ray, meta_sampler, message, nan_count, keys: ColumnKeys):
-        meta = {
-            keys.crs_ray: crs_ray.to_authority() if crs_ray is not None else None,
+        records: dict = {
+            "rays": {keys.crs_ray: crs_ray.to_string() if crs_ray is not None else None, keys.nan_count: nan_count},
         }
-        meta.update(meta_sampler.copy())
-        meta[keys.message] = message
-        meta[keys.nan_count] = nan_count
-        return meta
+        records.update(meta_sampler.copy())
+        records["alignment"] = {keys.message: message}
+        return records
 
 
 def _apply_nan_policy(

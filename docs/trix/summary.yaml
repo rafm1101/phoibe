@@ -1,43 +1,44 @@
-profile: full
-timestamp: null
+project_name: WP Eggbox II
 meta:
   name: T-RIX assessment
-  meta:
-    version: '1.0'
-    description: TRIX, TR6 Rev.12
-  parameters:
-    n_angles: 32
-    R_km: 3.5
-    dr_km: 0.5
-    slope_critical: 0.01
+  version: '1.0'
+  description: TRIX, TR6 Rev.12
+  created_at: 2026-07-06 16:56:47 UTC
+parameters:
+  ray:
+    n_angles: 72
+    R_km: 13.0
+    dr_km: 0.05
+  slope:
+    slope_critical: 0.033
+  sampler:
+    interpolation_method: linear
+spatial_context:
+  source_dem:
+    name: Copernicus DEM GLO-30
+    source: Copernicus
+    description: Downloaded 2026.
     crs:
-    - EPSG
-    - '4326'
-  sampling:
-    method: linear
-  created_at: 2026-07-03 17:18:04 UTC
-  spatial_context:
-    source_dem:
-      crs:
-      - - EPSG
-        - '4326'
-      extent:
-      - - 10.996268656716419
-        - 51.00248756218905
-        - 13.996268656716417
-        - 53.00248756218905
-      resolution:
-      - - 0.007462686567164179
-        - -0.004975124378109453
-      nan_count: 0
-    source_ray:
-      crs:
-      - - EPSG
-        - '32633'
-    internal_alignment:
-      messages:
-      - Transformed ray CRS('EPSG', '32633') to DEM CRS('EPSG', '4326') for sampling.
+    - EPSG:4326
+    extent:
+    - west: 10.996268656716419
+      south: 51.00248756218905
+      east: 13.996268656716417
+      north: 53.00248756218905
+    resolution:
+    - dx: 0.007462686567164179
+      dy: -0.004975124378109453
+  source_ray:
+    crs:
+    - EPSG:32633
+    nan_count: 0
+  internal_alignment:
+    messages:
+    - Transformed ray CRS EPSG:32633 to DEM CRS EPSG:4326 for sampling.
 artifacts:
-  rix_summary: rix_summary.csv
-  trix: trix.csv
-  geopackage: rix_details.gpkg
+  profile: full
+  files:
+    manifest: summary.yaml
+    rix_summary: rix_summary.csv
+    trix_table: trix.csv
+    geopackage: rix_details.gpkg

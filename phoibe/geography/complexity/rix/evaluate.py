@@ -4,9 +4,9 @@ import numpy as np
 import shapely.geometry
 from numpy.typing import NDArray
 
-from .config import ColumnKeys
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
+from .keys import ColumnKeys
 from .profiles import NaNPolicy, RayProfile
 from .results import RadialRuggedness, RayRuggedness
 
