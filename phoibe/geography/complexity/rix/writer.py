@@ -132,7 +132,6 @@ class RIXWriter:
 
     def _write_trix(self, out: pathlib.Path, trix: pd.DataFrame) -> None:
         """Write pairwise trix-results."""
-        print(self._filenames)
         path = out / self._filenames[self._keys.trix_table]
         trix.reset_index().to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)

@@ -142,12 +142,12 @@ class RayGeometry:
         """
         if self.crs is None or crs is None:
             message = "Assume all coordinates are in the same CRS. "
-            message += "Ray-CRS None. " if self.crs is None else f"Ray-CRS {self.crs.to_authority()}. "
-            message += "DEM-CRS None. " if crs is None else f"DEM-CRS {crs.to_authority()}."
+            message += "Ray-CRS None. " if self.crs is None else f"Ray-CRS {self.crs.to_string()}. "
+            message += "DEM-CRS None. " if crs is None else f"DEM-CRS {crs.to_string()}."
             return self, message
 
         elif self.crs == crs:
-            message = f"All coordinates are in the same CRS {crs.to_authority()}. "
+            message = f"All coordinates are in the same CRS {crs.to_string()}. "
             message += "No guarantee unless sites are presented in a metric CRS." if crs.to_epsg() == 4326 else ""
             return self, message
 
