@@ -13,7 +13,6 @@ import yaml
 from .analyzer import ResultSummary
 from .base import ColumnKeys
 from .config import WRITER_DEFAULTS
-from .interface import _get_parameter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,8 +26,8 @@ class WriterProfile(enum.StrEnum):
     """Detailed output: Summary plus additional detailed packaged for GIS inspection."""
 
 
-_FILENAMES = _get_parameter(WRITER_DEFAULTS, "filenames")
-_GPKG_LAYERS = _get_parameter(WRITER_DEFAULTS, "gpkg_layers")
+_FILENAMES = WRITER_DEFAULTS["filenames"]
+_GPKG_LAYERS = WRITER_DEFAULTS["gpkg_layers"]
 KEYS = ColumnKeys()
 
 

@@ -329,22 +329,18 @@ class TRIXAnalyzer:
         self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS
     ) -> gpd.GeoDataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
-        crs = self._config[keys.parameters]["crs"]
         steep_segments_rows = []
 
         for location_id, radial_rix in radial_results.items():
             gdf_segments = radial_rix.steep_segments_geodataframe()
-            crs = gdf_segments.crs
             gdf_segments.insert(0, keys.site_id, location_id)
             steep_segments_rows.append(gdf_segments)
 
         if steep_segments_rows:
-            steep_segments = gpd.GeoDataFrame(
-                pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry, crs=crs
-            )
+            steep_segments = gpd.GeoDataFrame(pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry)
         else:
             steep_segments = gpd.GeoDataFrame(
-                columns=[keys.site_id, keys.theta, keys.segment_id, keys.geometry], geometry=keys.geometry, crs=crs
+                columns=[keys.site_id, keys.theta, keys.segment_id, keys.geometry], geometry=keys.geometry, crs=None
             ).set_index(keys.site_id)
 
         return steep_segments

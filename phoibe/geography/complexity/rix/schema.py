@@ -1,7 +1,3 @@
-from .base import ColumnKeys
-
-COLUMN_KEYS = ColumnKeys()
-
 PRODUCT_DEFINITION_TRIX = {
     "name": "T-RIX assessment",
     "description": "TRIX, TR6 Rev.12",

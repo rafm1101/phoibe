@@ -34,7 +34,7 @@ WRITER_DEFAULTS: dict = {
     },
 }
 
-DEM_METADATA: dict = {
+COPDEM_METADATA: dict = {
     "name": "Copernicus DEM GLO-30",
     "source": "Copernicus",
     "description": "Downloaded 2026.",

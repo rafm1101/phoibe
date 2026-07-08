@@ -171,20 +171,23 @@ def ruggedness(profile: RayProfile, slope_critical: float) -> float:
 
 def _get_true_runs(mask: NDArray[np.bool_]) -> list[tuple[int, int]]:
     """Return the indices [start, stop) of intervals of contiguous `True` values."""
-    runs = []
-    start = None
+    changes = np.diff(mask.astype(int), prepend=0, append=0)
+    starts = np.where(changes == 1)[0]
+    stops = np.where(changes == -1)[0]
 
-    for index, value in enumerate(mask):
-        if value and start is None:
-            start = index
-        elif not value and start is not None:
-            runs.append((start, index))
-            start = None
+    # runs = []
+    # start = None
 
-    if start is not None:
-        runs.append((start, len(mask)))
+    # for index, value in enumerate(mask):
+    #     if value and start is None:
+    #         start = index
+    #     elif not value and start is not None:
+    #         runs.append((start, index))
+    #         start = None
 
-    return runs
+    # if start is not None:
+    #     runs.append((start, len(mask)))
+    return list(zip(starts, stops, strict=True))
 
 
 def steep_segment_indices(profile: RayProfile, slope_critical: float) -> list[tuple[int, int]]:
