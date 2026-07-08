@@ -159,12 +159,12 @@ class RadialRuggedness:
         if len(slope_criticals) > 1:
             raise ValueError(f"All rays must use same slope_critical, got: {slope_criticals}")
 
-        crss = {None if ray.profile.ray.crs is None else ray.profile.ray.crs.to_authority() for ray in self.rays}
-
+        crss = {None if ray.profile.ray.crs is None else ray.profile.ray.crs.to_string() for ray in self.rays}
         if len(crss) > 1:
             raise ValueError(f"All rays must have the same crs, got: {crss}")
 
-        object.__setattr__(self, "_ray_by_angle", {ray.theta: ray for ray in self.rays})
+        rays_sorted = tuple(sorted(self.rays, key=lambda ray: ray.theta))
+        object.__setattr__(self, "rays", rays_sorted)
 
     @property
     def z(self) -> tuple[float, float]:
@@ -191,7 +191,7 @@ class RadialRuggedness:
     @property
     def angles(self) -> np.ndarray:
         """Array of ray angles [°] in sorted order."""
-        return np.array(sorted(self._ray_by_angle.keys()), dtype=float)
+        return np.array([ray.theta for ray in self.rays], dtype=float)
 
     @property
     def ruggednesses(self) -> np.ndarray:
@@ -202,7 +202,7 @@ class RadialRuggedness:
         np.ndarray
             Ruggedness for each angle in `self.angles`.
         """
-        return np.array([self._ray_by_angle[theta].ruggedness for theta in self.angles], dtype=float)
+        return np.array([ray.ruggedness for ray in self.rays], dtype=float)
 
     @property
     def meta(self) -> dict:
@@ -235,13 +235,15 @@ class RadialRuggedness:
         }
         return records
 
-    def ray(self, theta: float) -> RayRuggedness:
+    def ray(self, theta: float, atol: float = 1e-5) -> RayRuggedness:
         """Get RayResult for a specific angle.
 
         Parameters
         ----------
         theta
             Ray direction [°].
+        atol
+            Tolerance for float comparison.
 
         Returns
         -------
@@ -253,11 +255,11 @@ class RadialRuggedness:
         KeyError
             If no ray exists for this angle.
         """
-        try:
-            return self._ray_by_angle[theta]
-        except KeyError:
-            available = sorted(self._ray_by_angle.keys())
-            raise KeyError(f"No ray found for theta={theta:.1f}°. Available angles: {available}") from None
+        idx = np.searchsorted(self.angles, theta)
+        if idx < len(self.rays) and np.isclose(self.angles[idx], theta, atol=atol):
+            return self.rays[idx - 1]
+        else:
+            raise KeyError(f"No ray found for theta={theta:.1f}°. Available angles: {self.angles}")
 
     def to_dataframe(self):
         """Generate a dataframe summarising the metrics of all rays.
