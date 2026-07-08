@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import dataclasses
 import datetime
 import logging
@@ -8,6 +9,7 @@ import pathlib
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import pyproj
 import scipy.spatial.distance
 import xarray
 import yaml
@@ -21,7 +23,7 @@ from .results import RadialRuggedness
 LOGGER = logging.getLogger(__name__)
 
 
-_REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical", "crs"}
+_REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical"}
 COLUMN_KEYS = ColumnKeys()
 
 
@@ -117,7 +119,7 @@ class TRIXAnalyzer:
             On CRS mismatch or invalid geometries.
         """
         # TODO: Add failed validations to messages, and add messages to meta.
-        # self._validate_inputs(dem=dem, locations_site=locations_site, locations_wind=locations_wind)
+        # self._validate_inputs(dem=dem, locations_site=locations_site, locations_reference=locations_reference)
 
         locations_site = locations_site.copy()
         if not keys.site_id == "index":
@@ -164,31 +166,31 @@ class TRIXAnalyzer:
         self,
         dem: xarray.DataArray,
         locations_site: gpd.GeoDataFrame,
-        locations_wind: gpd.GeoDataFrame | None,
+        locations_reference: gpd.GeoDataFrame | None,
         keys: ColumnKeys,
     ) -> None:
         """Check CRS consistency and index uniqueness."""
         expected_crs = self._config["crs"]
 
-        if locations_site.crs is None:
-            raise ValueError("locations_wind has no CRS. Set it to match config['crs'].")
-        if str(locations_site.crs) != expected_crs and locations_site.crs.to_epsg() != _epsg_int(expected_crs):
-            raise ValueError(f"locations_wind CRS mismatch: expected {expected_crs}, got {locations_site.crs}.")
-        if not locations_site.index.is_unique:
-            raise ValueError("locations_wind index must be unique (used as location_id).")
-
-        if locations_wind is not None:
-            if locations_wind.crs is None:
-                raise ValueError("locations_reference has no CRS.")
-            if str(locations_wind.crs) != expected_crs and locations_wind.crs.to_epsg() != _epsg_int(expected_crs):
+        if locations_reference is not None:
+            if locations_site.crs != locations_reference.crs:
                 raise ValueError(
-                    f"locations_reference CRS mismatch: expected {expected_crs}, got {locations_wind.crs}."
+                    f"CRS mismatch between locations_site {locations_site.crs} and "
+                    f"locations_reference {locations_reference.crs}."
                 )
-            if not locations_wind.index.is_unique:
-                raise ValueError("locations_reference index must be unique.")
+        if expected_crs is not None and locations_site.crs is not None:
+            if locations_site.crs != pyproj.CRS.from_user_input(expected_crs):
+                LOGGER.warning("CRS of locations_site %s differs from config CRS %s,", locations_site.crs, expected_crs)
 
-        if not {keys.x, keys.y}.issubset(dem.dims):
-            raise ValueError("DEM must have 'x' and 'y' coordinates.")
+        if not locations_site.index.is_unique:
+            raise ValueError("locations_site index must be unique (as being used as identifier).")
+        if locations_reference is not None:
+            if not locations_reference.index.is_unique:
+                raise ValueError("locations_reference index must be unique (as being used as identifier).")
+
+        # Check in RegularGridXYSampler.sample possibly early enough.
+        # if not {keys.x, keys.y}.issubset(dem.dims):
+        #     raise ValueError("DEM must have 'x' and 'y' coordinates.")
 
     def _compute_rix_results(
         self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame, keys: ColumnKeys
@@ -441,7 +443,15 @@ def _load_config(path: str | pathlib.Path) -> dict:
     with path.open() as f:
         raw = yaml.safe_load(f)
 
-    config = {**ANALYZER_DEFAULTS, **_get_parameter(raw, "parameters")}
+    raw_parameters = raw.get("parameters", {})
+    config = copy.deepcopy(ANALYZER_DEFAULTS)
+
+    for key in raw_parameters:
+        if key in config["parameters"]:
+            config["parameters"][key] = raw_parameters[key]
+        else:
+            raise ValueError(f"Configuration file {str(path)} contains unknown parameter {key}.")
+
     _validate_config(config)
     return config
 
@@ -451,8 +461,6 @@ def _validate_config(config: dict) -> None:
     missing_keys = _REQUIRED_KEYS - parameters.keys()
     if missing_keys:
         raise ValueError(f"config.yaml is missing required keys: {missing_keys}")
-    # if config["crs"] is None:
-    #     raise ValueError("config.yaml must specify 'crs' (e.g. 'EPSG:2056').")
     if parameters["dr_km"] >= parameters["R_km"]:
         raise ValueError("dr_km must be smaller than R_km.")
     if not (1 <= parameters["n_angles"] <= 360):

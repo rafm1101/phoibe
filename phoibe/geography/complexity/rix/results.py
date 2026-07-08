@@ -48,7 +48,7 @@ class RayRuggedness:
             crs_dem=_get_parameter(self.profile.meta, "dem", self.keys.crs_dem, strict=False),
             resolution=0,
             n_oob=_get_parameter(self.profile.meta, "rays", self.keys.nan_count, strict=False),
-            messages=str(_get_parameter(self.profile.meta, "algnment", self.keys.message, strict=False)),
+            messages=str(_get_parameter(self.profile.meta, "alignment", self.keys.message, strict=False)),
         )
         return ray_profile_meta
 

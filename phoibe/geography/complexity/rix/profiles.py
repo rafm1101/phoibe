@@ -160,19 +160,19 @@ def _apply_nan_policy(
         return r_m.copy(), z.copy()
 
     if policy is NaNPolicy.ERROR:
-        raise ValueError("NaNs encountered in ray profile for theta=%.1f.", theta)
+        raise ValueError(f"NaNs encountered in ray profile for {theta=:.1f}.")
 
     elif policy is NaNPolicy.TRUNCATE:
         first_nan = np.where(np.isnan(z))[0][0]
         if first_nan == 0:
-            raise ValueError("Ray for theta=%.1f contains no valid numbers.", theta)
+            raise ValueError(f"Ray for {theta=:_.1f} contains no valid numbers.")
         return r_m[:first_nan].copy(), z[:first_nan].copy()
 
     elif policy is NaNPolicy.MASK:
         return r_m.copy(), z.copy()
 
     else:
-        raise ValueError("Unknown NaN policy: %s.", policy)
+        raise ValueError(f"Unknown NaN policy: {policy}.")
 
 
 def _compute_level_crossings(

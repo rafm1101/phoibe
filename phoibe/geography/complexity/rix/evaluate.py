@@ -114,7 +114,7 @@ def slopes(profile: RayProfile) -> NDArray[np.floating]:
     dz = np.diff(profile.z)
     dr = segment_lengths(profile=profile)
     if not np.all(dr > 0):
-        raise ValueError("Ray for theta=%.1f requires strictly increasing distance from origin.", profile.ray.theta)
+        raise ValueError(f"Ray for theta={profile.ray.theta:.1f} requires strictly increasing distance from origin.")
     return dz / dr
 
 
