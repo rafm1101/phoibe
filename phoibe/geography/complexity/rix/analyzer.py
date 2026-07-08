@@ -118,8 +118,9 @@ class TRIXAnalyzer:
         ValueError
             On CRS mismatch or invalid geometries.
         """
-        # TODO: Add failed validations to messages, and add messages to meta.
-        # self._validate_inputs(dem=dem, locations_site=locations_site, locations_reference=locations_reference)
+        self._validate_inputs(
+            dem=dem, locations_site=locations_site, locations_reference=locations_reference, keys=keys
+        )
 
         locations_site = locations_site.copy()
         if not keys.site_id == "index":
