@@ -16,7 +16,7 @@ import yaml
 
 from . import evaluate, trix
 from .base import ColumnKeys
-from .config import ANALYZER_DEFAULTS, DEM_METADATA
+from .config import ANALYZER_DEFAULTS
 from .fieldsampler import RegularGridXYSampler
 from .interface import Keys, _get_parameter
 from .results import RadialRuggedness
@@ -93,7 +93,7 @@ class TRIXAnalyzer:
         dem: xarray.DataArray,
         locations_site: gpd.GeoDataFrame,
         locations_reference: gpd.GeoDataFrame | None = None,
-        dem_metadata: dict = DEM_METADATA,
+        dem_metadata: dict | None = None,
         keys: Keys = KEYS,
     ) -> ResultSummary:
         """Run the full RIX analysis.
@@ -265,7 +265,7 @@ class TRIXAnalyzer:
         return summary
 
     def _build_meta(
-        self, rix_results: dict[object, RadialRuggedness], dem_metadata: dict[str, str], keys: Keys
+        self, rix_results: dict[object, RadialRuggedness], dem_metadata: dict[str, str] | None, keys: Keys
     ) -> dict:
         records: dict = {
             "meta": {key: self._config[key] for key in ["name", "version", "description"]}
@@ -317,6 +317,7 @@ class TRIXAnalyzer:
         nan_count = sum(
             [_get_parameter(rix_result.meta, keys.rays, keys.nan_count) for _, rix_result in rix_results.items()]
         )
+        dem_metadata = copy.deepcopy(dem_metadata) if dem_metadata is not None else {}
         records[keys.spatial_context] = {
             keys.source_dem: dem_metadata.copy() | dict(crs=crs_dem, extent=extent_dem, resolution=resolution_dem),
             keys.source_ray: dict(crs=crs_ray, nan_count=nan_count),
