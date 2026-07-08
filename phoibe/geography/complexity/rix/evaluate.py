@@ -1,4 +1,5 @@
 import logging
+import typing
 
 import numpy as np
 import shapely.geometry
@@ -6,25 +7,25 @@ from numpy.typing import NDArray
 
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
-from .keys import ColumnKeys
+from .interface import Keys
 from .profiles import NaNPolicy, RayProfile
 from .results import RadialRuggedness, RayRuggedness
 
 LOGGER = logging.getLogger(__name__)
 
-COLUMN_KEYS = ColumnKeys()
+KEYS = Keys()
 
 
 def compute_regular_rix(
     location: shapely.Point,
     sampler: FieldSampler,
     n_angles: int,
-    R_km,
-    dr_km,
-    crs,
-    slope_critical=0.3,
+    R_km: float,
+    dr_km: float,
+    crs: typing.Any,
+    slope_critical: float,
     nan_policy="mask",
-    keys: ColumnKeys = COLUMN_KEYS,
+    keys: Keys = KEYS,
 ):
     """Compute the ruggedness index RIX of a location. The RIX assesses height profiles along
     rays originating at `location`.

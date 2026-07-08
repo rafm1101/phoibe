@@ -15,9 +15,10 @@ import xarray
 import yaml
 
 from . import evaluate, trix
+from .base import ColumnKeys
 from .config import ANALYZER_DEFAULTS, DEM_METADATA
 from .fieldsampler import RegularGridXYSampler
-from .keys import ColumnKeys, _get_parameter
+from .interface import Keys, _get_parameter
 from .results import RadialRuggedness
 
 LOGGER = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ LOGGER = logging.getLogger(__name__)
 
 _REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical"}
 COLUMN_KEYS = ColumnKeys()
+KEYS = Keys()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -76,6 +78,8 @@ class TRIXAnalyzer:
         ----------
         path
             Path to ``config.yaml``.
+        keys
+            Keys for the config.
 
         Returns
         -------
@@ -90,7 +94,7 @@ class TRIXAnalyzer:
         locations_site: gpd.GeoDataFrame,
         locations_reference: gpd.GeoDataFrame | None = None,
         dem_metadata: dict = DEM_METADATA,
-        keys: ColumnKeys = COLUMN_KEYS,
+        keys: Keys = KEYS,
     ) -> ResultSummary:
         """Run the full RIX analysis.
 
@@ -168,10 +172,10 @@ class TRIXAnalyzer:
         dem: xarray.DataArray,
         locations_site: gpd.GeoDataFrame,
         locations_reference: gpd.GeoDataFrame | None,
-        keys: ColumnKeys,
+        keys: Keys,
     ) -> None:
         """Check CRS consistency and index uniqueness."""
-        expected_crs = self._config["crs"]
+        expected_crs = self._config[keys.parameters]["crs"]
 
         if locations_reference is not None:
             if locations_site.crs != locations_reference.crs:
@@ -194,10 +198,10 @@ class TRIXAnalyzer:
         #     raise ValueError("DEM must have 'x' and 'y' coordinates.")
 
     def _compute_rix_results(
-        self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame, keys: ColumnKeys
+        self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame, keys: Keys
     ) -> dict[object, RadialRuggedness]:
         """Run RIX for every location. Returns dict keyed by location_id."""
-        cfg = self._config["parameters"]
+        cfg = self._config[keys.parameters]
         results = {}
 
         for location_id, row in locations.iterrows():
@@ -237,9 +241,7 @@ class TRIXAnalyzer:
 
         return rix_roses
 
-    def _build_summary(
-        self, radial_results: dict[object, RadialRuggedness], keys: ColumnKeys = COLUMN_KEYS
-    ) -> pd.DataFrame:
+    def _build_summary(self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS) -> pd.DataFrame:
         """Build summary DataFrame from radial results."""
         summary_rows = []
 
@@ -263,7 +265,7 @@ class TRIXAnalyzer:
         return summary
 
     def _build_meta(
-        self, rix_results: dict[object, RadialRuggedness], dem_metadata: dict[str, str], keys: ColumnKeys
+        self, rix_results: dict[object, RadialRuggedness], dem_metadata: dict[str, str], keys: Keys
     ) -> dict:
         records: dict = {
             "meta": {key: self._config[key] for key in ["name", "version", "description"]}
@@ -271,9 +273,9 @@ class TRIXAnalyzer:
                 keys.created_at: datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z"),
             }
         }
-        records["parameters"] = {
-            "ray": {key: _get_parameter(self._config, "parameters", key) for key in ["n_angles", "R_km", "dr_km"]},
-            "slope": {key: _get_parameter(self._config, "parameters", key) for key in ["slope_critical"]},
+        records[keys.parameters] = {
+            "ray": {key: _get_parameter(self._config, keys.parameters, key) for key in ["n_angles", "R_km", "dr_km"]},
+            "slope": {key: _get_parameter(self._config, keys.parameters, key) for key in ["slope_critical"]},
             "sampler": _get_parameter(self._config, "sampler").copy(),
         }
 
@@ -281,20 +283,20 @@ class TRIXAnalyzer:
             set(
                 crs
                 for _, rix_result in rix_results.items()
-                for crs in _get_parameter(rix_result.meta, "rays", keys.crs_ray)
+                for crs in _get_parameter(rix_result.meta, keys.rays, keys.crs_ray)
             )
         )
         crs_dem = list(
             set(
                 crs
                 for _, rix_result in rix_results.items()
-                for crs in _get_parameter(rix_result.meta, "dem", keys.crs_dem)
+                for crs in _get_parameter(rix_result.meta, keys.dem, keys.crs_dem)
             )
         )
         unique_extends_dem = set(
             extent
             for _, rix_result in rix_results.items()
-            for extent in _get_parameter(rix_result.meta, "dem", keys.extent_dem)
+            for extent in _get_parameter(rix_result.meta, keys.dem, keys.extent_dem)
         )
         extent_dem = list(
             dict(zip(["west", "south", "east", "north"], extent, strict=True)) for extent in unique_extends_dem
@@ -302,18 +304,18 @@ class TRIXAnalyzer:
         unique_resolution_dem = set(
             res
             for _, rix_result in rix_results.items()
-            for res in _get_parameter(rix_result.meta, "dem", keys.resolution_dem)
+            for res in _get_parameter(rix_result.meta, keys.dem, keys.resolution_dem)
         )
         resolution_dem = list(dict(zip(["dx", "dy"], resolution, strict=True)) for resolution in unique_resolution_dem)
         message = list(
             set(
                 message
                 for _, rix_result in rix_results.items()
-                for message in _get_parameter(rix_result.meta, "alignment", keys.message)
+                for message in _get_parameter(rix_result.meta, keys.alignment, keys.message)
             )
         )
         nan_count = sum(
-            [_get_parameter(rix_result.meta, "rays", keys.nan_count) for _, rix_result in rix_results.items()]
+            [_get_parameter(rix_result.meta, keys.rays, keys.nan_count) for _, rix_result in rix_results.items()]
         )
         records[keys.spatial_context] = {
             keys.source_dem: dem_metadata.copy() | dict(crs=crs_dem, extent=extent_dem, resolution=resolution_dem),
@@ -323,10 +325,10 @@ class TRIXAnalyzer:
         return records
 
     def _build_steep_segments(
-        self, radial_results: dict[object, RadialRuggedness], keys: ColumnKeys = COLUMN_KEYS
+        self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS
     ) -> gpd.GeoDataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
-        crs = self._config["parameters"]["crs"]
+        crs = self._config[keys.parameters]["crs"]
         steep_segments_rows = []
 
         for location_id, radial_rix in radial_results.items():
@@ -347,7 +349,7 @@ class TRIXAnalyzer:
         return steep_segments
 
     def _compute_trix(
-        self, summary_site: pd.DataFrame, summary_reference: pd.DataFrame, keys: ColumnKeys = COLUMN_KEYS
+        self, summary_site: pd.DataFrame, summary_reference: pd.DataFrame, keys: Keys = KEYS
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Compute pairwise TRIX as Cartesian product of summary_site × summary_reference.
 
@@ -375,7 +377,7 @@ class TRIXAnalyzer:
         return trix_result, A, B
 
     def _compute_pairwise_distances_km(
-        self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries, keys: ColumnKeys
+        self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries, keys: Keys
     ) -> pd.DataFrame:
         """Compute pairwise Euclidean distances [km] between site and wind locations."""
         coords_a = np.vstack([point.coords[0] for point in location_site])
@@ -387,7 +389,7 @@ class TRIXAnalyzer:
         )
         return distances
 
-    def _build_trix_results(self, trix, A, B, distances, transferability, keys: ColumnKeys):
+    def _build_trix_results(self, trix, A, B, distances, transferability, keys: Keys):
         """Build the T-RIX table containing the transferability, distances between wind data base and site, T-RIX
         and threshold distances A and B.
         """
@@ -420,6 +422,8 @@ def _load_config(path: str | pathlib.Path) -> dict:
     ----------
     path
         Path to ``config.yaml``.
+    keys
+        Key holding parameter key.
 
     Returns
     -------

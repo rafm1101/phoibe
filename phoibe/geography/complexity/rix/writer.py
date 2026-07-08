@@ -11,8 +11,9 @@ import pandas as pd
 import yaml
 
 from .analyzer import ResultSummary
+from .base import ColumnKeys
 from .config import WRITER_DEFAULTS
-from .keys import ColumnKeys, _get_parameter
+from .interface import _get_parameter
 
 LOGGER = logging.getLogger(__name__)
 

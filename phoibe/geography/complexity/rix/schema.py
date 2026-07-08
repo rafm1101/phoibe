@@ -1,4 +1,4 @@
-from .keys import ColumnKeys
+from .base import ColumnKeys
 
 COLUMN_KEYS = ColumnKeys()
 
@@ -138,57 +138,68 @@ PRODUCT_DEFINITION_TRIX = {
         "rix_summary": {
             "description": "Table of the RIX and elevation values, and summary statistics thereof.",
             "columns": {
-                COLUMN_KEYS.site_id: {
+                "site_id": {
+                    "name": "location_id",
                     "description": "Site identifier of the assessed site.",
                     "unit": None,
                 },
-                COLUMN_KEYS.elevation: {
+                "elevation": {
+                    "name": "elevation",
                     "description": "Site elevation as determined from the DEM. Mean of the origins of all rays.",
                     "unit": "m",
                 },
-                COLUMN_KEYS.elevation_std: {
+                "elevation_std": {
+                    "name": "elevation_std",
                     "description": "Standard deviation of `elevation`.",
                     "unit": "m",
                 },
-                COLUMN_KEYS.rix: {
+                "rix": {
+                    "name": "rix",
                     "description": "Mean ruggedness index across all ray directions. "
                     "Proportion of the total length of all steep segments among the total length of all rays.",
                     "unit": None,
                 },
-                COLUMN_KEYS.rix_std: {
+                "rix_std": {
+                    "name": "rix_std",
                     "description": "Standard deviation of ruggedness across ray directions.",
                     "unit": None,
                 },
-                COLUMN_KEYS.rix_min: {
+                "rix_min": {
+                    "name": "rix_min",
                     "description": "Minimal ruggedness across ray directions.",
                     "unit": None,
                 },
-                COLUMN_KEYS.rix_max: {
+                "rix_max": {
+                    "name": "rix_max",
                     "description": "Maximal ruggedness across ray directions.",
                     "unit": None,
                 },
-                COLUMN_KEYS.n_rays: {
+                "n_rays": {
+                    "name": "n_rays",
                     "description": "Number of rays directions evaluated.",
                     "unit": None,
                 },
-                COLUMN_KEYS.slope_critical: {
+                "slope_critical": {
+                    "name": "slope_critical",
                     "description": "Slope threshold distinguishing steep and flat",
                     "unit": "m/m",
                 },
             },
         },
-        "trix": {
+        "trix_table": {
             "description": "Table of representativity measures and related distances.",
             "columns": {
-                COLUMN_KEYS.site_id: {
+                "site_id": {
                     "description": "Site identifier of the assessed site.",
                     "unit": None,
                 },
-                COLUMN_KEYS.reference_id: {
+                "reference_id": {
+                    "name": "reference_id",
                     "description": "Site identifier of the wind data base site.",
                     "unit": None,
                 },
-                COLUMN_KEYS.transferability: {
+                "transferability": {
+                    "name": "transferability",
                     "description": "Representability of the wind measurement at the wind date base site. "
                     "for the assessed site.",
                     "unit": None,
@@ -199,19 +210,23 @@ PRODUCT_DEFINITION_TRIX = {
                         2: "Representable.",
                     },
                 },
-                COLUMN_KEYS.distance: {
+                "distance": {
+                    "name": "distance",
                     "description": "Distance between the assessed site and the wind data base site.",
                     "unit": "km",
                 },
-                COLUMN_KEYS.trix: {
+                "trix": {
+                    "name": "trix",
                     "description": "T-RIX measure between the assessed site and the wind data base site.",
                     "unit": "km",
                 },
-                COLUMN_KEYS.A: {
+                "A": {
+                    "name": "A",
                     "description": "Distance threshold for full representability at the given T-RIX value.",
                     "unit": "km",
                 },
-                COLUMN_KEYS.B: {
+                "B": {
+                    "name": "B",
                     "description": "Distance threshold for conditional representability at the given T-RIX value.",
                     "unit": "km",
                 },
@@ -222,67 +237,69 @@ PRODUCT_DEFINITION_TRIX = {
                 "locations_site": {
                     "description": "Coordinates of the assessed sites.",
                     "columns": {
-                        COLUMN_KEYS.site_id: {
+                        "site_id": {
                             "description": "Site identifier of the assessed site.",
                             "unit": None,
                         },
-                        COLUMN_KEYS.geometry: {
+                        "geometry": {
                             "description": "Coordinates of the assessed sites. CRS as presented by the user.",
                         },
                     },
-                    "geometry_column": COLUMN_KEYS.geometry,
+                    "geometry_column": "geometry",
                     "geometry_type": "Point",
                 },
                 "locations_reference": {
                     "description": "Coordinates of the wind data base sites.",
                     "columns": {
-                        COLUMN_KEYS.site_id: {
+                        "site_id": {
                             "description": "Site identifier of the wind data base site.",
                             "unit": None,
                         },
-                        COLUMN_KEYS.geometry: {
+                        "geometry": {
                             "description": "Coordinates of the wind data base sites. CRS as presented by the user.",
                         },
                     },
-                    "geometry_column": COLUMN_KEYS.geometry,
+                    "geometry_column": "geometry",
                     "geometry_type": "Point",
                 },
                 "ruggedness": {
                     "description": "Steep segments of the assessed sites on each ray.",
                     "columns": {
-                        COLUMN_KEYS.site_id: {
+                        "site_id": {
                             "description": "Site identifier of the wind data base site.",
                             "unit": None,
                         },
-                        COLUMN_KEYS.theta: {
+                        "theta": {
+                            "name": "theta",
                             "description": "Direction of the ray.",
                             "unit": "°",
                             "dtype": "float",
                             "range": [0, 360],
                         },
-                        COLUMN_KEYS.segment_id: {
+                        "segment_id": {
+                            "name": "segment_id",
                             "description": "Identifier of the steep segment on the given ray of the given site.",
                             "unit": None,
                         },
-                        COLUMN_KEYS.geometry: {
+                        "geometry": {
                             "description": "Coordinates of segments start/end. CRS as presented by the user.",
                         },
                     },
-                    "geometry_column": COLUMN_KEYS.geometry,
+                    "geometry_column": "geometry",
                     "geometry_type": "LineString",
                 },
-                COLUMN_KEYS.trix: {
+                "trix_table": {
                     "description": "Table of representativity measures and related distances.",
                     "columns": {
-                        COLUMN_KEYS.site_id: {
+                        "site_id": {
                             "description": "Site identifier of the assessed site.",
                             "unit": None,
                         },
-                        COLUMN_KEYS.reference_id: {
+                        "reference_id": {
                             "description": "Site identifier of the wind data base site.",
                             "unit": None,
                         },
-                        COLUMN_KEYS.transferability: {
+                        "transferability": {
                             "description": "Representability of the wind measurement at the wind date base site. "
                             "for the assessed site.",
                             "unit": None,
@@ -293,25 +310,25 @@ PRODUCT_DEFINITION_TRIX = {
                                 2: "Representable.",
                             },
                         },
-                        COLUMN_KEYS.distance: {
+                        "distance": {
                             "description": "Distance between the assessed site and the wind data base site.",
                             "unit": "km",
                         },
-                        COLUMN_KEYS.trix: {
+                        "trix": {
                             "description": "T-RIX measure between the assessed site and the wind data base site.",
                             "unit": "km",
                         },
-                        COLUMN_KEYS.A: {
+                        "A": {
                             "description": "Distance threshold for full representability at the given T-RIX value.",
                             "unit": "km",
                         },
-                        COLUMN_KEYS.B: {
+                        "B": {
                             "description": "Distance threshold for conditional representability at the given T-RIX "
                             "value.",
                             "unit": "km",
                         },
                     },
-                    "geometry_column": COLUMN_KEYS.geometry,
+                    "geometry_column": "geometry",
                     "geometry_type": None,
                 },
             }

@@ -1,6 +1,6 @@
 import typing
 
-from .keys import _get_parameter
+from .interface import _get_parameter
 from .schema import PRODUCT_DEFINITION_TRIX
 
 ANALYZER_DEFAULTS: dict = {

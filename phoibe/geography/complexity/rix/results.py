@@ -5,10 +5,10 @@ import numpy as np
 import shapely
 
 from . import evaluate
-from .keys import ColumnKeys, _get_parameter
+from .interface import Keys, _get_parameter
 from .profiles import RayProfile
 
-COLUMN_KEYS = ColumnKeys()
+KEYS = Keys()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -38,17 +38,17 @@ class RayRuggedness:
     """Ray profile of some field."""
     slope_critical: float
     """Slope [m/m] above which a segment is consideres as steep."""
-    keys: ColumnKeys = dataclasses.field(repr=False, default=COLUMN_KEYS)
+    keys: Keys = dataclasses.field(repr=False, default=KEYS)
 
     @property
     def meta(self) -> RayProfileMeta:
         """Metadata relating to `RayProfile`. Includes CRS, (resolution), out-of-bound point count, messages."""
         ray_profile_meta = RayProfileMeta(
-            crs_ray=_get_parameter(self.profile.meta, "rays", self.keys.crs_ray, strict=False),
-            crs_dem=_get_parameter(self.profile.meta, "dem", self.keys.crs_dem, strict=False),
+            crs_ray=_get_parameter(self.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False),
+            crs_dem=_get_parameter(self.profile.meta, self.keys.dem, self.keys.crs_dem, strict=False),
             resolution=0,
-            n_oob=_get_parameter(self.profile.meta, "rays", self.keys.nan_count, strict=False),
-            messages=str(_get_parameter(self.profile.meta, "alignment", self.keys.message, strict=False)),
+            n_oob=_get_parameter(self.profile.meta, self.keys.rays, self.keys.nan_count, strict=False),
+            messages=str(_get_parameter(self.profile.meta, self.keys.alignment, self.keys.message, strict=False)),
         )
         return ray_profile_meta
 
@@ -147,7 +147,7 @@ class RadialRuggedness:
     """Collection of rays being evaluated."""
     _ray_by_angle: dict[float, RayRuggedness] = dataclasses.field(init=False, repr=False, compare=False)
     """Access ray results by their angle."""
-    keys: ColumnKeys = dataclasses.field(repr=False, default=COLUMN_KEYS)
+    keys: Keys = dataclasses.field(repr=False, default=KEYS)
     """Column keys to employ."""
 
     def __post_init__(self):
@@ -206,25 +206,30 @@ class RadialRuggedness:
 
     @property
     def meta(self) -> dict:
-        crs_ray = list({_get_parameter(ray.profile.meta, "rays", self.keys.crs_ray) for ray in self.rays})
-        crs_dem = list({_get_parameter(ray.profile.meta, "dem", self.keys.crs_dem) for ray in self.rays})
-        extent_dem = list({_get_parameter(ray.profile.meta, "dem", self.keys.extent_dem) for ray in self.rays})
-        resolution_dem = list({_get_parameter(ray.profile.meta, "dem", self.keys.resolution_dem) for ray in self.rays})
-        message = list({_get_parameter(ray.profile.meta, "alignment", self.keys.message) for ray in self.rays})
+        crs_ray = list({_get_parameter(ray.profile.meta, self.keys.rays, self.keys.crs_ray) for ray in self.rays})
+        crs_dem = list({_get_parameter(ray.profile.meta, self.keys.dem, self.keys.crs_dem) for ray in self.rays})
+        extent_dem = list({_get_parameter(ray.profile.meta, self.keys.dem, self.keys.extent_dem) for ray in self.rays})
+        resolution_dem = list(
+            {_get_parameter(ray.profile.meta, self.keys.dem, self.keys.resolution_dem) for ray in self.rays}
+        )
+        message = list({_get_parameter(ray.profile.meta, self.keys.alignment, self.keys.message) for ray in self.rays})
         nan_count = int(
-            np.sum([_get_parameter(ray.profile.meta, "rays", self.keys.nan_count) for ray in self.rays], dtype=float)
+            np.sum(
+                [_get_parameter(ray.profile.meta, self.keys.rays, self.keys.nan_count) for ray in self.rays],
+                dtype=float,
+            )
         )
         records = {
-            "rays": {
+            self.keys.rays: {
                 self.keys.crs_ray: crs_ray,
                 self.keys.nan_count: nan_count,
             },
-            "dem": {
+            self.keys.dem: {
                 self.keys.crs_dem: crs_dem,
                 self.keys.extent_dem: extent_dem,
                 self.keys.resolution_dem: resolution_dem,
             },
-            "alignment": {
+            self.keys.alignment: {
                 self.keys.message: message,
             },
         }
