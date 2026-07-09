@@ -13,10 +13,11 @@ Key insights:
 ## What You Can Do
 
 - **Assess terrain complexity** with RIX: a single 0-1 score indicating proportion of steep slopes.
+- **Assess wind data base representativity** with T-RIX: a single score translating directly into distance thresholds.
 - **Drill into results** with per-ray statistics, elevation profiles, and steep-segment geometry.
 - **Work across coordinate systems**: your site and elevation model can use different CRS; the toolkit handles conversion.
-- **Visualize findings**: Plot polar diagrams, overlay steep segments on maps, export results as GeoDataFrames
-- **Customize analysis**: Adjust ray count, search radius, grid spacing, and slope thresholds to your use case
+- **Visualize findings**: Plot polar diagrams, overlay steep segments on maps, export results as GeoDataFrames.
+- **Customize analysis**: Adjust ray count, search radius, grid spacing, and slope thresholds to your use case.
 
 ## Quick Start
 
@@ -81,6 +82,19 @@ _, ax = plot_geodata(da=elevation_map)
 result_regular.steep_segments_geodataframe().plot(ax=ax, color="r", linewidth=1, label="ray's steep parts")
 ```
 
+4. **Store your results:**
+
+```python
+from complexity.rix import writer
+
+writer.RIXWriter(
+    result=results,
+    locations_site=sites,
+    locations_reference=references,
+    profile=writer.WriterProfile.FULL,
+).write(directory="trix_assessment", project_name="WP Planar I")
+```
+
 ## Architecture
 
 | Subpackage | Purpose |
@@ -91,6 +105,8 @@ result_regular.steep_segments_geodataframe().plot(ax=ax, color="r", linewidth=1,
 
 Within `rix`:
 
+- `schema`: Central product definition including descriptions.
+- `interface`: Key definitions.
 - `config`: Gathered configurations used throughout the subpackage.
 - `geometry`: Definition of rays as representatives in 2D world.
 - `profiles`: Generate 1D profiles along rays.
@@ -112,6 +128,11 @@ Within `plot`:
 
 ### Best practices and considerations
 
+1. Central anchor for configuration, version, parameters, artifact schema, and field definitions and descriptions are contained in `schema.py`.
+   - `interface.py` contains relevant keys.
+   - `config.py` extracts relevant parameters.
+   - Parameters that rely on TR6 are marked as `locked`.
+1. DEM metadata remains to be refined.
 1. Multi-CRS supported. Provide assessed sites in a projected CRS measuring in meters. Maps in a geographic CRS are handled accordingly by transforming the sites' coordinates and sampling these.
 1. Interpolation and grid spacing matter: Along the individual rays, resampling the elevations at its internal grid points, may have some hidden sensitivities. The following combinations should be used carefully:
    - Interpolation method `nearest` w/ a small grid spacing (leads to jumps on short segments).
@@ -125,7 +146,7 @@ Within `plot`:
    1. Coarse level-crossing grids + nearest-neighbor: Extreme loss of slope detail. Use linear interpolation and finer grids instead.
    1. Mismatched ray resolution: Very short `dr_km` with coarse elevation data means you're interpolating between widely-spaced source points. Choose consistent scales.
 1. Objects separate concerns:
-   - `RayGeometry` represents a ray only. It may change its representation to another CRS.
+   - `RayGeometry` represents a single ray only. It may change its representation to another CRS.
    - `RayProfile` represents the elevation profile along its ray. For its instantiation, a `FieldSampler` is required.
    - `FieldSampler` samples coordinates from a 2D field. In case of a CRS mismatch, it requests a matching representation of the coordinates in its own CRS.
    - `RayRuggedness` evaluates a single `RayProfile` instance.
