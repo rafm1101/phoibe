@@ -134,25 +134,77 @@ class Keys:
     y: str = "y"
     """Meridonal dimension."""
 
-    """Metainformation/topl-level keys:"""
+    """Summary/top-level keys:"""
+    project_name: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "project_name", "name")
+    """Project name."""
+    meta: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "meta", "name")
+    """Context about the process."""
+    parameters: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "parameters", "name")
+    """Context about the parameters."""
+    spatial_context: str = _get_parameter(
+        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "spatial_context", "name"
+    )
+    """Context about the data sources evaluated."""
+    run: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "name")
+    """Information about the run."""
+    artifacts: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "artifacts", "name")
+    """Information about the artifacts stored."""
+
+    """Metainformation/internal keys:"""
+    created_at: str = "created_at"
+    """meta: Creation timestamp."""
+    source_dem: str = "source_dem"
+    """spatial_context: Context about the DEM."""
+    source_ray: str = "source_ray"
+    """spatial_context: Context about the rays."""
+    n_sites: str = _get_parameter(
+        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "keys", "n_sites", "name"
+    )
+    """run: Number of assessed sites."""
+    n_references: str = _get_parameter(
+        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "keys", "n_references", "name"
+    )
+    """run: Number of assessed references."""
+    computed: str = _get_parameter(
+        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "keys", "computed", "name"
+    )
+    """run: What has been computed."""
+    diagnostics: str = _get_parameter(
+        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "keys", "diagnostics", "name"
+    )
+    """run: Summary statistics."""
+    n_sites_with_nans: str = _get_parameter(
+        PRODUCT_DEFINITION_TRIX,
+        "schema",
+        "manifest",
+        "keys",
+        "run",
+        "keys",
+        "diagnostics",
+        "keys",
+        "n_sites_with_nans",
+        "name",
+    )
+    """run.diagnostics: Summary statistics."""
+    transferability_counts: str = _get_parameter(
+        PRODUCT_DEFINITION_TRIX,
+        "schema",
+        "manifest",
+        "keys",
+        "run",
+        "keys",
+        "diagnostics",
+        "keys",
+        "transferability_counts",
+        "name",
+    )
+    """run.diagnostics: Summary statistics."""
     dem: str = "dem"
     """Top-level key holding DEM information."""
     rays: str = "rays"
     """Top-level key holding ray information."""
-    parameters: str = "parameters"
-    """Context about the parameters."""
     alignment: str = "internal_alignment"
     """Context about the alignment of DEM and rays."""
-
-    """Metainformation/internal keys:"""
-    created_at: str = "created_at"
-    """Creation timestamp."""
-    spatial_context: str = "spatial_context" ""
-    """Information about data sources evaluated."""
-    source_dem: str = "source_dem"
-    """Context about the DEM."""
-    source_ray: str = "source_ray"
-    """Context about the rays."""
     crs_dem: str = "crs_dem"
     """CRS of the digital elevation model."""
     crs_ray: str = "crs_ray"

@@ -155,7 +155,13 @@ class TRIXAnalyzer:
                 trix=trix_values, A=A, B=B, distances=distances, transferability=transferability, keys=keys
             )
 
-        meta = self._build_meta(rix_results=radial_rix_site, dem_metadata=dem_metadata, keys=keys)
+        meta = self._build_meta(
+            results_site=radial_rix_site,
+            results_reference=radial_rix_reference,
+            trix_table=trix_table,
+            dem_metadata=dem_metadata,
+            keys=keys,
+        )
 
         return ResultSummary(
             locations_site=locations_site,
@@ -265,7 +271,12 @@ class TRIXAnalyzer:
         return summary
 
     def _build_meta(
-        self, rix_results: dict[object, RadialRuggedness], dem_metadata: dict[str, str] | None, keys: Keys
+        self,
+        results_site: dict[object, RadialRuggedness],
+        results_reference: dict[object, RadialRuggedness] | None,
+        trix_table: pd.DataFrame | None,
+        dem_metadata: dict[str, str] | None,
+        keys: Keys,
     ) -> dict:
         records: dict = {
             "meta": {key: self._config[key] for key in ["name", "version", "description"]}
@@ -282,20 +293,20 @@ class TRIXAnalyzer:
         crs_ray = list(
             set(
                 crs
-                for _, rix_result in rix_results.items()
+                for _, rix_result in results_site.items()
                 for crs in _get_parameter(rix_result.meta, keys.rays, keys.crs_ray)
             )
         )
         crs_dem = list(
             set(
                 crs
-                for _, rix_result in rix_results.items()
+                for _, rix_result in results_site.items()
                 for crs in _get_parameter(rix_result.meta, keys.dem, keys.crs_dem)
             )
         )
         unique_extends_dem = set(
             extent
-            for _, rix_result in rix_results.items()
+            for _, rix_result in results_site.items()
             for extent in _get_parameter(rix_result.meta, keys.dem, keys.extent_dem)
         )
         extent_dem = list(
@@ -303,25 +314,43 @@ class TRIXAnalyzer:
         )
         unique_resolution_dem = set(
             res
-            for _, rix_result in rix_results.items()
+            for _, rix_result in results_site.items()
             for res in _get_parameter(rix_result.meta, keys.dem, keys.resolution_dem)
         )
         resolution_dem = list(dict(zip(["dx", "dy"], resolution, strict=True)) for resolution in unique_resolution_dem)
         message = list(
             set(
                 message
-                for _, rix_result in rix_results.items()
+                for _, rix_result in results_site.items()
                 for message in _get_parameter(rix_result.meta, keys.alignment, keys.message)
             )
         )
-        nan_count = sum(
-            [_get_parameter(rix_result.meta, keys.rays, keys.nan_count) for _, rix_result in rix_results.items()]
+        n_nans = sum(
+            [_get_parameter(rix_result.meta, keys.rays, keys.nan_count) for _, rix_result in results_site.items()]
         )
         dem_metadata = copy.deepcopy(dem_metadata) if dem_metadata is not None else {}
         records[keys.spatial_context] = {
             keys.source_dem: dem_metadata.copy() | dict(crs=crs_dem, extent=extent_dem, resolution=resolution_dem),
-            keys.source_ray: dict(crs=crs_ray, nan_count=nan_count),
+            keys.source_ray: dict(crs=crs_ray, nan_count=n_nans),
             keys.alignment: dict(messages=message),
+        }
+        n_sites_w_nans = sum(
+            [_get_parameter(rix_result.meta, keys.rays, keys.nan_count) > 0 for _, rix_result in results_site.items()]
+        )
+        computed = ["rix_site"]
+        if results_reference is not None:
+            computed.append("rix_reference")
+        if trix_table is not None:
+            computed.append("trix")
+            transferability_counts = trix_table[keys.transferability].value_counts().sort_index().to_dict()
+        records[keys.run] = {
+            keys.n_sites: len(results_site),
+            keys.n_references: len(results_reference) if results_reference is not None else 0,
+            keys.computed: computed,
+            keys.diagnostics: {
+                keys.n_sites_with_nans: n_sites_w_nans,
+                keys.transferability_counts: transferability_counts,
+            },
         }
         return records
 
