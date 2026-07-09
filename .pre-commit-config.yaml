@@ -9,7 +9,7 @@ repos:
         files: (phoibe|tests)
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.17
+    rev: v0.15.21
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -33,7 +33,7 @@ repos:
       - id: vulture
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.1.0
+    rev: v2.2.0
     hooks:
       - id: mypy
         args: ["phoibe"]
@@ -47,7 +47,7 @@ repos:
         args: ["--maxkb=775"]
 
   - repo: https://github.com/jshwi/docsig
-    rev: intellij-plugin-v1.0.2
+    rev: v0.89.0
     hooks:
       - id: docsig
         files: "pho/"

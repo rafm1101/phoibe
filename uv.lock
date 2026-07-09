@@ -284,8 +284,8 @@ wheels = [
 
 [[package]]
 name = "ergaleiothiki"
-version = "0.2.0"
-source = { git = "https://github.com/rafm1101/ergaleiothiki.git?tag=0.2.0#35ecb730c81be15349d40f91a1f5985c24842d24" }
+version = "0.3.0"
+source = { git = "https://github.com/rafm1101/ergaleiothiki.git?tag=0.3.0#407030fc7132bc3c666c703c884418d3ba51e4a2" }
 dependencies = [
     { name = "numpy" },
     { name = "python-dotenv" },
@@ -859,7 +859,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cartopy", marker = "extra == 'docs'", specifier = ">=0.25.0" },
-    { name = "ergaleiothiki", git = "https://github.com/rafm1101/ergaleiothiki.git?tag=0.2.0" },
+    { name = "ergaleiothiki", git = "https://github.com/rafm1101/ergaleiothiki.git?tag=0.3.0" },
     { name = "geopandas", marker = "extra == 'docs'", specifier = ">=1.1.2" },
     { name = "ipykernel", marker = "extra == 'docs'", specifier = ">=6.31" },
     { name = "matplotlib", marker = "extra == 'docs'", specifier = ">=3.10.8" },

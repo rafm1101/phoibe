@@ -41,8 +41,8 @@ docs = [
 ]
 
 [tool.uv.sources]
-ergaleiothiki = { git = "https://github.com/rafm1101/ergaleiothiki.git", tag = "0.2.0" }
-# ergaleiothiki = { git = "git@github.com:rafm1101/ergaleiothiki.git", tag = "0.2.0" }
+ergaleiothiki = { git = "https://github.com/rafm1101/ergaleiothiki.git", tag = "0.3.0" }
+# ergaleiothiki = { git = "git@github.com:rafm1101/ergaleiothiki.git", tag = "0.3.0" }
 # ergaleiothiki = { index = "nemea-index" }
 
 [[tool.uv.index]]
