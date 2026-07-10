@@ -285,14 +285,10 @@ wheels = [
 [[package]]
 name = "ergaleiothiki"
 version = "0.3.0"
-source = { registry = "http://localhost:8080/simple/" }
+source = { git = "https://github.com/rafm1101/ergaleiothiki.git?tag=0.3.0#407030fc7132bc3c666c703c884418d3ba51e4a2" }
 dependencies = [
     { name = "numpy" },
     { name = "python-dotenv" },
-]
-sdist = { url = "http://localhost:8080/packages/ergaleiothiki-0.3.0.tar.gz", hash = "sha256:52ae7fb29c822af440c06a553f338a9817d11b14bcd5b975553de76474861762" }
-wheels = [
-    { url = "http://localhost:8080/packages/ergaleiothiki-0.3.0-py3-none-any.whl", hash = "sha256:51aaed3fbd8f00d84f93da345479420c16f544b5cbdce52a1e15ddb48125b5b5" },
 ]
 
 [[package]]
@@ -824,7 +820,7 @@ wheels = [
 
 [[package]]
 name = "phoibe"
-version = "0.4.0"
+version = "0.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "ergaleiothiki" },
@@ -863,7 +859,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cartopy", marker = "extra == 'docs'", specifier = ">=0.25.0" },
-    { name = "ergaleiothiki", specifier = ">=0.3.0", index = "http://localhost:8080/simple/" },
+    { name = "ergaleiothiki", git = "https://github.com/rafm1101/ergaleiothiki.git?tag=0.3.0" },
     { name = "geopandas", marker = "extra == 'docs'", specifier = ">=1.1.2" },
     { name = "ipykernel", marker = "extra == 'docs'", specifier = ">=6.31" },
     { name = "matplotlib", marker = "extra == 'docs'", specifier = ">=3.10.8" },

@@ -10,6 +10,8 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
 - **Profile and validate machine data.** following a progressive issue detection and transformation approach subdivided into layers for (more than just) scada data.
 - **Generate synthetic data.** This includes 2D fields, sample points and messy scada data timeseries.
 
+---
+
 ## Architecture
 
 | Package | Subpackage | Purpose |
@@ -20,6 +22,8 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
 |  | `plot` | Visualise. |
 | `layered` |   | Profile and validate data in layers. Prototype. |
 | `synthetic_data` |  | Generate 2D-fields and wtg scada data timeseries (including data mess) for demonstration. |
+
+---
 
 ## Demonstrations
 
@@ -33,13 +37,23 @@ Notebooks demonstrate how to use certain parts of the package. Their prefixes me
 
 <!--### Guidelines-->
 
+---
+
+## Setup
+
+**Prerequisites:** Python 3.13 and uv.
+
+**Install environment:** `make install`.
+
+---
+
 ## Observed code sweets and sours
 
 ### How to ... use the package
 
-Currently, the package is registered in a locally hosted registry. This works on my computer. To run examples, adjust `pyproject.toml` to receive the dependency _ergaleiothiki_ directly from github, and remove the source _nemea-index_.
+<!--Currently, the package is registered in a locally hosted registry. This works on my computer. To run examples, adjust `pyproject.toml` to receive the dependency _ergaleiothiki_ directly from github, and remove the source _nemea-index_.
 
-An alternative is to download the _ergaleiothiki_ along with _phoibe_, set the path of the former in `pyproject.toml` accordingly, and remove the source.
+An alternative is to download the _ergaleiothiki_ along with _phoibe_, set the path of the former in `pyproject.toml` accordingly, and remove the source.-->
 
 ### How to ... register new package versions
 

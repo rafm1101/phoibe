@@ -8,11 +8,11 @@ from numpy.typing import NDArray
 
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
-from .keys import ColumnKeys
+from .interface import Keys
 
 LOGGER = logging.getLogger(__name__)
 
-COLUMN_KEYS = ColumnKeys()
+KEYS = Keys()
 
 
 class NaNPolicy(enum.StrEnum):
@@ -56,9 +56,7 @@ class RayProfile:
             _validate_positive(dr, "delta r_m")
 
     @classmethod
-    def create_regular(
-        cls, ray: RayGeometry, sampler: FieldSampler, nan_policy: NaNPolicy, keys: ColumnKeys = COLUMN_KEYS
-    ):
+    def create_regular(cls, ray: RayGeometry, sampler: FieldSampler, nan_policy: NaNPolicy, keys: Keys = KEYS):
         """Generate `RayProfile` from a regular grid.
 
         If CRSs differ, ray is reprojected for sampling.
@@ -72,7 +70,7 @@ class RayProfile:
         nan_policy
             NaN handling policy.
         keys
-            Column keys for the output.
+            Keys for the output.
 
         Returns
         -------
@@ -98,7 +96,7 @@ class RayProfile:
         sampler: FieldSampler,
         levels: NDArray[np.floating],
         nan_policy: NaNPolicy,
-        keys: ColumnKeys = COLUMN_KEYS,
+        keys: Keys = KEYS,
     ):
         """Generate `RayProfile` from a level crossings.
 
@@ -115,7 +113,7 @@ class RayProfile:
         nan_policy
             NaN handling policy.
         keys
-            Column keys for the output.
+            Keys for the output.
 
         Returns
         -------
@@ -136,12 +134,15 @@ class RayProfile:
         return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings, meta=meta)
 
     @staticmethod
-    def _build_meta(crs_ray, meta_sampler, message, nan_count, keys: ColumnKeys):
+    def _build_meta(crs_ray, meta_sampler, message, nan_count, keys: Keys):
         records: dict = {
-            "rays": {keys.crs_ray: crs_ray.to_string() if crs_ray is not None else None, keys.nan_count: nan_count},
+            "rays": {
+                keys.crs_ray: crs_ray.to_string() if crs_ray is not None else None,
+                keys.nan_count: nan_count,
+            },
         }
         records.update(meta_sampler.copy())
-        records["alignment"] = {keys.message: message}
+        records[keys.alignment] = {keys.message: message}
         return records
 
 
@@ -160,19 +161,19 @@ def _apply_nan_policy(
         return r_m.copy(), z.copy()
 
     if policy is NaNPolicy.ERROR:
-        raise ValueError("NaNs encountered in ray profile for theta=%.1f.", theta)
+        raise ValueError(f"NaNs encountered in ray profile for {theta=:.1f}.")
 
     elif policy is NaNPolicy.TRUNCATE:
         first_nan = np.where(np.isnan(z))[0][0]
         if first_nan == 0:
-            raise ValueError("Ray for theta=%.1f contains no valid numbers.", theta)
+            raise ValueError(f"Ray for {theta=:_.1f} contains no valid numbers.")
         return r_m[:first_nan].copy(), z[:first_nan].copy()
 
     elif policy is NaNPolicy.MASK:
         return r_m.copy(), z.copy()
 
     else:
-        raise ValueError("Unknown NaN policy: %s.", policy)
+        raise ValueError(f"Unknown NaN policy: {policy}.")
 
 
 def _compute_level_crossings(

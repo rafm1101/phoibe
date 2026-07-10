@@ -8,11 +8,11 @@ import xarray
 from numpy.typing import NDArray
 
 from .config import INTERPOLATION_METHODS
-from .keys import ColumnKeys
+from .interface import Keys
 
 LOGGER = logging.getLogger(__name__)
 
-COLUMN_KEYS = ColumnKeys()
+KEYS = Keys()
 
 
 class FieldSampler(typing.Protocol):
@@ -57,10 +57,10 @@ class RegularGridXYSampler:
     """Field to be sampled from. Assume that coordinates are `keys.x` and `keys.y`."""
     method: INTERPOLATION_METHODS
     """Interpolation method. One of 'linear' and 'nearest'."""
-    keys: ColumnKeys
+    keys: Keys
     """Keys identifying dimensions. Requires: `x`, `y`."""
 
-    def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS, keys: ColumnKeys = COLUMN_KEYS):
+    def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS, keys: Keys = KEYS):
         if not {keys.x, keys.y}.issubset(da.dims):
             raise ValueError(f"Field must have '{keys.x}' and '{keys.y}' coordinates.")
         self.da = da
@@ -86,11 +86,13 @@ class RegularGridXYSampler:
 
     @property
     def meta(self) -> dict:
-        records: dict = {"dem": {}}
+        records: dict = {self.keys.dem: {}}
         if hasattr(self.da, "rio"):
-            records["dem"][self.keys.crs_dem] = crs.to_string() if (crs := self.da.rio.crs) is not None else None
-            records["dem"][self.keys.extent_dem] = self.da.rio.bounds()
-            records["dem"][self.keys.resolution_dem] = self.da.rio.resolution()
+            records[self.keys.dem][self.keys.crs_dem] = (
+                crs.to_string() if (crs := self.da.rio.crs) is not None else None
+            )
+            records[self.keys.dem][self.keys.extent_dem] = self.da.rio.bounds()
+            records[self.keys.dem][self.keys.resolution_dem] = self.da.rio.resolution()
         return records
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:

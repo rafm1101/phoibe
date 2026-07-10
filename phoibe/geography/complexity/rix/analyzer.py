@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import dataclasses
 import datetime
 import logging
@@ -8,21 +9,24 @@ import pathlib
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import pyproj
 import scipy.spatial.distance
 import xarray
 import yaml
 
 from . import evaluate, trix
-from .config import ANALYZER_DEFAULTS, DEM_METADATA
+from .base import ColumnKeys
+from .config import ANALYZER_DEFAULTS
 from .fieldsampler import RegularGridXYSampler
-from .keys import ColumnKeys, _get_parameter
+from .interface import Keys, _get_parameter
 from .results import RadialRuggedness
 
 LOGGER = logging.getLogger(__name__)
 
 
-_REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical", "crs"}
+_REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical"}
 COLUMN_KEYS = ColumnKeys()
+KEYS = Keys()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -74,6 +78,8 @@ class TRIXAnalyzer:
         ----------
         path
             Path to ``config.yaml``.
+        keys
+            Keys for the config.
 
         Returns
         -------
@@ -87,8 +93,8 @@ class TRIXAnalyzer:
         dem: xarray.DataArray,
         locations_site: gpd.GeoDataFrame,
         locations_reference: gpd.GeoDataFrame | None = None,
-        dem_metadata: dict = DEM_METADATA,
-        keys: ColumnKeys = COLUMN_KEYS,
+        dem_metadata: dict | None = None,
+        keys: Keys = KEYS,
     ) -> ResultSummary:
         """Run the full RIX analysis.
 
@@ -116,8 +122,9 @@ class TRIXAnalyzer:
         ValueError
             On CRS mismatch or invalid geometries.
         """
-        # TODO: Add failed validations to messages, and add messages to meta.
-        # self._validate_inputs(dem=dem, locations_site=locations_site, locations_wind=locations_wind)
+        self._validate_inputs(
+            dem=dem, locations_site=locations_site, locations_reference=locations_reference, keys=keys
+        )
 
         locations_site = locations_site.copy()
         if not keys.site_id == "index":
@@ -148,7 +155,13 @@ class TRIXAnalyzer:
                 trix=trix_values, A=A, B=B, distances=distances, transferability=transferability, keys=keys
             )
 
-        meta = self._build_meta(rix_results=radial_rix_site, dem_metadata=dem_metadata, keys=keys)
+        meta = self._build_meta(
+            results_site=radial_rix_site,
+            results_reference=radial_rix_reference,
+            trix_table=trix_table,
+            dem_metadata=dem_metadata,
+            keys=keys,
+        )
 
         return ResultSummary(
             locations_site=locations_site,
@@ -164,37 +177,37 @@ class TRIXAnalyzer:
         self,
         dem: xarray.DataArray,
         locations_site: gpd.GeoDataFrame,
-        locations_wind: gpd.GeoDataFrame | None,
-        keys: ColumnKeys,
+        locations_reference: gpd.GeoDataFrame | None,
+        keys: Keys,
     ) -> None:
         """Check CRS consistency and index uniqueness."""
-        expected_crs = self._config["crs"]
+        expected_crs = self._config[keys.parameters]["crs"]
 
-        if locations_site.crs is None:
-            raise ValueError("locations_wind has no CRS. Set it to match config['crs'].")
-        if str(locations_site.crs) != expected_crs and locations_site.crs.to_epsg() != _epsg_int(expected_crs):
-            raise ValueError(f"locations_wind CRS mismatch: expected {expected_crs}, got {locations_site.crs}.")
-        if not locations_site.index.is_unique:
-            raise ValueError("locations_wind index must be unique (used as location_id).")
-
-        if locations_wind is not None:
-            if locations_wind.crs is None:
-                raise ValueError("locations_reference has no CRS.")
-            if str(locations_wind.crs) != expected_crs and locations_wind.crs.to_epsg() != _epsg_int(expected_crs):
+        if locations_reference is not None:
+            if locations_site.crs != locations_reference.crs:
                 raise ValueError(
-                    f"locations_reference CRS mismatch: expected {expected_crs}, got {locations_wind.crs}."
+                    f"CRS mismatch between locations_site {locations_site.crs} and "
+                    f"locations_reference {locations_reference.crs}."
                 )
-            if not locations_wind.index.is_unique:
-                raise ValueError("locations_reference index must be unique.")
+        if expected_crs is not None and locations_site.crs is not None:
+            if locations_site.crs != pyproj.CRS.from_user_input(expected_crs):
+                LOGGER.warning("CRS of locations_site %s differs from config CRS %s,", locations_site.crs, expected_crs)
 
-        if not {keys.x, keys.y}.issubset(dem.dims):
-            raise ValueError("DEM must have 'x' and 'y' coordinates.")
+        if not locations_site.index.is_unique:
+            raise ValueError("locations_site index must be unique (as being used as identifier).")
+        if locations_reference is not None:
+            if not locations_reference.index.is_unique:
+                raise ValueError("locations_reference index must be unique (as being used as identifier).")
+
+        # Check in RegularGridXYSampler.sample possibly early enough.
+        # if not {keys.x, keys.y}.issubset(dem.dims):
+        #     raise ValueError("DEM must have 'x' and 'y' coordinates.")
 
     def _compute_rix_results(
-        self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame, keys: ColumnKeys
+        self, sampler: RegularGridXYSampler, locations: gpd.GeoDataFrame, keys: Keys
     ) -> dict[object, RadialRuggedness]:
         """Run RIX for every location. Returns dict keyed by location_id."""
-        cfg = self._config["parameters"]
+        cfg = self._config[keys.parameters]
         results = {}
 
         for location_id, row in locations.iterrows():
@@ -234,9 +247,7 @@ class TRIXAnalyzer:
 
         return rix_roses
 
-    def _build_summary(
-        self, radial_results: dict[object, RadialRuggedness], keys: ColumnKeys = COLUMN_KEYS
-    ) -> pd.DataFrame:
+    def _build_summary(self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS) -> pd.DataFrame:
         """Build summary DataFrame from radial results."""
         summary_rows = []
 
@@ -260,7 +271,12 @@ class TRIXAnalyzer:
         return summary
 
     def _build_meta(
-        self, rix_results: dict[object, RadialRuggedness], dem_metadata: dict[str, str], keys: ColumnKeys
+        self,
+        results_site: dict[object, RadialRuggedness],
+        results_reference: dict[object, RadialRuggedness] | None,
+        trix_table: pd.DataFrame | None,
+        dem_metadata: dict[str, str] | None,
+        keys: Keys,
     ) -> dict:
         records: dict = {
             "meta": {key: self._config[key] for key in ["name", "version", "description"]}
@@ -268,83 +284,98 @@ class TRIXAnalyzer:
                 keys.created_at: datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z"),
             }
         }
-        records["parameters"] = {
-            "ray": {key: _get_parameter(self._config, "parameters", key) for key in ["n_angles", "R_km", "dr_km"]},
-            "slope": {key: _get_parameter(self._config, "parameters", key) for key in ["slope_critical"]},
+        records[keys.parameters] = {
+            "ray": {key: _get_parameter(self._config, keys.parameters, key) for key in ["n_angles", "R_km", "dr_km"]},
+            "slope": {key: _get_parameter(self._config, keys.parameters, key) for key in ["slope_critical"]},
             "sampler": _get_parameter(self._config, "sampler").copy(),
         }
 
         crs_ray = list(
             set(
                 crs
-                for _, rix_result in rix_results.items()
-                for crs in _get_parameter(rix_result.meta, "rays", keys.crs_ray)
+                for _, rix_result in results_site.items()
+                for crs in _get_parameter(rix_result.meta, keys.rays, keys.crs_ray)
             )
         )
         crs_dem = list(
             set(
                 crs
-                for _, rix_result in rix_results.items()
-                for crs in _get_parameter(rix_result.meta, "dem", keys.crs_dem)
+                for _, rix_result in results_site.items()
+                for crs in _get_parameter(rix_result.meta, keys.dem, keys.crs_dem)
             )
         )
         unique_extends_dem = set(
             extent
-            for _, rix_result in rix_results.items()
-            for extent in _get_parameter(rix_result.meta, "dem", keys.extent_dem)
+            for _, rix_result in results_site.items()
+            for extent in _get_parameter(rix_result.meta, keys.dem, keys.extent_dem)
         )
         extent_dem = list(
             dict(zip(["west", "south", "east", "north"], extent, strict=True)) for extent in unique_extends_dem
         )
         unique_resolution_dem = set(
             res
-            for _, rix_result in rix_results.items()
-            for res in _get_parameter(rix_result.meta, "dem", keys.resolution_dem)
+            for _, rix_result in results_site.items()
+            for res in _get_parameter(rix_result.meta, keys.dem, keys.resolution_dem)
         )
         resolution_dem = list(dict(zip(["dx", "dy"], resolution, strict=True)) for resolution in unique_resolution_dem)
         message = list(
             set(
                 message
-                for _, rix_result in rix_results.items()
-                for message in _get_parameter(rix_result.meta, "alignment", keys.message)
+                for _, rix_result in results_site.items()
+                for message in _get_parameter(rix_result.meta, keys.alignment, keys.message)
             )
         )
-        nan_count = sum(
-            [_get_parameter(rix_result.meta, "rays", keys.nan_count) for _, rix_result in rix_results.items()]
+        n_nans = sum(
+            [_get_parameter(rix_result.meta, keys.rays, keys.nan_count) for _, rix_result in results_site.items()]
         )
+        dem_metadata = copy.deepcopy(dem_metadata) if dem_metadata is not None else {}
         records[keys.spatial_context] = {
             keys.source_dem: dem_metadata.copy() | dict(crs=crs_dem, extent=extent_dem, resolution=resolution_dem),
-            keys.source_ray: dict(crs=crs_ray, nan_count=nan_count),
+            keys.source_ray: dict(crs=crs_ray, nan_count=n_nans),
             keys.alignment: dict(messages=message),
+        }
+        n_sites_w_nans = sum(
+            [_get_parameter(rix_result.meta, keys.rays, keys.nan_count) > 0 for _, rix_result in results_site.items()]
+        )
+        computed = ["rix_site"]
+        if results_reference is not None:
+            computed.append("rix_reference")
+        if trix_table is not None:
+            computed.append("trix")
+            transferability_counts = trix_table[keys.transferability].value_counts().sort_index().to_dict()
+        records[keys.run] = {
+            keys.n_sites: len(results_site),
+            keys.n_references: len(results_reference) if results_reference is not None else 0,
+            keys.computed: computed,
+            keys.diagnostics: {
+                keys.n_sites_with_nans: n_sites_w_nans,
+                keys.transferability_counts: transferability_counts,
+            },
         }
         return records
 
     def _build_steep_segments(
-        self, radial_results: dict[object, RadialRuggedness], keys: ColumnKeys = COLUMN_KEYS
+        self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS
     ) -> gpd.GeoDataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
-        crs = self._config["parameters"]["crs"]
         steep_segments_rows = []
 
         for location_id, radial_rix in radial_results.items():
             gdf_segments = radial_rix.steep_segments_geodataframe()
-            crs = gdf_segments.crs
             gdf_segments.insert(0, keys.site_id, location_id)
             steep_segments_rows.append(gdf_segments)
 
         if steep_segments_rows:
-            steep_segments = gpd.GeoDataFrame(
-                pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry, crs=crs
-            )
+            steep_segments = gpd.GeoDataFrame(pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry)
         else:
             steep_segments = gpd.GeoDataFrame(
-                columns=[keys.site_id, keys.theta, keys.segment_id, keys.geometry], geometry=keys.geometry, crs=crs
+                columns=[keys.site_id, keys.theta, keys.segment_id, keys.geometry], geometry=keys.geometry, crs=None
             ).set_index(keys.site_id)
 
         return steep_segments
 
     def _compute_trix(
-        self, summary_site: pd.DataFrame, summary_reference: pd.DataFrame, keys: ColumnKeys = COLUMN_KEYS
+        self, summary_site: pd.DataFrame, summary_reference: pd.DataFrame, keys: Keys = KEYS
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Compute pairwise TRIX as Cartesian product of summary_site × summary_reference.
 
@@ -372,7 +403,7 @@ class TRIXAnalyzer:
         return trix_result, A, B
 
     def _compute_pairwise_distances_km(
-        self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries, keys: ColumnKeys
+        self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries, keys: Keys
     ) -> pd.DataFrame:
         """Compute pairwise Euclidean distances [km] between site and wind locations."""
         coords_a = np.vstack([point.coords[0] for point in location_site])
@@ -384,7 +415,7 @@ class TRIXAnalyzer:
         )
         return distances
 
-    def _build_trix_results(self, trix, A, B, distances, transferability, keys: ColumnKeys):
+    def _build_trix_results(self, trix, A, B, distances, transferability, keys: Keys):
         """Build the T-RIX table containing the transferability, distances between wind data base and site, T-RIX
         and threshold distances A and B.
         """
@@ -417,6 +448,8 @@ def _load_config(path: str | pathlib.Path) -> dict:
     ----------
     path
         Path to ``config.yaml``.
+    keys
+        Key holding parameter key.
 
     Returns
     -------
@@ -441,7 +474,15 @@ def _load_config(path: str | pathlib.Path) -> dict:
     with path.open() as f:
         raw = yaml.safe_load(f)
 
-    config = {**ANALYZER_DEFAULTS, **_get_parameter(raw, "parameters")}
+    raw_parameters = raw.get("parameters", {})
+    config = copy.deepcopy(ANALYZER_DEFAULTS)
+
+    for key in raw_parameters:
+        if key in config["parameters"]:
+            config["parameters"][key] = raw_parameters[key]
+        else:
+            raise ValueError(f"Configuration file {str(path)} contains unknown parameter {key}.")
+
     _validate_config(config)
     return config
 
@@ -451,8 +492,6 @@ def _validate_config(config: dict) -> None:
     missing_keys = _REQUIRED_KEYS - parameters.keys()
     if missing_keys:
         raise ValueError(f"config.yaml is missing required keys: {missing_keys}")
-    # if config["crs"] is None:
-    #     raise ValueError("config.yaml must specify 'crs' (e.g. 'EPSG:2056').")
     if parameters["dr_km"] >= parameters["R_km"]:
         raise ValueError("dr_km must be smaller than R_km.")
     if not (1 <= parameters["n_angles"] <= 360):

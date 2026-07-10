@@ -1,6 +1,6 @@
 [project]
 name = "phoibe"
-version = "0.5.0"
+version = "0.6.0"
 description = "Repository holding high level functions"
 authors = [{ name = "MR", email = "raffmatth@gmail.com" }]
 readme = "README.md"
@@ -41,8 +41,9 @@ docs = [
 ]
 
 [tool.uv.sources]
-# ergaleiothiki = { git = "git@github.com:rafm1101/ergaleiothiki.git", tag = "0.2.0" }
-ergaleiothiki = { index = "nemea-index" }
+ergaleiothiki = { git = "https://github.com/rafm1101/ergaleiothiki.git", tag = "0.3.0" }
+# ergaleiothiki = { git = "git@github.com:rafm1101/ergaleiothiki.git", tag = "0.3.0" }
+# ergaleiothiki = { index = "nemea-index" }
 
 [[tool.uv.index]]
 name = "nemea-index"

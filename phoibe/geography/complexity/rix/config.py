@@ -1,6 +1,6 @@
 import typing
 
-from .keys import _get_parameter
+from .interface import _get_parameter
 from .schema import PRODUCT_DEFINITION_TRIX
 
 ANALYZER_DEFAULTS: dict = {
@@ -34,7 +34,7 @@ WRITER_DEFAULTS: dict = {
     },
 }
 
-DEM_METADATA: dict = {
+COPDEM_METADATA: dict = {
     "name": "Copernicus DEM GLO-30",
     "source": "Copernicus",
     "description": "Downloaded 2026.",

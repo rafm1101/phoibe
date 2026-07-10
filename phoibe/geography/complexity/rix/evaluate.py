@@ -1,4 +1,5 @@
 import logging
+import typing
 
 import numpy as np
 import shapely.geometry
@@ -6,25 +7,25 @@ from numpy.typing import NDArray
 
 from .fieldsampler import FieldSampler
 from .geometry import RayGeometry
-from .keys import ColumnKeys
+from .interface import Keys
 from .profiles import NaNPolicy, RayProfile
 from .results import RadialRuggedness, RayRuggedness
 
 LOGGER = logging.getLogger(__name__)
 
-COLUMN_KEYS = ColumnKeys()
+KEYS = Keys()
 
 
 def compute_regular_rix(
     location: shapely.Point,
     sampler: FieldSampler,
     n_angles: int,
-    R_km,
-    dr_km,
-    crs,
-    slope_critical=0.3,
+    R_km: float,
+    dr_km: float,
+    crs: typing.Any,
+    slope_critical: float,
     nan_policy="mask",
-    keys: ColumnKeys = COLUMN_KEYS,
+    keys: Keys = KEYS,
 ):
     """Compute the ruggedness index RIX of a location. The RIX assesses height profiles along
     rays originating at `location`.
@@ -114,7 +115,7 @@ def slopes(profile: RayProfile) -> NDArray[np.floating]:
     dz = np.diff(profile.z)
     dr = segment_lengths(profile=profile)
     if not np.all(dr > 0):
-        raise ValueError("Ray for theta=%.1f requires strictly increasing distance from origin.", profile.ray.theta)
+        raise ValueError(f"Ray for theta={profile.ray.theta:.1f} requires strictly increasing distance from origin.")
     return dz / dr
 
 
@@ -170,20 +171,23 @@ def ruggedness(profile: RayProfile, slope_critical: float) -> float:
 
 def _get_true_runs(mask: NDArray[np.bool_]) -> list[tuple[int, int]]:
     """Return the indices [start, stop) of intervals of contiguous `True` values."""
-    runs = []
-    start = None
+    changes = np.diff(mask.astype(int), prepend=0, append=0)
+    starts = np.where(changes == 1)[0]
+    stops = np.where(changes == -1)[0]
 
-    for index, value in enumerate(mask):
-        if value and start is None:
-            start = index
-        elif not value and start is not None:
-            runs.append((start, index))
-            start = None
+    # runs = []
+    # start = None
 
-    if start is not None:
-        runs.append((start, len(mask)))
+    # for index, value in enumerate(mask):
+    #     if value and start is None:
+    #         start = index
+    #     elif not value and start is not None:
+    #         runs.append((start, index))
+    #         start = None
 
-    return runs
+    # if start is not None:
+    #     runs.append((start, len(mask)))
+    return list(zip(starts, stops, strict=True))
 
 
 def steep_segment_indices(profile: RayProfile, slope_critical: float) -> list[tuple[int, int]]:

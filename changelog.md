@@ -10,7 +10,7 @@ A version bump is required in each of these cases:
 
 Internal refactoring does not require a bump.
 
-## [Unreleased]
+## [Unreleased/0.5]
 
 ### Added
 
@@ -25,11 +25,11 @@ Internal refactoring does not require a bump.
 ### Changed
 
 - `summary.yaml` restructured: nested `meta`, `parameters`, `spatial_context`, and `artifacts` blocks replace flat layout.
-- Writer derives all field definitions and filenames from `PRODUCT_DEFINITION`; no hardcoded strings remain in writer.
+- Writer derives all column definitions and filenames from `PRODUCT_DEFINITION`.
 
 ---
 
-## [1.0]: Unreleased baseline
+## [1.0/0.6]: Unreleased baseline
 
 Initial product definition establishing:
 
