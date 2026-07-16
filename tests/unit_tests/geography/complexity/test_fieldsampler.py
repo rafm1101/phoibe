@@ -20,21 +20,22 @@ class TestRegularGridXYSampler:
         return xarray.DataArray(data=z, coords={"x": x, "y": y}, dims=("y", "x"), name="field")
 
     @pytest.mark.parametrize(
-        "method, xs, ys, expected_z",
+        "method, xs, ys, expected_z, expected_nan",
         [
-            ("linear", [0.0, 10.0, 20.0], [0.0, 0.0, 0.0], [0.0, 5.0, 10.0]),
-            ("linear", [0.5, 0.5, 31.5], [0.0, 0.5, 0.5], [0.25, 0.25, 15.75]),
-            ("linear", [105, -101], [0, 314], [np.nan, np.nan]),
-            ("linear", [], [], []),
-            ("nearest", [0.0, 10.0, 20.0], [0.0, 0.0, 0.0], [0.0, 5.0, 10.0]),
-            ("nearest", [0.5, 0.5, 0.6, 31.5], [0.0, 0.5, 0.0, 0.5], [0.0, 0.0, 0.5, 15.5]),
-            ("nearest", [105, -101], [0, 314], [np.nan, np.nan]),
+            ("linear", [0.0, 10.0, 20.0], [0.0, 0.0, 0.0], [0.0, 5.0, 10.0], 0),
+            ("linear", [0.5, 0.5, 31.5], [0.0, 0.5, 0.5], [0.25, 0.25, 15.75], 0),
+            ("linear", [105, -101], [0, 314], [np.nan, np.nan], 2),
+            ("linear", [], [], [], 0),
+            ("nearest", [0.0, 10.0, 20.0], [0.0, 0.0, 0.0], [0.0, 5.0, 10.0], 0),
+            ("nearest", [0.5, 0.5, 0.6, 31.5], [0.0, 0.5, 0.0, 0.5], [0.0, 0.0, 0.5, 15.5], 0),
+            ("nearest", [105, -101], [0, 314], [np.nan, np.nan], 2),
         ],
     )
-    def test_regulargridxysampler_returns_expected_values(self, planar_field, method, xs, ys, expected_z):
+    def test_regulargridxysampler_returns_expected_values(self, planar_field, method, xs, ys, expected_z, expected_nan):
         sampler = RegularGridXYSampler(da=planar_field, method=method)
-        z = sampler.sample(xs=xs, ys=ys)
+        z, nan_count = sampler.sample(xs=xs, ys=ys)
         assert np.allclose(z, expected_z, equal_nan=True)
+        assert nan_count == expected_nan
 
     @pytest.mark.parametrize(
         "method, xs, ys, expected_match",
@@ -67,6 +68,6 @@ class TestRegularGridXYSampler:
     ):
         sampler = RegularGridXYSampler(da=planar_field, method=method)
         with caplog.at_level(expected_level):
-            z = sampler.sample(xs=xs, ys=ys)
+            z, _ = sampler.sample(xs=xs, ys=ys)
         assert expected_message in caplog.text
         assert np.isnan(z[-1])
