@@ -1,6 +1,7 @@
 import dataclasses
 
 import pytest
+import shapely.geometry
 
 from phoibe.geography.complexity.rix.geometry import RayGeometry
 
@@ -18,7 +19,7 @@ def dummy_location():
 
 @pytest.fixture
 def origin():
-    return Location(easting=0.0, northing=0.0)
+    return shapely.geometry.Point(0.0, 0.0)
 
 
 @pytest.fixture

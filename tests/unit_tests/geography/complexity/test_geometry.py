@@ -39,9 +39,9 @@ def test_raygeometry_returns_correct_spacing(origin, theta, R_km, dr_km, expecte
 def test_raygeometry_returns_correct_orientation(origin, theta, R_km, dr_km):
     ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=R_km, dr_km=dr_km)
     xs, ys = ray.xs, ray.ys
-    assert np.all(ys >= origin.northing - 1e-7)
-    assert np.all(xs <= origin.easting + 1e-7)
-    assert np.allclose(ys, origin.northing) or np.allclose(xs, origin.easting)
+    assert np.all(ys >= origin.y - 1e-7)
+    assert np.all(xs <= origin.x + 1e-7)
+    assert np.allclose(ys, origin.y) or np.allclose(xs, origin.x)
 
 
 @pytest.mark.parametrize(
