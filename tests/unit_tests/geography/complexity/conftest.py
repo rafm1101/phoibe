@@ -12,6 +12,7 @@ class Location:
     northing: float
 
 
+# TODO: Migrate to shapely as soon as needed.
 @pytest.fixture
 def dummy_location():
     return Location(easting=-2.5, northing=-7.4)

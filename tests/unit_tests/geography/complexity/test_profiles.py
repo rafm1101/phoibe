@@ -8,10 +8,12 @@ from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile, _com
 class DummySampler:
     def __init__(self, z):
         self._z = np.asarray(z, dtype=float)
+        self.crs = None
+        self.meta = {}
 
     def sample(self, xs, ys):
         assert len(xs) == len(self._z)
-        return self._z
+        return self._z, np.isnan(self._z).sum()
 
 
 @pytest.fixture
