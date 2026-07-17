@@ -257,7 +257,7 @@ class RadialRuggedness:
         """
         idx = np.searchsorted(self.angles, theta)
         if idx < len(self.rays) and np.isclose(self.angles[idx], theta, atol=atol):
-            return self.rays[idx - 1]
+            return self.rays[idx]
         else:
             raise KeyError(f"No ray found for theta={theta:.1f}°. Available angles: {self.angles}")
 

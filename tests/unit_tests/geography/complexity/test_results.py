@@ -153,8 +153,6 @@ def test_radial_result_angles_are_unique(radial_result):
 def test_radial_result_retrieves_correct_ray(radial_result):
     theta = radial_result.angles[35]
     ray = radial_result.ray(theta)
-    breakpoint()
-    # TODO: TOFIX Winkel sind gegen die Rays um 1 verschoben.
     assert ray.theta == theta
 
 
@@ -171,7 +169,7 @@ def test_radial_result_directional_stats_order(radial_result):
 def test_radial_result_describe_statistics(radial_result):
     description = radial_result.describe()
     rix_values = [ray.ruggedness for ray in radial_result.rays]
-    assert np.isclose(description["rix_mean"], np.mean(rix_values))
+    assert np.isclose(description["rix"], np.mean(rix_values))
     assert np.isclose(description["rix_std"], np.std(rix_values))
     assert np.isclose(description["rix_min"], np.min(rix_values))
     assert np.isclose(description["rix_max"], np.max(rix_values))
