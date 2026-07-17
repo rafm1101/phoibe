@@ -9,9 +9,11 @@ from phoibe.geography.complexity.rix.results import RadialRuggedness, RayRuggedn
 class DummySampler:
     def __init__(self, z):
         self._z = np.asarray(z, dtype=float)
+        self.crs = None
+        self.meta = {}
 
     def sample(self, xs, ys):
-        return self._z.copy()
+        return self._z.copy(), np.isnan(self._z).sum()
 
 
 @pytest.fixture
@@ -151,6 +153,8 @@ def test_radial_result_angles_are_unique(radial_result):
 def test_radial_result_retrieves_correct_ray(radial_result):
     theta = radial_result.angles[35]
     ray = radial_result.ray(theta)
+    breakpoint()
+    # TODO: TOFIX Winkel sind gegen die Rays um 1 verschoben.
     assert ray.theta == theta
 
 

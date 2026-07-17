@@ -1,5 +1,6 @@
 import dataclasses
 
+import pyproj
 import pytest
 import shapely.geometry
 
@@ -38,3 +39,13 @@ def ray_1km_100m(dummy_location):
 def ray_01km(origin, request):
     dr_km = request.param
     return RayGeometry.from_compass_regular(location=origin, theta=0.0, R_km=0.1, dr_km=dr_km)
+
+
+@pytest.fixture
+def crs_wgs84():
+    return pyproj.CRS.from_epsg(4326)
+
+
+@pytest.fixture
+def crs_utm33n():
+    return pyproj.CRS.from_epsg(32633)
