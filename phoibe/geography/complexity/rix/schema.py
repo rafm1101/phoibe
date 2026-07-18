@@ -172,7 +172,7 @@ PRODUCT_DEFINITION_TRIX = {
             "description": "Table of the RIX and elevation values, and summary statistics thereof.",
             "columns": {
                 "site_id": {
-                    "name": "location_id",
+                    "name": "site_id",
                     "description": "Site identifier of the assessed site.",
                     "unit": None,
                 },
@@ -299,7 +299,7 @@ PRODUCT_DEFINITION_TRIX = {
                     "description": "Steep segments of the assessed sites on each ray.",
                     "columns": {
                         "site_id": {
-                            "description": "Site identifier of the wind data base site.",
+                            "description": "Site identifier of the assessed site.",
                             "unit": None,
                         },
                         "theta": {

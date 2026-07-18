@@ -80,3 +80,14 @@ def test_product_definition_artifact_filenames_cover_every_profile_member():
     artifacts = PRODUCT_DEFINITION_TRIX["artifacts"]
     referenced = {name for members in artifacts["profiles"].values() for name in members}
     assert referenced <= set(artifacts["filenames"].keys())
+
+
+def test_product_definition_identifier_columns_use_their_own_key_as_output_name():
+    violations = [
+        path
+        for path, entry in _iter_column_entries(PRODUCT_DEFINITION_TRIX)
+        if (column_key := path.rsplit(".", 1)[-1]) in ("site_id", "reference_id")
+        and "name" in entry
+        and entry["name"] != column_key
+    ]
+    assert violations == []
