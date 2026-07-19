@@ -137,7 +137,7 @@ class RadialRixResultContract:
     def test_verify_describe_returns_dict(self, radial_result):
         description = radial_result.describe()
         assert isinstance(description, dict)
-        assert "rix_mean" in description
+        assert "rix" in description
         assert "rix_std" in description
         assert "n_rays" in description
 
@@ -145,8 +145,7 @@ class RadialRixResultContract:
 class RadialRixResultContractFlatProfile(RadialRixResultContract):
     def test_verify_ruggedness_is_zero(self, radial_result):
         assert np.isclose(radial_result.rix, 0.0)
-        directional_rix = radial_result.directional_stats()
-        assert np.allclose(directional_rix, 0.0)
+        assert np.allclose(radial_result.ruggednesses, 0.0)
 
 
 class TestRadialRixResultMultipleAngles(RadialRixResultContract):
@@ -154,3 +153,9 @@ class TestRadialRixResultMultipleAngles(RadialRixResultContract):
     def radial_result(self, request, make_radial_result):
         n_angles = request.param
         return make_radial_result(n_angles=n_angles, slope_critical=0.3)
+
+
+class TestRadialRixResultFlatProfile(RadialRixResultContractFlatProfile):
+    @pytest.fixture
+    def radial_result(self, make_radial_result, flat_sampler):
+        return make_radial_result(n_angles=8, slope_critical=0.3, sampler_factory=lambda: flat_sampler)

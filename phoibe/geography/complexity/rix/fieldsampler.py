@@ -22,8 +22,8 @@ class FieldSampler(typing.Protocol):
         raise NotImplementedError
 
     @property
-    def meta(self) -> pyproj.CRS | None:
-        """Return the sampler's meta information in case it is `rasterio`."""
+    def meta(self) -> dict:
+        """Return the sampler's meta information."""
         raise NotImplementedError
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
@@ -76,6 +76,7 @@ class RegularGridXYSampler:
             bounds_error=False,
             fill_value=np.nan,
         )
+        breakpoint()
 
     @property
     def crs(self) -> pyproj.CRS | None:
@@ -87,12 +88,14 @@ class RegularGridXYSampler:
     @property
     def meta(self) -> dict:
         records: dict = {self.keys.dem: {}}
+        breakpoint()
         if hasattr(self.da, "rio"):
             records[self.keys.dem][self.keys.crs_dem] = (
                 crs.to_string() if (crs := self.da.rio.crs) is not None else None
             )
             records[self.keys.dem][self.keys.extent_dem] = self.da.rio.bounds()
             records[self.keys.dem][self.keys.resolution_dem] = self.da.rio.resolution()
+        # breakpoint()
         return records
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:

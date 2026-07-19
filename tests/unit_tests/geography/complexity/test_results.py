@@ -7,10 +7,10 @@ from phoibe.geography.complexity.rix.results import RadialRuggedness, RayRuggedn
 
 
 class DummySampler:
-    def __init__(self, z):
+    def __init__(self, z, meta=None):
         self._z = np.asarray(z, dtype=float)
         self.crs = None
-        self.meta = {}
+        self.meta = meta if meta is not None else {}
 
     def sample(self, xs, ys):
         return self._z.copy(), np.isnan(self._z).sum()
@@ -174,3 +174,41 @@ def test_radial_result_describe_statistics(radial_result):
     assert np.isclose(description["rix_min"], np.min(rix_values))
     assert np.isclose(description["rix_max"], np.max(rix_values))
     assert description["n_rays"] == len(radial_result.rays)
+
+
+class TestMeta:
+    """Unit tests for RayRuggedness.meta and RadialRuggedness.meta.
+
+    Notes
+    -----
+    1. Both must tolerate missing dem-level metadata gracefully (no rioxarray case)
+    2. A dem key that exists but is empty, or is absent entirely, must both resolve to None fields rather than raise.
+    """
+
+    def _make_ray_result(self, origin, dem_meta):
+        ray = RayGeometry.from_compass_regular(location=origin, theta=0.0, R_km=0.1, dr_km=0.05)
+        sampler = DummySampler(z=[0, 1, 2], meta=dem_meta)
+        profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy.ERROR)
+        return RayRuggedness(profile=profile, slope_critical=0.3)
+
+    def test_ray_result_meta_returns_none_given_dem_key_present_but_empty(self, origin):
+        ray_result = self._make_ray_result(origin, dem_meta={"dem": {}})
+        assert ray_result.meta.crs_dem is None
+
+    def test_ray_result_meta_returns_none_given_dem_key_is_entirely_absent(self, origin):
+        ray_result = self._make_ray_result(origin, dem_meta={})
+        assert ray_result.meta.crs_dem is None
+
+    def test_ray_result_meta_resolution_is_wired_to_actual_dem_resolution(self, origin):
+        ray_result = self._make_ray_result(origin, dem_meta={"dem": {"resolution_dem": (30.0, -30.0)}})
+        assert ray_result.meta.resolution == (30.0, -30.0)
+
+    def test_radial_result_meta_returns_none_given_dem_key_present_but_empty(self, origin):
+        ray_result = self._make_ray_result(origin, dem_meta={"dem": {}})
+        radial_result = RadialRuggedness(rays=(ray_result,))
+        assert radial_result.meta[radial_result.keys.dem][radial_result.keys.crs_dem] == [None]
+
+    def test_radial_result_meta_returns_none_given_dem_key_is_entirely_absent(self, origin):
+        ray_result = self._make_ray_result(origin, dem_meta={})
+        radial_result = RadialRuggedness(rays=(ray_result,))
+        assert radial_result.meta[radial_result.keys.dem][radial_result.keys.crs_dem] == [None]

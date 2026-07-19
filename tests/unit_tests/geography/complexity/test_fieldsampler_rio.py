@@ -1,18 +1,3 @@
-"""Tests for RegularGridXYSampler's crs/meta properties when a real rioxarray CRS is set.
-
-Kept in its own file, separate from test_fieldsampler.py: rioxarray registers its
-`.rio` accessor globally for the whole test process once imported anywhere, which
-would silently invalidate the "no accessor" tests in test_fieldsampler.py if the
-two were mixed and executed in the wrong order.
-
-NOT VERIFIED BY EXECUTION -- rioxarray is unavailable in the environment these
-tests were written in. In particular, double-check locally:
-- The exact sign/values returned by `.rio.bounds()` and `.rio.resolution()` for
-  this coordinate layout (ascending x/y), which depend on rioxarray's affine
-  transform conventions.
-- That `.rio.write_crs(...)` is the correct call for your rioxarray version.
-"""
-
 import numpy as np
 import pytest
 import xarray
