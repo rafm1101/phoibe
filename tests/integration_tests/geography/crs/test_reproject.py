@@ -2,6 +2,7 @@ import numpy as np
 import pyproj
 import pytest
 import rasterio.transform
+import rioxarray  # noqa: F401
 import xarray
 
 from phoibe.geography.crs import reproject_rasterdata
