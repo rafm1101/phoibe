@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from phoibe.geography.complexity.rix import evaluate
-from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile, _compute_level_crossings
+from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile, _apply_nan_policy, _compute_level_crossings
 
 
 class DummySampler:
@@ -146,20 +146,6 @@ def test_profile_analysis_with_nan_handling(
     assert np.isclose(ruggedness, expected_rix)
 
 
-class DummyProfile(RayProfile):
-    def __init__(self, slopes, segment_lengths):
-        self._slopes = np.asarray(slopes, dtype=float)
-        self._segment_lengths = np.asarray(segment_lengths, dtype=float)
-
-    @property
-    def slopes(self):
-        return self._slopes
-
-    @property
-    def segment_lengths(self):
-        return self._segment_lengths
-
-
 @pytest.mark.parametrize(
     "z, r, levels, expected_z, expected_r",
     [
@@ -177,3 +163,59 @@ def test_compute_level_crossings_returns_valid_level_crossings(z, r, levels, exp
 
     assert np.allclose(r_crossings, expected_r)
     assert np.allclose(z_crossings, expected_z)
+
+
+def test_compute_level_crossings_silently_drops_a_crossing_hidden_behind_an_interior_nan():
+    """CURRENT behaviour. Treatment requires confirmation.
+
+    Notes
+    -----
+    1. A NaN in the middle of the profile makes the segment being skipped via `continue`.
+    2. A level that would genuinely fall between the valid neighbours on either side of the NaN
+       is silently never reported as a crossing.
+    """
+    r_crossings, z_crossings = _compute_level_crossings(r=[0, 5, 10], z=[0, np.nan, 10], levels=[5])
+    assert np.allclose(r_crossings, [0, 10])
+    assert np.allclose(z_crossings, [0, 10])
+
+
+def test_compute_level_crossings_leaks_a_leading_nan_into_the_result():
+    """CURRENT behaviour. Treatment requires confirmation.
+
+    Notes
+    -----
+    1. Unlike an interior NaN (silently skipped), NaN at z[0] is copied directly into the result
+       before the loop even starts, so it survives unfiltered.
+    """
+    r_crossings, z_crossings = _compute_level_crossings(r=[0, 5, 10], z=[np.nan, 5, 10], levels=[7])
+    assert np.isnan(z_crossings[0])
+    assert np.allclose(r_crossings[1:], [7, 10])
+    assert np.allclose(z_crossings[1:], [7, 10])
+
+
+class TestApplyNanPolicy:
+    """Unit tests for _apply_nan_policy."""
+
+    def test_truncate_cuts_before_first_nan(self):
+        r_m, z = _apply_nan_policy(
+            np.array([0.0, 1.0, 2.0, 3.0]), np.array([0.0, np.nan, 2.0, 3.0]), 0.0, NaNPolicy.TRUNCATE
+        )
+        assert np.allclose(r_m, [0.0])
+        assert np.allclose(z, [0.0])
+
+    def test_truncate_raises_when_first_point_is_nan(self):
+        with pytest.raises(ValueError, match="contains no valid numbers"):
+            _apply_nan_policy(np.array([0.0, 1.0]), np.array([np.nan, 1.0]), 0.0, NaNPolicy.TRUNCATE)
+
+    def test_error_policy_raises_on_any_nan(self):
+        with pytest.raises(ValueError, match="NaNs encountered"):
+            _apply_nan_policy(np.array([0.0, 1.0]), np.array([0.0, np.nan]), 0.0, NaNPolicy.ERROR)
+
+    def test_mask_keeps_nan_unchanged(self):
+        r_m, z = _apply_nan_policy(np.array([0.0, 1.0]), np.array([0.0, np.nan]), 0.0, NaNPolicy.MASK)
+        assert np.isnan(z[1])
+
+    def test_plain_string_matching_enum_value_is_not_recognized(self):
+        """Ensure policy is compared via `is`, not `==`."""
+        with pytest.raises(ValueError, match="Unknown NaN policy"):
+            _apply_nan_policy(np.array([0.0, 1.0]), np.array([0.0, np.nan]), 0.0, "error")

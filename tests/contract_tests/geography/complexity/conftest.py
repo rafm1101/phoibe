@@ -2,6 +2,7 @@ import dataclasses
 
 import numpy as np
 import pytest
+import shapely
 
 from phoibe.geography.complexity.rix.geometry import RayGeometry
 from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile
@@ -16,15 +17,17 @@ class Location:
 
 @pytest.fixture
 def origin():
-    return Location(easting=0.0, northing=0.0)
+    return shapely.geometry.Point(0.0, 0.0)
 
 
 class DummySampler:
     def __init__(self, z):
         self._z = np.asarray(z, dtype=float)
+        self.crs = None
+        self.meta = {}
 
     def sample(self, xs, ys):
-        return self._z.copy()
+        return self._z.copy(), np.isnan(self._z).sum()
 
 
 @pytest.fixture
