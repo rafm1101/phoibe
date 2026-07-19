@@ -2,10 +2,11 @@ import numpy as np
 import pyproj
 import pytest
 import rasterio.transform
-import rioxarray  # noqa: F401
 import xarray
 
 from phoibe.geography.crs import reproject_rasterdata
+
+pytestmark = pytest.mark.rio
 
 
 @pytest.fixture
@@ -20,6 +21,8 @@ def bbox_wgs84_lon_min_lat_min_lon_max_lat_max():
 
 @pytest.fixture
 def sample_int_array(grid_shape_width_height, bbox_wgs84_lon_min_lat_min_lon_max_lat_max):
+    import rioxarray  # noqa: F401   # register .rio accessor
+
     width, height = grid_shape_width_height
     lon_min, lat_min, lon_max, lat_max = bbox_wgs84_lon_min_lat_min_lon_max_lat_max
 
@@ -36,6 +39,8 @@ def sample_int_array(grid_shape_width_height, bbox_wgs84_lon_min_lat_min_lon_max
 
 @pytest.fixture
 def grid_of_rearranged_sequence():
+    import rioxarray  # noqa: F401   # register .rio accessor
+
     width, height = 100, 80
     data = np.arange(width * height, dtype=float).reshape((height, width))
 

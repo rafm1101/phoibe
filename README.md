@@ -105,6 +105,15 @@ poetry build
 poetry config system-git-client true
 ```
 
+### Testing
+
+1. `rioxarray` registers the `.rio` accessor to `xarray` globally as soon it is imported somewhere.
+   - _Consequence:_ Tests relying on no `.rio` present explicitly break when executed together.
+   - _Unsolution:_ 
+   - _Solution:_
+     1. Separate execution w/ pytest marks: Rio mark registered in `pyproject.toml`, rio modules marked.
+     1. Import _inside fixtures_ that require `.rio` -- module level imports keep on breaking.
+
 ### Environment
 
 <!--

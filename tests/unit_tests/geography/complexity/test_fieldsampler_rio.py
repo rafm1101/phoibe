@@ -4,10 +4,12 @@ import xarray
 
 from phoibe.geography.complexity.rix.fieldsampler import RegularGridXYSampler
 
+pytestmark = pytest.mark.rio
+
 
 @pytest.fixture
 def planar_field_with_crs():
-    import rioxarray  # noqa: F401  (registers the .rio accessor)
+    import rioxarray  # noqa: F401  # register the .rio accessor
 
     x = np.arange(-100, 100)
     y = np.arange(-100, 100)
