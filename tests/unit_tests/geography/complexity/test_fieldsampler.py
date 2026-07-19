@@ -113,7 +113,6 @@ class TestRegularGridXYSamplerCrsAndMeta:
         # TODO: For some unclear reason, `planar_field` has the attribute `rio`. Its xarray.DataArray construction
         # already has this attribute. Meanwhile, rioxarray is unkown when trying to access.
         sampler = RegularGridXYSampler(da=planar_field, method="linear")
-        # breakpoint()
         assert sampler.meta == {sampler.keys.dem: {}}
 
     def test_sample_returns_full_length_array_not_truncated_on_nan(self, planar_field):
