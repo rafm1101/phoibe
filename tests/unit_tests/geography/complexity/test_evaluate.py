@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from phoibe.geography.complexity.rix import evaluate
+from phoibe.geography.complexity.rix.evaluate import _get_true_runs
 from phoibe.geography.complexity.rix.geometry import RayGeometry
 from phoibe.geography.complexity.rix.profiles import RayProfile
 
@@ -84,3 +85,24 @@ def test_steep_segment_indices(dummy_profile, slope_critical, expected_indices):
     """steep_segment_indices() finds correct contiguous steep runs."""
     result = evaluate.steep_segment_indices(dummy_profile, slope_critical)
     assert result == expected_indices
+
+
+class TestGetTrueRuns:
+
+    def test_no_true_values_returns_empty_list(self):
+        assert _get_true_runs(np.array([False, False, False])) == []
+
+    def test_all_true_returns_single_full_run(self):
+        assert _get_true_runs(np.array([True, True, True])) == [(0, 3)]
+
+    def test_run_touching_start(self):
+        assert _get_true_runs(np.array([True, False, False])) == [(0, 1)]
+
+    def test_run_touching_end(self):
+        assert _get_true_runs(np.array([False, False, True])) == [(2, 3)]
+
+    def test_two_separate_single_element_runs(self):
+        assert _get_true_runs(np.array([True, False, True])) == [(0, 1), (2, 3)]
+
+    def test_empty_mask_returns_empty_list(self):
+        assert _get_true_runs(np.array([], dtype=bool)) == []
