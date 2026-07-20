@@ -39,6 +39,9 @@ docs = [
     "matplotlib>=3.10.8",
     "python-dotenv>=1.2.1",
 ]
+rix = [
+    "geopandas>=1.1.2",
+]
 
 [tool.uv.sources]
 ergaleiothiki = { git = "https://github.com/rafm1101/ergaleiothiki.git", tag = "0.3.0" }
