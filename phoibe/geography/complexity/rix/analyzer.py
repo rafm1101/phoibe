@@ -173,15 +173,17 @@ class TRIXAnalyzer:
         ValueError
             On CRS mismatch or invalid geometries.
         """
+        locations_site = locations_site.copy()
+        if keys.site_id in locations_site.columns:
+            locations_site = locations_site.set_index(keys.site_id)
+        if locations_reference is not None:
+            locations_reference = locations_reference.copy()
+            if keys.site_id in locations_reference.columns:
+                locations_reference = locations_reference.set_index(keys.site_id)
+
         self._validate_inputs(
             dem=dem, locations_site=locations_site, locations_reference=locations_reference, keys=keys
         )
-
-        locations_site = locations_site.copy()
-        if not keys.site_id == "index":
-            locations_site = locations_site.set_index(keys.site_id)
-            if locations_reference is not None:
-                locations_reference = locations_reference.copy().set_index(keys.site_id)
 
         sampler = RegularGridXYSampler(da=dem, method=_get_parameter(self._config, "sampler", "interpolation_method"))
 
@@ -191,6 +193,7 @@ class TRIXAnalyzer:
         summary_site = self._build_summary(radial_rix_site, keys=keys)
 
         trix_values, transferability, A, B, trix_table = None, None, None, None, None
+        radial_rix_reference = None
         if locations_reference is not None:
             radial_rix_reference = self._compute_rix_results(sampler, locations_reference, keys=keys)
             summary_reference = self._build_summary(radial_rix_reference, keys=keys)
@@ -330,13 +333,15 @@ class TRIXAnalyzer:
         keys: Keys,
     ) -> dict:
         records: dict = {
-            "meta": {key: self._config[key] for key in ["name", "version", "description"]}
+            keys.meta: {key: self._config[key] for key in ["name", "version", "description"]}
             | {
                 keys.created_at: datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z"),
             }
         }
         records[keys.parameters] = {
-            "ray": {key: _get_parameter(self._config, keys.parameters, key) for key in ["n_angles", "R_km", "dr_km"]},
+            "ray": {
+                key: _get_parameter(self._config, keys.parameters, key) for key in ["n_angles", "R_km", "dr_km", "crs"]
+            },
             "slope": {key: _get_parameter(self._config, keys.parameters, key) for key in ["slope_critical"]},
             "sampler": _get_parameter(self._config, "sampler").copy(),
         }
@@ -360,15 +365,21 @@ class TRIXAnalyzer:
             for _, rix_result in results_site.items()
             for extent in _get_parameter(rix_result.meta, keys.dem, keys.extent_dem)
         )
-        extent_dem = list(
-            dict(zip(["west", "south", "east", "north"], extent, strict=True)) for extent in unique_extends_dem
-        )
+        extent_dem = [
+            dict(zip(["west", "south", "east", "north"], extent, strict=True))
+            for extent in unique_extends_dem
+            if extent is not None
+        ]
         unique_resolution_dem = set(
             res
             for _, rix_result in results_site.items()
             for res in _get_parameter(rix_result.meta, keys.dem, keys.resolution_dem)
         )
-        resolution_dem = list(dict(zip(["dx", "dy"], resolution, strict=True)) for resolution in unique_resolution_dem)
+        resolution_dem = [
+            dict(zip(["dx", "dy"], resolution, strict=True))
+            for resolution in unique_resolution_dem
+            if resolution is not None
+        ]
         message = list(
             set(
                 message
@@ -389,6 +400,7 @@ class TRIXAnalyzer:
             [_get_parameter(rix_result.meta, keys.rays, keys.nan_count) > 0 for _, rix_result in results_site.items()]
         )
         computed = ["rix_site"]
+        transferability_counts = {}
         if results_reference is not None:
             computed.append("rix_reference")
         if trix_table is not None:
@@ -417,7 +429,9 @@ class TRIXAnalyzer:
             steep_segments_rows.append(gdf_segments)
 
         if steep_segments_rows:
-            steep_segments = gpd.GeoDataFrame(pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry)
+            steep_segments = gpd.GeoDataFrame(
+                pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry
+            ).set_index(keys.site_id)
         else:
             steep_segments = gpd.GeoDataFrame(
                 columns=[keys.site_id, keys.theta, keys.segment_id, keys.geometry], geometry=keys.geometry, crs=None

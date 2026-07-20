@@ -4,12 +4,9 @@ import numpy as np
 import shapely.geometry
 from numpy.typing import NDArray
 
-from .interface import Keys
 from .profiles import RayProfile
 
 LOGGER = logging.getLogger(__name__)
-
-KEYS = Keys()
 
 
 def segment_lengths(profile: RayProfile) -> NDArray[np.floating]:
@@ -121,19 +118,6 @@ def _get_true_runs(mask: NDArray[np.bool_]) -> list[tuple[int, int]]:
     changes = np.diff(mask.astype(int), prepend=0, append=0)
     starts = np.where(changes == 1)[0]
     stops = np.where(changes == -1)[0]
-
-    # runs = []
-    # start = None
-
-    # for index, value in enumerate(mask):
-    #     if value and start is None:
-    #         start = index
-    #     elif not value and start is not None:
-    #         runs.append((start, index))
-    #         start = None
-
-    # if start is not None:
-    #     runs.append((start, len(mask)))
     return list(zip(starts, stops, strict=True))
 
 
