@@ -67,7 +67,7 @@ class TestKeys:
             "segment_id": "segment_id",
             "theta": "theta",
             "manifest": "manifest",
-            "rix_summary": "rix_summary",
+            "rix_table": "rix_table",
             "trix_table": "trix_table",
             "geopackage": "geopackage",
             "locations_site_layer": "locations_site",

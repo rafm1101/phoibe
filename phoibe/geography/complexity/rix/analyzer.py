@@ -190,13 +190,15 @@ class TRIXAnalyzer:
         radial_rix_site = self._compute_rix_results(sampler, locations_site, keys=keys)
         steep_segments_site = self._build_steep_segments(radial_rix_site, keys=keys)
         rix_roses = self._build_rix_rose(radial_rix_site)
-        summary_site = self._build_summary(radial_rix_site, keys=keys)
+        summary_site = self._build_summary(radial_rix_site, keys=keys, index_name=locations_site.index.name)
 
         trix_values, transferability, A, B, trix_table = None, None, None, None, None
         radial_rix_reference = None
         if locations_reference is not None:
             radial_rix_reference = self._compute_rix_results(sampler, locations_reference, keys=keys)
-            summary_reference = self._build_summary(radial_rix_reference, keys=keys)
+            summary_reference = self._build_summary(
+                radial_rix_reference, keys=keys, index_name=locations_reference.index.name
+            )
             trix_values, A, B = self._compute_trix(summary_site, summary_reference)
             distances = self._compute_pairwise_distances_km(
                 locations_site.geometry, locations_reference.geometry, keys=keys
@@ -301,7 +303,9 @@ class TRIXAnalyzer:
 
         return rix_roses
 
-    def _build_summary(self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS) -> pd.DataFrame:
+    def _build_summary(
+        self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS, index_name: object = None
+    ) -> pd.DataFrame:
         """Build summary DataFrame from radial results."""
         summary_rows = []
 
@@ -320,8 +324,8 @@ class TRIXAnalyzer:
                     keys.slope_critical: radial_rix.slope_critical,
                 }
             )
-
-        summary = pd.DataFrame(summary_rows).set_index(keys.site_id)
+        index = pd.Index(radial_results.keys(), name=index_name)
+        summary = pd.DataFrame(summary_rows, index=index)
         return summary
 
     def _build_meta(

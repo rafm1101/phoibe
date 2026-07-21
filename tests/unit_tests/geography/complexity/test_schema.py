@@ -11,9 +11,9 @@ def _iter_parameter_entries(definition):
 
 
 def _iter_column_entries(definition):
-    """Yield (path, entry) for every column definition across rix_summary, trix_table, and all geopackage layers."""
+    """Yield (path, entry) for every column definition across rix_table, trix_table, and all geopackage layers."""
     schema = definition["schema"]
-    for table_name in ("rix_summary", "trix_table"):
+    for table_name in ("rix_table", "trix_table"):
         for column_name, entry in schema[table_name]["columns"].items():
             yield f"schema.{table_name}.columns.{column_name}", entry
     for layer_name, layer in schema["geopackage"]["layers"].items():

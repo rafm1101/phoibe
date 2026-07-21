@@ -110,12 +110,12 @@ PRODUCT_DEFINITION_TRIX = {
     },
     "artifacts": {
         "profiles": {
-            "summary": ["rix_summary", "trix_table", "manifest"],
-            "full": ["rix_summary", "trix_table", "manifest", "geopackage"],
+            "summary": ["rix_table", "trix_table", "manifest"],
+            "full": ["rix_table", "trix_table", "manifest", "geopackage"],
         },
         "filenames": {
             "manifest": "summary.yaml",
-            "rix_summary": "rix_summary.csv",
+            "rix_table": "rix_table.csv",
             "trix_table": "trix.csv",
             "geopackage": "rix_details.gpkg",
         },
@@ -168,7 +168,7 @@ PRODUCT_DEFINITION_TRIX = {
                 "artifacts": {"name": "artifacts", "description": "Output files."},
             },
         },
-        "rix_summary": {
+        "rix_table": {
             "description": "Table of the RIX and elevation values, and summary statistics thereof.",
             "columns": {
                 "site_id": {

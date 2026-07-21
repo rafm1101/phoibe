@@ -43,7 +43,7 @@ def test_writer_defaults_match_expected_snapshot():
     expected = {
         "filenames": {
             "manifest": "summary.yaml",
-            "rix_summary": "rix_summary.csv",
+            "rix_table": "rix_table.csv",
             "trix_table": "trix.csv",
             "geopackage": "rix_details.gpkg",
         },
