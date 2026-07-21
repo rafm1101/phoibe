@@ -3,21 +3,22 @@ meta:
   name: T-RIX assessment
   version: '1.0'
   description: TRIX, TR6 Rev.12
-  created_at: 2026-07-06 16:56:47 UTC
+  created_at: 2026-07-21 13:31:01 UTC
 parameters:
   ray:
     n_angles: 72
     R_km: 13.0
     dr_km: 0.05
+    crs: EPSG:4326
   slope:
     slope_critical: 0.033
   sampler:
     interpolation_method: linear
 spatial_context:
   source_dem:
-    name: Copernicus DEM GLO-30
-    source: Copernicus
-    description: Downloaded 2026.
+    name: Eggbox synthetic data
+    source: phoibe.synthetic_data
+    description: Regular double-wave landscape.
     crs:
     - EPSG:4326
     extent:
@@ -35,10 +36,27 @@ spatial_context:
   internal_alignment:
     messages:
     - Transformed ray CRS EPSG:32633 to DEM CRS EPSG:4326 for sampling.
+run:
+  n_sites: 7
+  n_references: 2
+  computed:
+  - rix_site
+  - rix_reference
+  - trix
+  diagnostics:
+    n_sites_with_nans: 0
+    transferability_counts:
+      0: 12
+      2: 2
 artifacts:
   profile: full
   files:
     manifest: summary.yaml
-    rix_summary: rix_summary.csv
+    rix_table: rix_table.csv
     trix_table: trix.csv
     geopackage: rix_details.gpkg
+  geopackage_records_per_layer:
+    locations_site: 7
+    locations_reference: 2
+    ruggedness: 194
+    trix: 14
