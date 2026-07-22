@@ -15,14 +15,14 @@ KEYS = Keys()
 class RayProfileMeta:
     """Information about a RayProfile."""
 
-    crs_ray: tuple[str, str] | None
+    crs_ray: str | None
     """CRS for the ray coordinates."""
-    crs_dem: tuple[str, str] | None
+    crs_dem: str | None
     """CRS for the DEM coordinates."""
-    resolution: float
-    """Resolution of the DEM."""
-    n_oob: str
-    """Number of ray point that are out of the DEM bounds."""
+    resolution: tuple[float, float] | None
+    """Resolution of the DEM (dx, dy), if known."""
+    n_oob: int | None
+    """Number of ray points that are NaN after sampling (out-of-bounds or data gaps)."""
     messages: str
     """Messages related to the ray."""
 
@@ -32,6 +32,10 @@ class RayRuggedness:
     """Analysis result for a single ray direction.
 
     Combines the profile with computed metrics for inspection and debugging.
+
+    Notes
+    -----
+    `.meta`: W/o rioxarray some DEM CRS metadata are missing. This need an additional graceful treatment.
     """
 
     profile: RayProfile
@@ -43,10 +47,11 @@ class RayRuggedness:
     @property
     def meta(self) -> RayProfileMeta:
         """Metadata relating to `RayProfile`. Includes CRS, (resolution), out-of-bound point count, messages."""
+        dem_meta = _get_parameter(self.profile.meta, self.keys.dem, strict=False) or {}
         ray_profile_meta = RayProfileMeta(
             crs_ray=_get_parameter(self.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False),
-            crs_dem=_get_parameter(self.profile.meta, self.keys.dem, self.keys.crs_dem, strict=False),
-            resolution=0,
+            crs_dem=_get_parameter(dem_meta, self.keys.crs_dem, strict=False),
+            resolution=_get_parameter(dem_meta, self.keys.resolution_dem, strict=False),
             n_oob=_get_parameter(self.profile.meta, self.keys.rays, self.keys.nan_count, strict=False),
             messages=str(_get_parameter(self.profile.meta, self.keys.alignment, self.keys.message, strict=False)),
         )
@@ -206,16 +211,27 @@ class RadialRuggedness:
 
     @property
     def meta(self) -> dict:
-        crs_ray = list({_get_parameter(ray.profile.meta, self.keys.rays, self.keys.crs_ray) for ray in self.rays})
-        crs_dem = list({_get_parameter(ray.profile.meta, self.keys.dem, self.keys.crs_dem) for ray in self.rays})
-        extent_dem = list({_get_parameter(ray.profile.meta, self.keys.dem, self.keys.extent_dem) for ray in self.rays})
-        resolution_dem = list(
-            {_get_parameter(ray.profile.meta, self.keys.dem, self.keys.resolution_dem) for ray in self.rays}
+        crs_ray = list(
+            {_get_parameter(ray.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False) for ray in self.rays}
         )
-        message = list({_get_parameter(ray.profile.meta, self.keys.alignment, self.keys.message) for ray in self.rays})
+        dem_metas = [_get_parameter(ray.profile.meta, self.keys.dem, strict=False) or {} for ray in self.rays]
+        crs_dem = list({_get_parameter(dem_meta, self.keys.crs_dem, strict=False) for dem_meta in dem_metas})
+        extent_dem = list({_get_parameter(dem_meta, self.keys.extent_dem, strict=False) for dem_meta in dem_metas})
+        resolution_dem = list(
+            {_get_parameter(dem_meta, self.keys.resolution_dem, strict=False) for dem_meta in dem_metas}
+        )
+        message = list(
+            {
+                _get_parameter(ray.profile.meta, self.keys.alignment, self.keys.message, strict=False)
+                for ray in self.rays
+            }
+        )
         nan_count = int(
             np.sum(
-                [_get_parameter(ray.profile.meta, self.keys.rays, self.keys.nan_count) for ray in self.rays],
+                [
+                    _get_parameter(ray.profile.meta, self.keys.rays, self.keys.nan_count, strict=False)
+                    for ray in self.rays
+                ],
                 dtype=float,
             )
         )
@@ -257,7 +273,7 @@ class RadialRuggedness:
         """
         idx = np.searchsorted(self.angles, theta)
         if idx < len(self.rays) and np.isclose(self.angles[idx], theta, atol=atol):
-            return self.rays[idx - 1]
+            return self.rays[idx]
         else:
             raise KeyError(f"No ray found for theta={theta:.1f}°. Available angles: {self.angles}")
 

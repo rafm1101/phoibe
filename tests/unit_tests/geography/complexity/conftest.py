@@ -1,6 +1,8 @@
 import dataclasses
 
+import pyproj
 import pytest
+import shapely.geometry
 
 from phoibe.geography.complexity.rix.geometry import RayGeometry
 
@@ -11,6 +13,7 @@ class Location:
     northing: float
 
 
+# TODO: Migrate to shapely as soon as needed.
 @pytest.fixture
 def dummy_location():
     return Location(easting=-2.5, northing=-7.4)
@@ -18,7 +21,7 @@ def dummy_location():
 
 @pytest.fixture
 def origin():
-    return Location(easting=0.0, northing=0.0)
+    return shapely.geometry.Point(0.0, 0.0)
 
 
 @pytest.fixture
@@ -36,3 +39,13 @@ def ray_1km_100m(dummy_location):
 def ray_01km(origin, request):
     dr_km = request.param
     return RayGeometry.from_compass_regular(location=origin, theta=0.0, R_km=0.1, dr_km=dr_km)
+
+
+@pytest.fixture
+def crs_wgs84():
+    return pyproj.CRS.from_epsg(4326)
+
+
+@pytest.fixture
+def crs_utm33n():
+    return pyproj.CRS.from_epsg(32633)

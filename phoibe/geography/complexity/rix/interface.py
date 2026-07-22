@@ -41,7 +41,7 @@ class Keys:
     """Keys employed at publsihed artifacts. Changes require version bumps."""
 
     """Joint table columns:"""
-    site_id: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_summary", "columns", "site_id", "name")
+    site_id: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "site_id", "name")
     """Id of the site to assess."""
     geometry: str = _get_parameter(
         PRODUCT_DEFINITION_TRIX, "schema", "geopackage", "layers", "locations_site", "geometry_column"
@@ -49,24 +49,24 @@ class Keys:
     """Coordinates of geometric objects."""
 
     """Summary:"""
-    elevation: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_summary", "columns", "elevation", "name")
+    elevation: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "elevation", "name")
     """Site elevation."""
     elevation_std: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "rix_summary", "columns", "elevation_std", "name"
+        PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "elevation_std", "name"
     )
     """Site elevation standard deviation (if measured in different occasions)."""
-    n_rays: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_summary", "columns", "n_rays", "name")
+    n_rays: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "n_rays", "name")
     """Number of rays evaluated."""
-    rix: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_summary", "columns", "rix", "name")
+    rix: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "rix", "name")
     """RIX value."""
-    rix_std: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_summary", "columns", "rix_std", "name")
+    rix_std: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "rix_std", "name")
     """Standard deviation of directional rix values."""
-    rix_min: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_summary", "columns", "rix_min", "name")
+    rix_min: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "rix_min", "name")
     """Minimum of directional rix values."""
-    rix_max: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_summary", "columns", "rix_max", "name")
+    rix_max: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "rix_max", "name")
     """Maximum of directional rix values."""
     slope_critical: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "rix_summary", "columns", "slope_critical", "name"
+        PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "slope_critical", "name"
     )
     """Slope threshold considered as steepness."""
 
@@ -113,7 +113,7 @@ class Keys:
     """Writer keys:"""
     manifest: str = "manifest"
     """Manifest file key."""
-    rix_summary: str = "rix_summary"
+    rix_table: str = "rix_table"
     """Rix table file key."""
     trix_table: str = "trix_table"
     """T-RIX table file key."""

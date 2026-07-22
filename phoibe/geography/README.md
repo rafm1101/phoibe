@@ -28,19 +28,20 @@ Analyzer:
 ```python
 import geopandas as gpd
 import shapely
-from complexity.rix import analyzer
+from phoibe.geography.complexity.rix import analyzer
+from phoibe.geography.complexity.rix.config import ANALYZER_DEFAULTS
 
 sites = gpd.GeoDataFrame(data={"location_id":["WTG1"], "geometry":[shapely.Point(0,0)]}, geometry="geometry")
 references = gpd.GeoDataFrame(data={"location_id":["WDB"], "geometry":[shapely.Point(5,3)]}, geometry="geometry")
 
-rix_analyzer = analyzer.TRIXAnalyzer()
+rix_analyzer = analyzer.TRIXAnalyzer(config=ANALYZER_DEFAULTS)
 results = rix_analyzer.run(dem=elevation_map, locations_site=sites, locations_reference=references)
 ```
 
 Functional:
 
 ```python
-from complexity.rix import RegularGridXYSampler, compute_regular_rix
+from phoibe.geography.complexity.rix import RegularGridXYSampler, compute_regular_rix
 import shapely
 
 location = shapely.Point(0, 0)
@@ -76,23 +77,21 @@ result.steep_segments_geodataframe()
 _Note: `geopandas` and `matplotlib` are not default dependencies in this package._
 
 ```python
+from phoibe.geography.plot import plot_raster
 result.plot_polar()
 
-_, ax = plot_geodata(da=elevation_map)
-result_regular.steep_segments_geodataframe().plot(ax=ax, color="r", linewidth=1, label="ray's steep parts")
+_, ax = plot_raster(da=elevation_map)
+result.steep_segments_geodataframe().plot(ax=ax, color="r", linewidth=1, label="ray's steep parts")
 ```
 
 4. **Store your results:**
 
 ```python
-from complexity.rix import writer
+from phoibe.geography.complexity.rix import writer
 
-writer.RIXWriter(
-    result=results,
-    locations_site=sites,
-    locations_reference=references,
-    profile=writer.WriterProfile.FULL,
-).write(directory="trix_assessment", project_name="WP Planar I")
+writer.RIXWriter(result=results, profile=writer.WriterProfile.FULL).write(
+   directory="trix_assessment", project_name="WP Planar I"
+)
 ```
 
 ## Architecture
@@ -133,6 +132,7 @@ Within `plot`:
    - `config.py` extracts relevant parameters.
    - Parameters that rely on TR6 are marked as `locked`.
 1. DEM metadata remains to be refined.
+   - Includes: Source and metadata.
 1. Multi-CRS supported. Provide assessed sites in a projected CRS measuring in meters. Maps in a geographic CRS are handled accordingly by transforming the sites' coordinates and sampling these.
 1. Interpolation and grid spacing matter: Along the individual rays, resampling the elevations at its internal grid points, may have some hidden sensitivities. The following combinations should be used carefully:
    - Interpolation method `nearest` w/ a small grid spacing (leads to jumps on short segments).
@@ -148,7 +148,7 @@ Within `plot`:
 1. Objects separate concerns:
    - `RayGeometry` represents a single ray only. It may change its representation to another CRS.
    - `RayProfile` represents the elevation profile along its ray. For its instantiation, a `FieldSampler` is required.
-   - `FieldSampler` samples coordinates from a 2D field. In case of a CRS mismatch, it requests a matching representation of the coordinates in its own CRS.
+   - `FieldSampler` samples coordinates from a 2D field. In case of a CRS mismatch, it provides a matching representation of the coordinates in a requested CRS.
    - `RayRuggedness` evaluates a single `RayProfile` instance.
    - `RadialRuggedness` collects multiples `RayRuggedness`es.
    - `TRIXAnalyzer` manages the RIX assessment, and if also reference locations are provided, also the full TRIX assessment of representativity.

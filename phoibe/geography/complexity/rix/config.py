@@ -26,7 +26,7 @@ INTERPOLATION_METHODS = typing.Literal["linear", "nearest"]
 WRITER_DEFAULTS: dict = {
     "filenames": {
         file: _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "filenames", file)
-        for file in ["manifest", "rix_summary", "trix_table", "geopackage"]
+        for file in ["manifest", "rix_table", "trix_table", "geopackage"]
     },
     "gpkg_layers": {
         layer: _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "geopackage_layers", layer)

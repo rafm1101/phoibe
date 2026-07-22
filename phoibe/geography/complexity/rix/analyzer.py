@@ -5,27 +5,29 @@ import dataclasses
 import datetime
 import logging
 import pathlib
+import typing
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pyproj
 import scipy.spatial.distance
+import shapely
 import xarray
 import yaml
 
-from . import evaluate, trix
-from .base import ColumnKeys
+from . import trix
 from .config import ANALYZER_DEFAULTS
-from .fieldsampler import RegularGridXYSampler
+from .fieldsampler import FieldSampler, RegularGridXYSampler
+from .geometry import RayGeometry
 from .interface import Keys, _get_parameter
-from .results import RadialRuggedness
+from .profiles import NaNPolicy, RayProfile
+from .results import RadialRuggedness, RayRuggedness
 
 LOGGER = logging.getLogger(__name__)
 
 
 _REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical"}
-COLUMN_KEYS = ColumnKeys()
 KEYS = Keys()
 
 
@@ -48,6 +50,55 @@ class ResultSummary:
     """Steep segments of sites as LineStrings. Columns: location_id, theta, segment_id, geometry."""
     meta: dict
     """Meta information including config, timestamp and processing information."""
+
+
+def compute_regular_rix(
+    location: shapely.Point,
+    sampler: FieldSampler,
+    n_angles: int,
+    R_km: float,
+    dr_km: float,
+    crs: typing.Any,
+    slope_critical: float,
+    nan_policy="mask",
+    keys: Keys = KEYS,
+):
+    """Compute the ruggedness index RIX of a location. The RIX assesses height profiles along
+    rays originating at `location`.
+
+    Parameters
+    ----------
+    location
+        Coordinates of the location to be assessed.
+    sampler
+        A sampler of field values from a regular, metric grid.
+    n_angles
+        Number of rays to cover the entire circle.
+    R_km
+        Distance [km] to which the profiles are considered.
+    dr_km
+        Stepsize [km] to sample from the field.
+    crs
+        CRS of the location.
+    slope_critical
+        Threshold on the slope between two points for a segment to be considered steep.
+    keys
+        Column keys for the output.
+
+    Returns
+    -------
+    RadialRixResult
+        Gathered results of the evaluation.
+    """
+    angles = np.linspace(0, 360, n_angles, endpoint=False)
+    results = []
+
+    for theta in angles:
+        ray = RayGeometry.from_compass_regular(location=location, theta=theta, R_km=R_km, dr_km=dr_km, crs=crs)
+        ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy(nan_policy), keys=keys)
+        results.append(RayRuggedness(profile=ray_profile, slope_critical=slope_critical, keys=keys))
+
+    return RadialRuggedness(rays=tuple(results))
 
 
 class TRIXAnalyzer:
@@ -122,27 +173,32 @@ class TRIXAnalyzer:
         ValueError
             On CRS mismatch or invalid geometries.
         """
+        locations_site = locations_site.copy()
+        if keys.site_id in locations_site.columns:
+            locations_site = locations_site.set_index(keys.site_id)
+        if locations_reference is not None:
+            locations_reference = locations_reference.copy()
+            if keys.site_id in locations_reference.columns:
+                locations_reference = locations_reference.set_index(keys.site_id)
+
         self._validate_inputs(
             dem=dem, locations_site=locations_site, locations_reference=locations_reference, keys=keys
         )
-
-        locations_site = locations_site.copy()
-        if not keys.site_id == "index":
-            locations_site = locations_site.set_index(keys.site_id)
-            if locations_reference is not None:
-                locations_reference = locations_reference.copy().set_index(keys.site_id)
 
         sampler = RegularGridXYSampler(da=dem, method=_get_parameter(self._config, "sampler", "interpolation_method"))
 
         radial_rix_site = self._compute_rix_results(sampler, locations_site, keys=keys)
         steep_segments_site = self._build_steep_segments(radial_rix_site, keys=keys)
         rix_roses = self._build_rix_rose(radial_rix_site)
-        summary_site = self._build_summary(radial_rix_site, keys=keys)
+        summary_site = self._build_summary(radial_rix_site, keys=keys, index_name=locations_site.index.name)
 
         trix_values, transferability, A, B, trix_table = None, None, None, None, None
+        radial_rix_reference = None
         if locations_reference is not None:
             radial_rix_reference = self._compute_rix_results(sampler, locations_reference, keys=keys)
-            summary_reference = self._build_summary(radial_rix_reference, keys=keys)
+            summary_reference = self._build_summary(
+                radial_rix_reference, keys=keys, index_name=locations_reference.index.name
+            )
             trix_values, A, B = self._compute_trix(summary_site, summary_reference)
             distances = self._compute_pairwise_distances_km(
                 locations_site.geometry, locations_reference.geometry, keys=keys
@@ -212,7 +268,7 @@ class TRIXAnalyzer:
 
         for location_id, row in locations.iterrows():
             LOGGER.debug("Computing RIX for location_id=%s", location_id)
-            results[location_id] = evaluate.compute_regular_rix(
+            results[location_id] = compute_regular_rix(
                 location=row.geometry,
                 sampler=sampler,
                 n_angles=cfg["n_angles"],
@@ -247,7 +303,9 @@ class TRIXAnalyzer:
 
         return rix_roses
 
-    def _build_summary(self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS) -> pd.DataFrame:
+    def _build_summary(
+        self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS, index_name: object = None
+    ) -> pd.DataFrame:
         """Build summary DataFrame from radial results."""
         summary_rows = []
 
@@ -266,8 +324,8 @@ class TRIXAnalyzer:
                     keys.slope_critical: radial_rix.slope_critical,
                 }
             )
-
-        summary = pd.DataFrame(summary_rows).set_index(keys.site_id)
+        index = pd.Index(radial_results.keys(), name=index_name)
+        summary = pd.DataFrame(summary_rows, index=index)
         return summary
 
     def _build_meta(
@@ -279,13 +337,15 @@ class TRIXAnalyzer:
         keys: Keys,
     ) -> dict:
         records: dict = {
-            "meta": {key: self._config[key] for key in ["name", "version", "description"]}
+            keys.meta: {key: self._config[key] for key in ["name", "version", "description"]}
             | {
                 keys.created_at: datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S %Z"),
             }
         }
         records[keys.parameters] = {
-            "ray": {key: _get_parameter(self._config, keys.parameters, key) for key in ["n_angles", "R_km", "dr_km"]},
+            "ray": {
+                key: _get_parameter(self._config, keys.parameters, key) for key in ["n_angles", "R_km", "dr_km", "crs"]
+            },
             "slope": {key: _get_parameter(self._config, keys.parameters, key) for key in ["slope_critical"]},
             "sampler": _get_parameter(self._config, "sampler").copy(),
         }
@@ -309,15 +369,21 @@ class TRIXAnalyzer:
             for _, rix_result in results_site.items()
             for extent in _get_parameter(rix_result.meta, keys.dem, keys.extent_dem)
         )
-        extent_dem = list(
-            dict(zip(["west", "south", "east", "north"], extent, strict=True)) for extent in unique_extends_dem
-        )
+        extent_dem = [
+            dict(zip(["west", "south", "east", "north"], extent, strict=True))
+            for extent in unique_extends_dem
+            if extent is not None
+        ]
         unique_resolution_dem = set(
             res
             for _, rix_result in results_site.items()
             for res in _get_parameter(rix_result.meta, keys.dem, keys.resolution_dem)
         )
-        resolution_dem = list(dict(zip(["dx", "dy"], resolution, strict=True)) for resolution in unique_resolution_dem)
+        resolution_dem = [
+            dict(zip(["dx", "dy"], resolution, strict=True))
+            for resolution in unique_resolution_dem
+            if resolution is not None
+        ]
         message = list(
             set(
                 message
@@ -338,6 +404,7 @@ class TRIXAnalyzer:
             [_get_parameter(rix_result.meta, keys.rays, keys.nan_count) > 0 for _, rix_result in results_site.items()]
         )
         computed = ["rix_site"]
+        transferability_counts = {}
         if results_reference is not None:
             computed.append("rix_reference")
         if trix_table is not None:
@@ -366,7 +433,9 @@ class TRIXAnalyzer:
             steep_segments_rows.append(gdf_segments)
 
         if steep_segments_rows:
-            steep_segments = gpd.GeoDataFrame(pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry)
+            steep_segments = gpd.GeoDataFrame(
+                pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry
+            ).set_index(keys.site_id)
         else:
             steep_segments = gpd.GeoDataFrame(
                 columns=[keys.site_id, keys.theta, keys.segment_id, keys.geometry], geometry=keys.geometry, crs=None

@@ -40,11 +40,6 @@ class RIXWriter:
         Completed analysis result.
     profile
         Controls which artifacts are written. See :class:`WriterProfile`.
-    locations_site
-        Original point GeoDataFrame for collection A (required for FULL profile).
-    locations_reference
-        Original point GeoDataFrame for collection B (required for FULL profile
-        when TRIX was computed).
     filenames
         Filenames for the results.
     gpkg_layers
@@ -55,7 +50,7 @@ class RIXWriter:
     1. Profiles:
        1. Profile SUMMARY writes:
             summary.yaml      - manifest: metadata, config, artifact references
-            rix_summary.csv   - RIX per location + per-angle ruggednesses
+            rix_table.csv     - RIX per location + per-angle ruggednesses
             trix.csv          - pairwise TRIX table (omitted if result.trix_table is None)
        1. Profile FULL writes everything in SUMMARY plus:
             rix_details.gpkg  - GeoPackage with four layers:
@@ -74,16 +69,16 @@ class RIXWriter:
         self,
         result: ResultSummary,
         profile: WriterProfile = WriterProfile.SUMMARY,
-        locations_site: gpd.GeoDataFrame | None = None,
-        locations_reference: gpd.GeoDataFrame | None = None,
+        # locations_site: gpd.GeoDataFrame | None = None,
+        # locations_reference: gpd.GeoDataFrame | None = None,
         filenames: dict = _FILENAMES,
         gpkg_layers: dict = _GPKG_LAYERS,
         keys: Keys = KEYS,
     ) -> None:
         self._result = result
         self._profile = WriterProfile(profile)
-        self._locations_site = locations_site
-        self._locations_reference = locations_reference
+        # self._locations_site = locations_site
+        # self._locations_reference = locations_reference
         self._filenames = filenames
         self._gpkg_layers = gpkg_layers
         self._keys = keys
@@ -112,7 +107,7 @@ class RIXWriter:
         out = pathlib.Path(directory)
         out.mkdir(parents=True, exist_ok=True)
 
-        self._write_rix_summary(out=out, summary=self._result.summary)
+        self._write_rix_table(out=out, summary=self._result.summary)
 
         if (trix := self._result.trix_table) is not None:
             self._write_trix(out=out, trix=trix)
@@ -125,9 +120,9 @@ class RIXWriter:
 
         LOGGER.info("RIXWriter(%s): wrote artifacts to %s", self._profile, out)
 
-    def _write_rix_summary(self, out: pathlib.Path, summary: pd.DataFrame) -> None:
+    def _write_rix_table(self, out: pathlib.Path, summary: pd.DataFrame) -> None:
         """Write summary of rix assessment."""
-        path = out / self._filenames[self._keys.rix_summary]
+        path = out / self._filenames[self._keys.rix_table]
         summary.reset_index().to_csv(path, index=False)
         LOGGER.debug("Wrote %s", path)
 
@@ -146,7 +141,7 @@ class RIXWriter:
             "profile": str(self._profile),
             "files": {
                 self._keys.manifest: self._filenames[self._keys.manifest],
-                self._keys.rix_summary: self._filenames[self._keys.rix_summary],
+                self._keys.rix_table: self._filenames[self._keys.rix_table],
             },
         }
         if result.trix_table is not None:
@@ -167,18 +162,18 @@ class RIXWriter:
         filepath = out / self._filenames[self._keys.geopackage]
         records = {}
 
-        if self._locations_site is not None:
-            self._locations_site.to_file(
+        if self._result.locations_site is not None:
+            self._result.locations_site.to_file(
                 filepath, layer=self._gpkg_layers[self._keys.locations_site_layer], driver="GPKG"
             )
-            records[self._keys.locations_site_layer] = len(self._locations_site)
+            records[self._keys.locations_site_layer] = len(self._result.locations_site)
             LOGGER.debug("Wrote layer '%s'", self._gpkg_layers[self._keys.locations_site_layer])
 
-        if self._locations_reference is not None:
-            self._locations_reference.to_file(
+        if self._result.locations_reference is not None:
+            self._result.locations_reference.to_file(
                 filepath, layer=self._gpkg_layers[self._keys.locations_reference_layer], driver="GPKG"
             )
-            records[self._keys.locations_reference_layer] = len(self._locations_reference)
+            records[self._keys.locations_reference_layer] = len(self._result.locations_reference)
             LOGGER.debug("Wrote layer '%s'", self._gpkg_layers[self._keys.locations_reference_layer])
 
         self._result.steep_segments.to_file(

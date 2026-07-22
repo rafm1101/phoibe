@@ -10,7 +10,8 @@ re-install:
 	$(MAKE) install
 
 test:
-	uv run pytest --cov phoibe --cov-report term-missing
+	uv run pytest --cov phoibe --cov-report term-missing -m "not rio"
+	uv run pytest --cov phoibe --cov-append --cov-report term-missing -m rio
 
 update-precommits:
 	uv run pre-commit autoupdate

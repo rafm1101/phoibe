@@ -166,7 +166,7 @@ def _apply_nan_policy(
     elif policy is NaNPolicy.TRUNCATE:
         first_nan = np.where(np.isnan(z))[0][0]
         if first_nan == 0:
-            raise ValueError(f"Ray for {theta=:_.1f} contains no valid numbers.")
+            raise ValueError(f"Ray for {theta=:.1f} contains no valid numbers.")
         return r_m[:first_nan].copy(), z[:first_nan].copy()
 
     elif policy is NaNPolicy.MASK:
@@ -196,6 +196,7 @@ def _compute_level_crossings(
         if z_next == z_current:
             r_crossings.extend([r_current, r_next])
             z_crossings.extend([z_current, z_next])
+            continue
 
         if z_next < z_current:
             levels_in_segment = levels_in_segment[::-1]

@@ -1,12 +1,13 @@
 [project]
 name = "phoibe"
-version = "0.6.0"
+version = "0.7.0"
 description = "Repository holding high level functions"
 authors = [{ name = "MR", email = "raffmatth@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.13, <3.14"
 dependencies = [
     "ergaleiothiki>=0.3.0",
+    "geopandas>=1.1.2",
     "openpyxl>=3.1.5",
     "rasterio>=1.5.0",
     "rioxarray>=0.20.0",
@@ -35,9 +36,11 @@ dev=[
 docs = [
     "ipykernel>=6.31",
     "cartopy>=0.25.0",
-    "geopandas>=1.1.2",
     "matplotlib>=3.10.8",
     "python-dotenv>=1.2.1",
+]
+rix = [
+    "geopandas>=1.1.2",
 ]
 
 [tool.uv.sources]
@@ -61,6 +64,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["phoibe"]
+
+[tool.pytest.ini_options]
+markers = ["rio: tests requiring rioxarray's .rio accessor shall run isolated not to break other tests."]
 
 [tool.vulture]
 min_confidence = 80

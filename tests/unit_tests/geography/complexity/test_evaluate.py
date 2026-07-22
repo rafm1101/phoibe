@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from phoibe.geography.complexity.rix import evaluate
+from phoibe.geography.complexity.rix.evaluate import _get_true_runs
 from phoibe.geography.complexity.rix.geometry import RayGeometry
 from phoibe.geography.complexity.rix.profiles import RayProfile
 
@@ -10,14 +11,15 @@ from phoibe.geography.complexity.rix.profiles import RayProfile
 def dummy_profile(request, origin):
     r_m = np.asarray(request.param[0])
     z = np.asarray(request.param[1])
-    ray = RayGeometry.from_compass(location=origin, theta=0, r_m=r_m)
-    return RayProfile(ray_=ray, r_m=r_m, z=z)
+    crs = request.param[2]
+    ray = RayGeometry.from_compass(location=origin, theta=0, r_m=r_m, crs=crs)
+    return RayProfile(ray_=ray, r_m=r_m, z=z, meta={})
 
 
 @pytest.mark.parametrize(
     "dummy_profile, expected_length",
     [
-        (([0.0], [5.0]), 1),
+        (([0.0], [5.0], None), 1),
     ],
     indirect=["dummy_profile"],
 )
@@ -30,9 +32,9 @@ def test_slopes_returns_nan_given_single_point(dummy_profile, expected_length):
 @pytest.mark.parametrize(
     "dummy_profile, expected_length, expected_slopes",
     [
-        (([0.0, 100.0], [0.0, 10.0]), 1, [0.1]),
-        (([0.0, 1.0, 2.0], [5.0, 5.0, 5.0]), 2, [0, 0]),
-        (([0.0, 100.0, 300], [0.0, 10.0, 0.0]), 2, [0.1, -0.05]),
+        (([0.0, 100.0], [0.0, 10.0], None), 1, [0.1]),
+        (([0.0, 1.0, 2.0], [5.0, 5.0, 5.0], None), 2, [0, 0]),
+        (([0.0, 100.0, 300], [0.0, 10.0, 0.0], None), 2, [0.1, -0.05]),
     ],
     indirect=["dummy_profile"],
 )
@@ -42,7 +44,7 @@ def test_slopes_returns_correct_values(dummy_profile, expected_length, expected_
     assert np.allclose(result, expected_slopes)
 
 
-@pytest.mark.parametrize("dummy_profile", [([0.0], [5.0])], indirect=["dummy_profile"])
+@pytest.mark.parametrize("dummy_profile", [([0.0], [5.0], None)], indirect=["dummy_profile"])
 def test_rix_handles_empty_profile(dummy_profile):
     result = evaluate.ruggedness(dummy_profile, slope_critical=0.3)
     assert np.isnan(result)
@@ -51,10 +53,10 @@ def test_rix_handles_empty_profile(dummy_profile):
 @pytest.mark.parametrize(
     "dummy_profile, slope_critical, expected_rix",
     [
-        (([0.0, 100.0], [0.0, 10.0]), 0.0, 1.0),
-        (([0.0, 100.0], [0.0, 10.0]), 0.3, 0.0),
-        (([0.0, 1.0, 2.0], [5.0, 5.0, 5.0]), 0.0, 0.0),
-        (([0.0, 1.0, 2.0], [0.0, 10.0, 20.0]), 6.0, 1.0),
+        (([0.0, 100.0], [0.0, 10.0], None), 0.0, 1.0),
+        (([0.0, 100.0], [0.0, 10.0], None), 0.3, 0.0),
+        (([0.0, 1.0, 2.0], [5.0, 5.0, 5.0], None), 0.0, 0.0),
+        (([0.0, 1.0, 2.0], [0.0, 10.0, 20.0], None), 6.0, 1.0),
     ],
     indirect=["dummy_profile"],
 )
@@ -63,7 +65,7 @@ def test_rix_returns_correct_values(dummy_profile, slope_critical, expected_rix)
     assert np.isclose(result, expected_rix)
 
 
-@pytest.mark.parametrize("dummy_profile", [([0.0, 1.0], [np.nan, np.nan])], indirect=["dummy_profile"])
+@pytest.mark.parametrize("dummy_profile", [([0.0, 1.0], [np.nan, np.nan], None)], indirect=["dummy_profile"])
 def test_steep_mask_with_all_nan_slopes(dummy_profile):
     result = evaluate.steep_mask(dummy_profile, slope_critical=0.3)
     assert len(result) == 1
@@ -73,9 +75,9 @@ def test_steep_mask_with_all_nan_slopes(dummy_profile):
 @pytest.mark.parametrize(
     "dummy_profile, slope_critical, expected_indices",
     [
-        (([0, 1, 2], [0, 0, 0]), 1.0, []),
-        (([0, 1, 2], [0, 10, 20]), 5.0, [(0, 2)]),
-        (([0, 1, 2, 3, 4, 5], [0, 10, 10, 20, 20, 20]), 5.0, [(0, 1), (2, 3)]),
+        (([0, 1, 2], [0, 0, 0], None), 1.0, []),
+        (([0, 1, 2], [0, 10, 20], None), 5.0, [(0, 2)]),
+        (([0, 1, 2, 3, 4, 5], [0, 10, 10, 20, 20, 20], None), 5.0, [(0, 1), (2, 3)]),
     ],
     indirect=["dummy_profile"],
 )
@@ -83,3 +85,24 @@ def test_steep_segment_indices(dummy_profile, slope_critical, expected_indices):
     """steep_segment_indices() finds correct contiguous steep runs."""
     result = evaluate.steep_segment_indices(dummy_profile, slope_critical)
     assert result == expected_indices
+
+
+class TestGetTrueRuns:
+
+    def test_no_true_values_returns_empty_list(self):
+        assert _get_true_runs(np.array([False, False, False])) == []
+
+    def test_all_true_returns_single_full_run(self):
+        assert _get_true_runs(np.array([True, True, True])) == [(0, 3)]
+
+    def test_run_touching_start(self):
+        assert _get_true_runs(np.array([True, False, False])) == [(0, 1)]
+
+    def test_run_touching_end(self):
+        assert _get_true_runs(np.array([False, False, True])) == [(2, 3)]
+
+    def test_two_separate_single_element_runs(self):
+        assert _get_true_runs(np.array([True, False, True])) == [(0, 1), (2, 3)]
+
+    def test_empty_mask_returns_empty_list(self):
+        assert _get_true_runs(np.array([], dtype=bool)) == []

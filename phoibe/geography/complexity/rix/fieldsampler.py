@@ -22,8 +22,8 @@ class FieldSampler(typing.Protocol):
         raise NotImplementedError
 
     @property
-    def meta(self) -> pyproj.CRS | None:
-        """Return the sampler's meta information in case it is `rasterio`."""
+    def meta(self) -> dict:
+        """Return the sampler's meta information."""
         raise NotImplementedError
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
