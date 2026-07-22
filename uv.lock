@@ -820,10 +820,11 @@ wheels = [
 
 [[package]]
 name = "phoibe"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "ergaleiothiki" },
+    { name = "geopandas" },
     { name = "openpyxl" },
     { name = "rasterio" },
     { name = "rioxarray" },
@@ -835,7 +836,6 @@ dependencies = [
 [package.optional-dependencies]
 docs = [
     { name = "cartopy" },
-    { name = "geopandas" },
     { name = "ipykernel" },
     { name = "matplotlib" },
     { name = "python-dotenv" },
@@ -863,7 +863,7 @@ dev = [
 requires-dist = [
     { name = "cartopy", marker = "extra == 'docs'", specifier = ">=0.25.0" },
     { name = "ergaleiothiki", git = "https://github.com/rafm1101/ergaleiothiki.git?tag=0.3.0" },
-    { name = "geopandas", marker = "extra == 'docs'", specifier = ">=1.1.2" },
+    { name = "geopandas", specifier = ">=1.1.2" },
     { name = "geopandas", marker = "extra == 'rix'", specifier = ">=1.1.2" },
     { name = "ipykernel", marker = "extra == 'docs'", specifier = ">=6.31" },
     { name = "matplotlib", marker = "extra == 'docs'", specifier = ">=3.10.8" },

@@ -1,12 +1,13 @@
 [project]
 name = "phoibe"
-version = "0.6.0"
+version = "0.7.0"
 description = "Repository holding high level functions"
 authors = [{ name = "MR", email = "raffmatth@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.13, <3.14"
 dependencies = [
     "ergaleiothiki>=0.3.0",
+    "geopandas>=1.1.2",
     "openpyxl>=3.1.5",
     "rasterio>=1.5.0",
     "rioxarray>=0.20.0",
@@ -35,7 +36,6 @@ dev=[
 docs = [
     "ipykernel>=6.31",
     "cartopy>=0.25.0",
-    "geopandas>=1.1.2",
     "matplotlib>=3.10.8",
     "python-dotenv>=1.2.1",
 ]

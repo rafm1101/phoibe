@@ -1,7 +1,7 @@
 PRODUCT_DEFINITION_TRIX = {
     "name": "T-RIX assessment",
     "description": "TRIX, TR6 Rev.12",
-    "version": "1.0",
+    "version": "1.1",
     "references": {
         "TR6": {
             "title": "Technische Richtlinien für Windenergieanlagen, "

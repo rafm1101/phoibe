@@ -38,3 +38,26 @@ Initial product definition establishing:
 - GeoPackage with layers: `locations_site`, `locations_reference`, `ruggedness`, `trix`.
 - Writer profiles: `SUMMARY` (csv + manifest) and `FULL` (+ geopackage).
 - Parameters per TR6: `n_angles = 72`, `R_km = 3.5`, `slope_critical = 0.033`.
+
+---
+
+## [1.1/0.7]: Reviewed baseline
+
+Reviewed and revised product:
+
+- Artifact schema and parameter schema unified.
+- Refactor of public Python API.
+- Fixes.
+
+### Changed
+
+- Filename: `rix_summary.csv` -> `rix_table.csv`.
+- Schema key: `rix_summary` -> `rix_table`.
+- Schema of the RIX table `location_id` now is `site_id`.
+- `summary.yaml` structure: `project_name` is top level. Added block `run`. for additional diagnostics.
+
+### Fixes
+
+- Removed `NameErrors` in single collection path.
+- `RayRuggedness.meta`/`RadialRuggedness.meta` unrobust w/o `rioxarray`.
+- Circular imports `results`/`evaluate` removed.
