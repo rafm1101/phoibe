@@ -4,9 +4,9 @@ import functools
 import numpy as np
 import shapely
 
+from ..definitions.interface import Keys, _get_parameter
 from .computations import evaluate
-from .computations.profiles import RayProfile
-from .definitions.interface import Keys, _get_parameter
+from .profiles import RayProfile
 
 KEYS = Keys()
 

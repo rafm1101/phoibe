@@ -3,7 +3,7 @@ import pytest
 import shapely.geometry
 
 from phoibe.geography.complexity.rix.computations.profiles import NaNPolicy, RayGeometry, RayProfile
-from phoibe.geography.complexity.rix.results import RadialRuggedness, RayRuggedness
+from phoibe.geography.complexity.rix.computations.results import RadialRuggedness, RayRuggedness
 
 
 class DummySampler:

@@ -10,9 +10,9 @@ import geopandas as gpd
 import pandas as pd
 import yaml
 
-from .analyzer import ResultSummary
-from .definitions.config import WRITER_DEFAULTS
-from .definitions.interface import Keys
+from ..definitions.config import WRITER_DEFAULTS
+from ..definitions.interface import Keys
+from ..pipeline.analyzer import ResultSummary
 
 LOGGER = logging.getLogger(__name__)
 
