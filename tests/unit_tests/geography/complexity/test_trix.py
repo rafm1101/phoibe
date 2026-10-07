@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix.trix import (
+from phoibe.geography.complexity.rix.computations.trix import (
     _ensure_1D,
     compute_trix,
     compute_trix_limit_distances,

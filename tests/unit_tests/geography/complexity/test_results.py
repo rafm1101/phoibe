@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import shapely.geometry
 
-from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayGeometry, RayProfile
+from phoibe.geography.complexity.rix.computations.profiles import NaNPolicy, RayGeometry, RayProfile
 from phoibe.geography.complexity.rix.results import RadialRuggedness, RayRuggedness
 
 

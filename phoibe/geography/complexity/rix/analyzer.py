@@ -16,12 +16,12 @@ import shapely
 import xarray
 import yaml
 
-from . import trix
-from .config import ANALYZER_DEFAULTS
-from .fieldsampler import FieldSampler, RegularGridXYSampler
-from .geometry import RayGeometry
-from .interface import Keys, _get_parameter
-from .profiles import NaNPolicy, RayProfile
+from .computations import trix
+from .computations.fieldsampler import FieldSampler, RegularGridXYSampler
+from .computations.geometry import RayGeometry
+from .computations.profiles import NaNPolicy, RayProfile
+from .definitions.config import ANALYZER_DEFAULTS
+from .definitions.interface import Keys, _get_parameter
 from .results import RadialRuggedness, RayRuggedness
 
 LOGGER = logging.getLogger(__name__)

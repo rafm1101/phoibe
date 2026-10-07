@@ -1,10 +1,10 @@
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix import evaluate
-from phoibe.geography.complexity.rix.evaluate import _get_true_runs
-from phoibe.geography.complexity.rix.geometry import RayGeometry
-from phoibe.geography.complexity.rix.profiles import RayProfile
+from phoibe.geography.complexity.rix.computations import evaluate
+from phoibe.geography.complexity.rix.computations.evaluate import _get_true_runs
+from phoibe.geography.complexity.rix.computations.geometry import RayGeometry
+from phoibe.geography.complexity.rix.computations.profiles import RayProfile
 
 
 @pytest.fixture

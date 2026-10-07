@@ -1,8 +1,13 @@
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix import evaluate
-from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile, _apply_nan_policy, _compute_level_crossings
+from phoibe.geography.complexity.rix.computations import evaluate
+from phoibe.geography.complexity.rix.computations.profiles import (
+    NaNPolicy,
+    RayProfile,
+    _apply_nan_policy,
+    _compute_level_crossings,
+)
 
 
 class DummySampler:

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray
 
-from phoibe.geography.complexity.rix.fieldsampler import RegularGridXYSampler
+from phoibe.geography.complexity.rix.computations.fieldsampler import RegularGridXYSampler
 
 pytestmark = pytest.mark.rio
 

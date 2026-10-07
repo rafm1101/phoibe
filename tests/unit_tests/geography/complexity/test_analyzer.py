@@ -2,7 +2,7 @@ import pytest
 import yaml
 
 from phoibe.geography.complexity.rix.analyzer import _epsg_int, _load_config, _validate_config
-from phoibe.geography.complexity.rix.config import ANALYZER_DEFAULTS
+from phoibe.geography.complexity.rix.definitions.config import ANALYZER_DEFAULTS
 
 
 def _valid_parameters(**overrides):

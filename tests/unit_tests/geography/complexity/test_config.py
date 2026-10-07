@@ -1,12 +1,12 @@
 import typing
 
-from phoibe.geography.complexity.rix.config import (
+from phoibe.geography.complexity.rix.definitions.config import (
     ANALYZER_DEFAULTS,
     COPDEM_METADATA,
     INTERPOLATION_METHODS,
     WRITER_DEFAULTS,
 )
-from phoibe.geography.complexity.rix.schema import PRODUCT_DEFINITION_TRIX
+from phoibe.geography.complexity.rix.definitions.schema import PRODUCT_DEFINITION_TRIX
 
 
 def test_analyzer_defaults_match_expected_snapshot():
