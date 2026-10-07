@@ -1,0 +1,159 @@
+from __future__ import annotations
+
+import dataclasses
+import logging
+
+import ergaleiothiki.kiklos.circle
+import numpy as np
+import pyproj
+import shapely.geometry
+from ergaleiothiki.tididi.validate_numerics import _validate_non_negative, _validate_notna_finite, _validate_positive
+from numpy.typing import NDArray
+
+LOGGER = logging.getLogger(__name__)
+
+
+@dataclasses.dataclass(frozen=True)
+class RayGeometry:
+    """Geometric representation of a ray embedded in 2D world.
+
+    A `RayGeometry` defines a directed ray originating from `location` in direction `theta`, and provides
+    its supporting points as distances from the origin `r_m` together with their respective coordinates in
+    the 2D world given by `xs` and `ys`.
+
+    Creation
+    --------
+    from_compass_regular
+        Create a regular grid starting from `location` in direction `theta` spacing `dr_km` of length `R_km`.
+    from_compass
+        Create any grid starting from `location` in direction `theta` given in increasing sequence of distances `r_m`.
+    """
+
+    location: shapely.geometry.Point
+    """Origin of the ray in world coordinates."""
+    crs: pyproj.CRS | None
+    """CRS of the 2D world."""
+    theta: float
+    """Direction of the ray [°] with 0° facing North and angles increasing clockwise."""
+    r_m: NDArray[np.floating]
+    """Strictly increasing distances [m] from ray origin. Each entry corresponds to one supporting point."""
+    xs: NDArray[np.floating]
+    """X coordinates of the ray supporting points in the world space."""
+    ys: NDArray[np.floating]
+    """Y coordinates of the ray supporting points in the world space."""
+
+    def __post_init__(self):
+        if len(self.r_m) > 1:
+            dr = np.diff(self.r_m)
+            _validate_positive(dr, "delta r_m")
+
+    @classmethod
+    def from_compass_regular(cls, location, theta, R_km, dr_km, crs=None):
+        """Generate `RayGeometry` as a equidistant grid.
+
+        Parameters
+        ----------
+        location
+            Origin of the ray in real world Cartesian coordinates.
+        theta
+            Direction of the ray [°] with 0° facing North and angles increasing clockwise.
+        R_km
+            Length [km] of the ray.
+        dr_km
+            Stepsize [km] of the grid.
+        crs
+            CRS of the 2D world. If `None`, assume vanilla coordinates.
+
+        Returns
+        -------
+        RayGeometry
+            Immutable representation of the regular grid starting at `location` and heading in direction `theta`.
+        """
+        _validate_notna_finite(R_km, "R_km")
+        _validate_non_negative(R_km, "R_km")
+        _validate_notna_finite(dr_km, "dr_km")
+        _validate_positive(dr_km, "dr_km")
+        if dr_km >= R_km:
+            raise ValueError("dr_km must not exceed R_km.")
+
+        n_steps = int(np.floor(R_km / dr_km))
+        r_m = np.arange(n_steps + 1, dtype=float) * dr_km * 1000
+
+        remainder = R_km * 1000 - r_m[-1]
+        if remainder > 1e-3:
+            msg = "Ray for %.1f truncated as %.3f not multiple of %.3f. Last point at %.3fm."
+            LOGGER.warning(msg, theta, R_km, dr_km, r_m[-1])
+
+        return cls._from_compass_r_m(location, theta, r_m, crs)
+
+    @classmethod
+    def from_compass(cls, location, theta, r_m, crs):
+        """Generate `RayGeometry` as any grid.
+
+        Parameters
+        ----------
+        location
+            Origin of the ray in real world Cartesian coordinates.
+        theta
+            Direction of the ray [°] with 0° facing North and angles increasing clockwise.
+        r_m
+            Gridpoint distances [m] from the origin. Must be strictly increasing.
+        crs
+            CRS of the 2D world. If `None`, assume vanilla coordinates.
+
+        Returns
+        -------
+        RayGeometry
+            Immutable representation of the regular grid starting at `location` and heading in direction `theta`.
+        """
+        return cls._from_compass_r_m(location, theta, r_m, crs)
+
+    @classmethod
+    def _from_compass_r_m(cls, location, theta, r_m, crs):
+        r_m = np.asarray(r_m, dtype=float)
+        _validate_positive(np.diff(r_m), "dr_m")
+        crs = None if crs is None else pyproj.CRS.from_user_input(crs)
+
+        dx, dy = ergaleiothiki.kiklos.circle.compass_polar_to_cartesian(theta, r_m)
+        xs = location.x + dx
+        ys = location.y + dy
+        return cls(location=location, theta=theta, r_m=r_m, xs=xs, ys=ys, crs=crs)
+
+    def to_crs(self, crs: pyproj.CRS | None) -> tuple[RayGeometry, str | None]:
+        """Transform the ray to some CRS.
+
+        Parameters
+        ----------
+        crs
+            Target CRS. If `None` or ray's CRS is `None`, no transformation is performed.
+
+        Returns
+        -------
+        RayGeometry
+            Transformed ray.
+        str | None
+            Message.
+
+        Notes
+        -----
+        1. Only `location`, `xs` and `ys` are subject to the transformation.
+           `r_m` is invariant, and `theta` stays as metadatum for identification w/o any transformation.
+        2. Message tracks action and non-action.
+        """
+        if self.crs is None or crs is None:
+            message = "Assume all coordinates are in the same CRS. "
+            message += "Ray-CRS None. " if self.crs is None else f"Ray-CRS {self.crs.to_string()}. "
+            message += "DEM-CRS None. " if crs is None else f"DEM-CRS {crs.to_string()}."
+            return self, message
+
+        elif self.crs == crs:
+            message = f"All coordinates are in the same CRS {crs.to_string()}. "
+            message += "No guarantee unless sites are presented in a metric CRS." if crs.to_epsg() == 4326 else ""
+            return self, message
+
+        else:
+            transformer = pyproj.Transformer.from_crs(crs_from=self.crs, crs_to=crs, always_xy=True)
+            xs_to, ys_to = transformer.transform(self.xs, self.ys)
+            location = shapely.geometry.Point(xs_to[0], ys_to[0])
+            ray = RayGeometry(location=location, theta=self.theta, r_m=self.r_m, xs=xs_to, ys=ys_to, crs=crs)
+            return ray, f"Transformed ray CRS {self.crs.to_string()} to DEM CRS {crs.to_string()} for sampling."
