@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import typing
 
@@ -15,12 +16,31 @@ LOGGER = logging.getLogger(__name__)
 KEYS = Keys()
 
 
+@dataclasses.dataclass(frozen=True)
+class FieldInfo:
+    """Metadata of the underlying raster data.
+
+    This remains unpopulated if no rioxarray information is provided.
+    """
+
+    crs: str | None
+    """ESPG code as a string."""
+    extent: tuple[float, float, float, float] | None
+    """Extend of window (left, bottom, right, top)."""
+    resolution: tuple[float, float] | None
+    """Resolution of the raster data."""
+
+
 class FieldSampler(typing.Protocol):
+    field_info: FieldInfo
+    """Metadata of the underlying field if it is rio: CRS, extent and resolution."""
+
     @property
     def crs(self) -> pyproj.CRS | None:
         """Return the sampler's CRS in case it has one."""
         raise NotImplementedError
 
+    # TODO: Remove.
     @property
     def meta(self) -> dict:
         """Return the sampler's meta information."""
@@ -57,6 +77,8 @@ class RegularGridXYSampler:
     """Field to be sampled from. Assume that coordinates are `keys.x` and `keys.y`."""
     method: INTERPOLATION_METHODS
     """Interpolation method. One of 'linear' and 'nearest'."""
+    field_info: FieldInfo
+    """Metadata of the underlying field if it is rio: CRS, extent and resolution."""
     keys: Keys
     """Keys identifying dimensions. Requires: `x`, `y`."""
 
@@ -77,6 +99,15 @@ class RegularGridXYSampler:
             fill_value=np.nan,
         )
 
+        if hasattr(da, "rio"):
+            self.field_info = FieldInfo(
+                crs=crs.to_string() if (crs := da.rio.crs) is not None else None,
+                extent=da.rio.bounds(),
+                resolution=da.rio.resolution(),
+            )
+        else:
+            self.field_info = FieldInfo(crs=None, extent=None, resolution=None)
+
     @property
     def crs(self) -> pyproj.CRS | None:
         if hasattr(self.da, "rio"):
@@ -84,6 +115,7 @@ class RegularGridXYSampler:
         else:
             return None
 
+    # TODO: Remove.
     @property
     def meta(self) -> dict:
         records: dict = {self.keys.dem: {}}

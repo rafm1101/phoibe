@@ -5,7 +5,7 @@ import numpy as np
 import shapely
 
 from ..definitions.interface import Keys, _get_parameter
-from .computations import evaluate
+from . import evaluate
 from .profiles import RayProfile
 
 KEYS = Keys()

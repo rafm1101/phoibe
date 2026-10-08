@@ -7,7 +7,7 @@ from ergaleiothiki.tididi.validate_numerics import _validate_positive
 from numpy.typing import NDArray
 
 from ..definitions.interface import Keys
-from .fieldsampler import FieldSampler
+from .fieldsampler import FieldInfo, FieldSampler
 from .geometry import RayGeometry
 
 LOGGER = logging.getLogger(__name__)
@@ -24,6 +24,14 @@ class NaNPolicy(enum.StrEnum):
     """Keep NaN values as-is in the profile."""
     ERROR = "error"
     """Raise ValueError if any NaN encounters."""
+
+
+@dataclasses.dataclass(frozen=True)
+class SamplingInfo:
+    field_info: FieldInfo
+    crs: str | None
+    nan_count: int
+    message: str
 
 
 @dataclasses.dataclass(frozen=True)
@@ -47,6 +55,7 @@ class RayProfile:
     z: NDArray[np.floating]
     """Sampled scalar field values along the ray. Each value corresponds to the same index in `r_m`."""
     meta: dict
+    sampling_info: SamplingInfo
 
     def __post_init__(self):
         if len(self.r_m) != len(self.z):
@@ -82,8 +91,11 @@ class RayProfile:
         meta = cls._build_meta(
             crs_ray=ray.crs, meta_sampler=sampler.meta, message=message, nan_count=nan_count, keys=keys
         )
+        sampling_info = cls._build_info(
+            crs_ray=ray.crs, field_info=sampler.field_info, message=message, nan_count=nan_count
+        )
         r_m, z = _apply_nan_policy(r_m=ray.r_m, z=z, theta=ray.theta, policy=nan_policy)
-        return cls(ray_=ray, r_m=r_m, z=z, meta=meta)
+        return cls(ray_=ray, r_m=r_m, z=z, meta=meta, sampling_info=sampling_info)
 
     @property
     def ray(self) -> RayGeometry:
@@ -125,13 +137,16 @@ class RayProfile:
         meta = cls._build_meta(
             crs_ray=ray.crs, meta_sampler=sampler.meta, message=message, nan_count=nan_count, keys=keys
         )
+        sampling_info = cls._build_info(
+            crs_ray=ray.crs, field_info=sampler.field_info, message=message, nan_count=nan_count
+        )
         r_regular, z_regular = _apply_nan_policy(r_m=ray.r_m, z=z_regular, theta=ray.theta, policy=nan_policy)
 
         levels = np.asarray(levels, dtype=float)
         r_crossings, z_crossings = _compute_level_crossings(r=r_regular, z=z_regular, levels=levels)
 
         ray_resampled = RayGeometry.from_compass(location=ray.location, theta=ray.theta, r_m=r_crossings, crs=ray.crs)
-        return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings, meta=meta)
+        return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings, meta=meta, sampling_info=sampling_info)
 
     @staticmethod
     def _build_meta(crs_ray, meta_sampler, message, nan_count, keys: Keys):
@@ -144,6 +159,11 @@ class RayProfile:
         records.update(meta_sampler.copy())
         records[keys.alignment] = {keys.message: message}
         return records
+
+    @staticmethod
+    def _build_info(crs_ray, field_info, message, nan_count):
+        crs = crs_ray.to_string() if crs_ray is not None else None
+        return SamplingInfo(field_info=field_info, crs=crs, nan_count=nan_count, message=message)
 
 
 def _apply_nan_policy(
