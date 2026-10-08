@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from phoibe.geography.complexity.rix.computations import evaluate
+from phoibe.geography.complexity.rix.computations.fieldsampler import FieldInfo
 from phoibe.geography.complexity.rix.computations.profiles import (
     NaNPolicy,
     RayProfile,
@@ -15,6 +16,7 @@ class DummySampler:
         self._z = np.asarray(z, dtype=float)
         self.crs = None
         self.meta = {}
+        self.field_info = FieldInfo(crs=None, extent=None, resolution=None)
 
     def sample(self, xs, ys):
         assert len(xs) == len(self._z)

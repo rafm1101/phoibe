@@ -12,7 +12,7 @@ from phoibe.geography.complexity.rix.definitions.schema import PRODUCT_DEFINITIO
 def test_analyzer_defaults_match_expected_snapshot():
     expected = {
         "name": "T-RIX assessment",
-        "version": "1.0",
+        "version": "1.1",
         "description": "TRIX, TR6 Rev.12",
         "parameters": {"n_angles": 72, "R_km": 3.5, "dr_km": 0.05, "slope_critical": 0.033, "crs": None},
         "sampler": {"interpolation_method": "linear"},

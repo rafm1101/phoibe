@@ -3,8 +3,9 @@ import pytest
 
 from phoibe.geography.complexity.rix.computations import evaluate
 from phoibe.geography.complexity.rix.computations.evaluate import _get_true_runs
+from phoibe.geography.complexity.rix.computations.fieldsampler import FieldInfo
 from phoibe.geography.complexity.rix.computations.geometry import RayGeometry
-from phoibe.geography.complexity.rix.computations.profiles import RayProfile
+from phoibe.geography.complexity.rix.computations.profiles import RayProfile, SamplingInfo
 
 
 @pytest.fixture
@@ -12,8 +13,10 @@ def dummy_profile(request, origin):
     r_m = np.asarray(request.param[0])
     z = np.asarray(request.param[1])
     crs = request.param[2]
+    field_info = FieldInfo(crs=None, extent=None, resolution=None)
+    sampling_info = SamplingInfo(field_info=field_info, crs=None, nan_count=0, message=None)
     ray = RayGeometry.from_compass(location=origin, theta=0, r_m=r_m, crs=crs)
-    return RayProfile(ray_=ray, r_m=r_m, z=z, meta={})
+    return RayProfile(ray_=ray, r_m=r_m, z=z, meta={}, sampling_info=sampling_info)
 
 
 @pytest.mark.parametrize(
