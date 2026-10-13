@@ -119,6 +119,7 @@ class RayRuggedness:
         return evaluate.ruggedness(self.profile, self.slope_critical)
 
     def describe(self) -> dict[str, float]:
+        # TODO: Shall be typed, and no keys here.
         """Summary statistics for this ray."""
         return {
             self.keys.theta: self.theta,

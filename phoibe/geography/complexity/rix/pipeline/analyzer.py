@@ -4,7 +4,6 @@ import copy
 import dataclasses
 import datetime
 import logging
-import pathlib
 
 import geopandas as gpd
 import numpy as np
@@ -12,19 +11,16 @@ import pandas as pd
 import pyproj
 import scipy.spatial.distance
 import xarray
-import yaml
 
 from ..computations import trix
 from ..computations.fieldsampler import RegularGridXYSampler
 from ..computations.results import RadialRuggedness
 from ..computations.rix import compute_regular_rix
-from ..definitions.config import ANALYZER_DEFAULTS
 from ..definitions.interface import Keys, _get_parameter
 
 LOGGER = logging.getLogger(__name__)
 
 
-_REQUIRED_KEYS = {"n_angles", "R_km", "dr_km", "slope_critical"}
 KEYS = Keys()
 
 
@@ -115,26 +111,27 @@ class TRIXAnalyzer:
     """
 
     def __init__(self, config: dict) -> None:
-        _validate_config(config=config)
+        # _validate_config(config=config)
         self._config = config
 
-    @classmethod
-    def from_config(cls, path: str | pathlib.Path) -> TRIXAnalyzer:
-        """Create an analyzer from a YAML config file.
+    # TODO: Remove as loading and validation of configs moved.
+    # @classmethod
+    # def from_config(cls, path: str | pathlib.Path) -> TRIXAnalyzer:
+    #     """Create an analyzer from a YAML config file.
 
-        Parameters
-        ----------
-        path
-            Path to ``config.yaml``.
-        keys
-            Keys for the config.
+    #     Parameters
+    #     ----------
+    #     path
+    #         Path to ``config.yaml``.
+    #     keys
+    #         Keys for the config.
 
-        Returns
-        -------
-        RIXAnalyzer
-            Ready-to-use analyzer instance.
-        """
-        return cls(config=_load_config(path))
+    #     Returns
+    #     -------
+    #     RIXAnalyzer
+    #         Ready-to-use analyzer instance.
+    #     """
+    #     return cls(config=_load_config(path))
 
     def run(
         self,
@@ -509,62 +506,3 @@ def _epsg_int(crs_str: str) -> int | None:
     except (ValueError, AttributeError):
         pass
     return None
-
-
-def _load_config(path: str | pathlib.Path) -> dict:
-    """Load and validate analyzer configuration from a YAML file.
-
-    Parameters
-    ----------
-    path
-        Path to ``config.yaml``.
-    keys
-        Key holding parameter key.
-
-    Returns
-    -------
-    config
-        Validated configuration dictionary.
-
-    Raises
-    ------
-    ValueError
-        If required keys are missing or values are out of range.
-
-    Example config.yaml
-    -------------------
-    parameters:
-      n_angles: 36
-      R_km: 5.0
-      dr_km: 0.05
-      slope_critical: 0.3
-      crs: "EPSG:2056"
-    """
-    path = pathlib.Path(path)
-    with path.open() as f:
-        raw = yaml.safe_load(f)
-
-    raw_parameters = raw.get("parameters", {})
-    config = copy.deepcopy(ANALYZER_DEFAULTS)
-
-    for key in raw_parameters:
-        if key in config["parameters"]:
-            config["parameters"][key] = raw_parameters[key]
-        else:
-            raise ValueError(f"Configuration file {str(path)} contains unknown parameter {key}.")
-
-    _validate_config(config)
-    return config
-
-
-def _validate_config(config: dict) -> None:
-    parameters = config.get("parameters", {})
-    missing_keys = _REQUIRED_KEYS - parameters.keys()
-    if missing_keys:
-        raise ValueError(f"config.yaml is missing required keys: {missing_keys}")
-    if parameters["dr_km"] >= parameters["R_km"]:
-        raise ValueError("dr_km must be smaller than R_km.")
-    if not (1 <= parameters["n_angles"] <= 360):
-        raise ValueError(f"n_angles must be between 1 and 360, got {parameters['n_angles']}.")
-    if parameters["slope_critical"] <= 0:
-        raise ValueError(f"slope_critical must be positive, got {parameters['slope_critical']}.")

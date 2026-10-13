@@ -6,6 +6,7 @@ import numpy as np
 from ergaleiothiki.tididi.validate_numerics import _validate_positive
 from numpy.typing import NDArray
 
+# TODO: Remove dependency in the follwoing line.
 from ..definitions.interface import Keys
 from .fieldsampler import FieldInfo, FieldSampler
 from .geometry import RayGeometry
