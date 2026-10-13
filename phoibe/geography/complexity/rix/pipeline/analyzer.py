@@ -5,22 +5,19 @@ import dataclasses
 import datetime
 import logging
 import pathlib
-import typing
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pyproj
 import scipy.spatial.distance
-import shapely
 import xarray
 import yaml
 
 from ..computations import trix
-from ..computations.fieldsampler import FieldSampler, RegularGridXYSampler
-from ..computations.geometry import RayGeometry
-from ..computations.profiles import NaNPolicy, RayProfile
-from ..computations.results import RadialRuggedness, RayRuggedness
+from ..computations.fieldsampler import RegularGridXYSampler
+from ..computations.results import RadialRuggedness
+from ..computations.rix import compute_regular_rix
 from ..definitions.config import ANALYZER_DEFAULTS
 from ..definitions.interface import Keys, _get_parameter
 
@@ -52,53 +49,53 @@ class ResultSummary:
     """Meta information including config, timestamp and processing information."""
 
 
-def compute_regular_rix(
-    location: shapely.Point,
-    sampler: FieldSampler,
-    n_angles: int,
-    R_km: float,
-    dr_km: float,
-    crs: typing.Any,
-    slope_critical: float,
-    nan_policy="mask",
-    keys: Keys = KEYS,
-):
-    """Compute the ruggedness index RIX of a location. The RIX assesses height profiles along
-    rays originating at `location`.
+# def compute_regular_rix(
+#     location: shapely.Point,
+#     sampler: FieldSampler,
+#     n_angles: int,
+#     R_km: float,
+#     dr_km: float,
+#     crs: typing.Any,
+#     slope_critical: float,
+#     nan_policy="mask",
+#     keys: Keys = KEYS,
+# ):
+#     """Compute the ruggedness index RIX of a location. The RIX assesses height profiles along
+#     rays originating at `location`.
 
-    Parameters
-    ----------
-    location
-        Coordinates of the location to be assessed.
-    sampler
-        A sampler of field values from a regular, metric grid.
-    n_angles
-        Number of rays to cover the entire circle.
-    R_km
-        Distance [km] to which the profiles are considered.
-    dr_km
-        Stepsize [km] to sample from the field.
-    crs
-        CRS of the location.
-    slope_critical
-        Threshold on the slope between two points for a segment to be considered steep.
-    keys
-        Column keys for the output.
+#     Parameters
+#     ----------
+#     location
+#         Coordinates of the location to be assessed.
+#     sampler
+#         A sampler of field values from a regular, metric grid.
+#     n_angles
+#         Number of rays to cover the entire circle.
+#     R_km
+#         Distance [km] to which the profiles are considered.
+#     dr_km
+#         Stepsize [km] to sample from the field.
+#     crs
+#         CRS of the location.
+#     slope_critical
+#         Threshold on the slope between two points for a segment to be considered steep.
+#     keys
+#         Column keys for the output.
 
-    Returns
-    -------
-    RadialRixResult
-        Gathered results of the evaluation.
-    """
-    angles = np.linspace(0, 360, n_angles, endpoint=False)
-    results = []
+#     Returns
+#     -------
+#     RadialRixResult
+#         Gathered results of the evaluation.
+#     """
+#     angles = np.linspace(0, 360, n_angles, endpoint=False)
+#     results = []
 
-    for theta in angles:
-        ray = RayGeometry.from_compass_regular(location=location, theta=theta, R_km=R_km, dr_km=dr_km, crs=crs)
-        ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy(nan_policy), keys=keys)
-        results.append(RayRuggedness(profile=ray_profile, slope_critical=slope_critical, keys=keys))
+#     for theta in angles:
+#         ray = RayGeometry.from_compass_regular(location=location, theta=theta, R_km=R_km, dr_km=dr_km, crs=crs)
+#         ray_profile = RayProfile.create_regular(ray=ray, sampler=sampler, nan_policy=NaNPolicy(nan_policy), keys=keys)
+#         results.append(RayRuggedness(profile=ray_profile, slope_critical=slope_critical, keys=keys))
 
-    return RadialRuggedness(rays=tuple(results))
+#     return RadialRuggedness(rays=tuple(results))
 
 
 class TRIXAnalyzer:
@@ -237,6 +234,7 @@ class TRIXAnalyzer:
         locations_reference: gpd.GeoDataFrame | None,
         keys: Keys,
     ) -> None:
+        # Checks go to compute/checks.py.
         """Check CRS consistency and index uniqueness."""
         expected_crs = self._config[keys.parameters]["crs"]
 
@@ -447,6 +445,7 @@ class TRIXAnalyzer:
     def _compute_trix(
         self, summary_site: pd.DataFrame, summary_reference: pd.DataFrame, keys: Keys = KEYS
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        # Move to compute/trix.py?
         """Compute pairwise TRIX as Cartesian product of summary_site × summary_reference.
 
         Returns
@@ -458,7 +457,7 @@ class TRIXAnalyzer:
         trix_records = trix.compute_trix(
             rix_site=np.array(summary_site[keys.rix]),
             elevation_site=np.array(summary_site[keys.elevation]),
-            rix_wind=np.array(summary_reference[keys.rix]),
+            rix_reference=np.array(summary_reference[keys.rix]),
             elevation_wind=np.array(summary_reference[keys.elevation]),
         )
         index = summary_site.index.rename(keys.site_id)
@@ -475,6 +474,7 @@ class TRIXAnalyzer:
     def _compute_pairwise_distances_km(
         self, location_site: gpd.GeoSeries, location_reference: gpd.GeoSeries, keys: Keys
     ) -> pd.DataFrame:
+        # Move to compute/trix.py.
         """Compute pairwise Euclidean distances [km] between site and wind locations."""
         coords_a = np.vstack([point.coords[0] for point in location_site])
         coords_b = np.vstack([point.coords[0] for point in location_reference])

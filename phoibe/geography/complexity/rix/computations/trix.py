@@ -4,7 +4,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def compute_trix(rix_site: NDArray, elevation_site: NDArray, rix_wind: NDArray, elevation_wind: NDArray) -> NDArray:
+def compute_trix(
+    rix_site: NDArray, elevation_site: NDArray, rix_reference: NDArray, elevation_wind: NDArray
+) -> NDArray:
     """Compute the TRIX representativity measure according to FGW TR6 Rev12.
 
     Parameters
@@ -13,7 +15,7 @@ def compute_trix(rix_site: NDArray, elevation_site: NDArray, rix_wind: NDArray, 
         RIX values of the site(s).
     elevation_site
         Elevation values of the site(s).
-    rix_wind
+    rix_reference
         RIX values of the reference/wind data base locations.
     elevation_wind
         Elevation values of the reference/wind data base locations.
@@ -25,10 +27,10 @@ def compute_trix(rix_site: NDArray, elevation_site: NDArray, rix_wind: NDArray, 
     """
     rix_site = _ensure_1D(rix_site)
     elevation_site = _ensure_1D(elevation_site)
-    rix_wind = _ensure_1D(rix_wind)
+    rix_reference = _ensure_1D(rix_reference)
     elevation_wind = _ensure_1D(elevation_wind)
 
-    rix_representativity = 0.5 * 100 * np.add.outer(rix_site, rix_wind)
+    rix_representativity = 0.5 * 100 * np.add.outer(rix_site, rix_reference)
     elevation_representativity = np.abs(np.subtract.outer(elevation_site, elevation_wind))
     trix = 0.9 * rix_representativity + 0.1 * elevation_representativity
     return trix
