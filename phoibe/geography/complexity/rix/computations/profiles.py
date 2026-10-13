@@ -56,6 +56,7 @@ class RayProfile:
     """Sampled scalar field values along the ray. Each value corresponds to the same index in `r_m`."""
     meta: dict
     sampling_info: SamplingInfo
+    """Sampler and sampling metadata including field's and ray's CRS, grid information and encountered NaNs."""
 
     def __post_init__(self):
         if len(self.r_m) != len(self.z):

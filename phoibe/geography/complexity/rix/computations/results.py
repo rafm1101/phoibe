@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import functools
 
@@ -6,7 +8,8 @@ import shapely
 
 from ..definitions.interface import Keys, _get_parameter
 from . import evaluate
-from .profiles import RayProfile
+from .fieldsampler import FieldInfo
+from .profiles import RayProfile, SamplingInfo
 
 KEYS = Keys()
 
@@ -15,16 +18,33 @@ KEYS = Keys()
 class RayProfileMeta:
     """Information about a RayProfile."""
 
-    crs_ray: str | None
+    crs_ray: str | list[str | None] | None
     """CRS for the ray coordinates."""
     crs_dem: str | None
     """CRS for the DEM coordinates."""
     resolution: tuple[float, float] | None
     """Resolution of the DEM (dx, dy), if known."""
-    n_oob: int | None
+    extent: tuple[float, float, float, float] | None
+    nan_count: int | None
     """Number of ray points that are NaN after sampling (out-of-bounds or data gaps)."""
-    messages: str
+    messages: str | list[str]
     """Messages related to the ray."""
+
+    @classmethod
+    def from_runs(cls, runs: dict[float, SamplingInfo]) -> RayProfileMeta:
+        crs_dem_by_field: dict[FieldInfo, list[float]] = {}
+        for theta, ray in runs.items():
+            crs_dem_by_field.setdefault(ray.field_info, []).append(theta)
+        if len(crs_dem_by_field) == 0:
+            crs_dem, resolution = None, None
+        elif len(crs_dem_by_field) == 1:
+            field_info = next(iter(crs_dem_by_field))
+            crs_dem, resolution, extent = field_info.crs, field_info.resolution, field_info.extent
+
+        crs_ray = list(set(info.crs for info in runs.values()))
+        message = list(info.message for info in runs.values())
+        nan_count = int(np.sum([info.nan_count for info in runs.values()], dtype=float))
+        return RayProfileMeta(crs_ray, crs_dem, resolution, extent, nan_count, message)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -52,7 +72,8 @@ class RayRuggedness:
             crs_ray=_get_parameter(self.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False),
             crs_dem=_get_parameter(dem_meta, self.keys.crs_dem, strict=False),
             resolution=_get_parameter(dem_meta, self.keys.resolution_dem, strict=False),
-            n_oob=_get_parameter(self.profile.meta, self.keys.rays, self.keys.nan_count, strict=False),
+            extent=(0, 0, 0, 0),
+            nan_count=_get_parameter(self.profile.meta, self.keys.rays, self.keys.nan_count, strict=False),
             messages=str(_get_parameter(self.profile.meta, self.keys.alignment, self.keys.message, strict=False)),
         )
         return ray_profile_meta
@@ -154,6 +175,8 @@ class RadialRuggedness:
     """Access ray results by their angle."""
     keys: Keys = dataclasses.field(repr=False, default=KEYS)
     """Column keys to employ."""
+    runs: RayProfileMeta = dataclasses.field(init=False, repr=False)
+    """Run summary statistics."""
 
     def __post_init__(self):
         """Build internal index for fast theta lookups."""
@@ -170,6 +193,9 @@ class RadialRuggedness:
 
         rays_sorted = tuple(sorted(self.rays, key=lambda ray: ray.theta))
         object.__setattr__(self, "rays", rays_sorted)
+        object.__setattr__(
+            self, "runs", RayProfileMeta.from_runs({ray.theta: ray.profile.sampling_info for ray in self.rays})
+        )
 
     @property
     def z(self) -> tuple[float, float]:
