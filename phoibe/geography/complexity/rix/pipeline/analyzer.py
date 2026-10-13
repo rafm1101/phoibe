@@ -188,7 +188,8 @@ class TRIXAnalyzer:
         sampler = RegularGridXYSampler(da=dem, method=_get_parameter(self._config, "sampler", "interpolation_method"))
 
         radial_rix_site = self._compute_rix_results(sampler, locations_site, keys=keys)
-        steep_segments_site = self._build_steep_segments(radial_rix_site, keys=keys)
+        # steep_segments_site = self._build_steep_segments(radial_rix_site, keys=keys)
+        steep_segments_site = None
         rix_roses = self._build_rix_rose(radial_rix_site)
         summary_site = self._build_summary(radial_rix_site, keys=keys, index_name=locations_site.index.name)
 
@@ -281,15 +282,15 @@ class TRIXAnalyzer:
 
         return results
 
-    def _get_steep_segments(self, rix_results: dict[object, RadialRuggedness]) -> dict[object, RadialRuggedness]:
-        """Run RIX for every location. Returns dict keyed by location_id."""
-        steep_segments = {}
+    # def _get_steep_segments(self, rix_results: dict[object, RadialRuggedness]) -> dict[object, RadialRuggedness]:
+    #     """Run RIX for every location. Returns dict keyed by location_id."""
+    #     steep_segments = {}
 
-        for location_id, rix_result in rix_results.items():
-            steep_segs = rix_result.steep_segments_geodataframe()
-            steep_segments[location_id] = steep_segs
+    #     for location_id, rix_result in rix_results.items():
+    #         steep_segs = rix_result.steep_segments_geodataframe()
+    #         steep_segments[location_id] = steep_segs
 
-        return steep_segments
+    #     return steep_segments
 
     def _build_rix_rose(self, radial_results: dict[object, RadialRuggedness]) -> pd.DataFrame:
         """Build summary DataFrame and detail GeoDataFrame from radial results."""
@@ -421,27 +422,27 @@ class TRIXAnalyzer:
         }
         return records
 
-    def _build_steep_segments(
-        self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS
-    ) -> gpd.GeoDataFrame:
-        """Build summary DataFrame and detail GeoDataFrame from radial results."""
-        steep_segments_rows = []
+    # def _build_steep_segments(
+    #     self, radial_results: dict[object, RadialRuggedness], keys: Keys = KEYS
+    # ) -> gpd.GeoDataFrame:
+    #     """Build summary DataFrame and detail GeoDataFrame from radial results."""
+    #     steep_segments_rows = []
 
-        for location_id, radial_rix in radial_results.items():
-            gdf_segments = radial_rix.steep_segments_geodataframe()
-            gdf_segments.insert(0, keys.site_id, location_id)
-            steep_segments_rows.append(gdf_segments)
+    #     for location_id, radial_rix in radial_results.items():
+    #         gdf_segments = radial_rix.steep_segments_geodataframe()
+    #         gdf_segments.insert(0, keys.site_id, location_id)
+    #         steep_segments_rows.append(gdf_segments)
 
-        if steep_segments_rows:
-            steep_segments = gpd.GeoDataFrame(
-                pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry
-            ).set_index(keys.site_id)
-        else:
-            steep_segments = gpd.GeoDataFrame(
-                columns=[keys.site_id, keys.theta, keys.segment_id, keys.geometry], geometry=keys.geometry, crs=None
-            ).set_index(keys.site_id)
+    #     if steep_segments_rows:
+    #         steep_segments = gpd.GeoDataFrame(
+    #             pd.concat(steep_segments_rows, ignore_index=True), geometry=keys.geometry
+    #         ).set_index(keys.site_id)
+    #     else:
+    #         steep_segments = gpd.GeoDataFrame(
+    #             columns=[keys.site_id, keys.theta, keys.segment_id, keys.geometry], geometry=keys.geometry, crs=None
+    #         ).set_index(keys.site_id)
 
-        return steep_segments
+    #     return steep_segments
 
     def _compute_trix(
         self, summary_site: pd.DataFrame, summary_reference: pd.DataFrame, keys: Keys = KEYS

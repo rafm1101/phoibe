@@ -129,36 +129,36 @@ class RayRuggedness:
             self.keys.n_steep_segments: self.n_steep_segments,
         }
 
-    def steep_segments_geodataframe(self):
-        """GeoDataFrame of steep segments for visualization.
+    # def steep_segments_geodataframe(self):
+    #     """GeoDataFrame of steep segments for visualization.
 
-        Returns
-        -------
-        geopandas.GeoDataFrame
-            Geodataframe where each row contains the geometry of one steep segment.
+    #     Returns
+    #     -------
+    #     geopandas.GeoDataFrame
+    #         Geodataframe where each row contains the geometry of one steep segment.
 
-        Raises
-        ------
-        ImportError
-            If geopandas is not installed.
-        """
-        try:
-            import geopandas as gpd
-        except ImportError as exception:
-            raise ImportError("RayResult.steep_segments_geodataframe() requires geopandas.") from exception
+    #     Raises
+    #     ------
+    #     ImportError
+    #         If geopandas is not installed.
+    #     """
+    #     try:
+    #         import geopandas as gpd
+    #     except ImportError as exception:
+    #         raise ImportError("RayResult.steep_segments_geodataframe() requires geopandas.") from exception
 
-        records = [{self.keys.segment_id: i, self.keys.geometry: seg} for i, seg in enumerate(self.steep_segments)]
+    #     records = [{self.keys.segment_id: i, self.keys.geometry: seg} for i, seg in enumerate(self.steep_segments)]
 
-        if records:
-            steep_segments = gpd.GeoDataFrame(records, geometry=self.keys.geometry, crs=self.profile.ray.crs)
-        else:
-            steep_segments = gpd.GeoDataFrame(
-                columns=[self.keys.segment_id, self.keys.geometry],
-                geometry=self.keys.geometry,
-                crs=self.profile.ray.crs,
-            )
+    #     if records:
+    #         steep_segments = gpd.GeoDataFrame(records, geometry=self.keys.geometry, crs=self.profile.ray.crs)
+    #     else:
+    #         steep_segments = gpd.GeoDataFrame(
+    #             columns=[self.keys.segment_id, self.keys.geometry],
+    #             geometry=self.keys.geometry,
+    #             crs=self.profile.ray.crs,
+    #         )
 
-        return steep_segments
+    #     return steep_segments
 
 
 @dataclasses.dataclass(frozen=True)
@@ -303,55 +303,55 @@ class RadialRuggedness:
         else:
             raise KeyError(f"No ray found for theta={theta:.1f}°. Available angles: {self.angles}")
 
-    def to_dataframe(self):
-        """Generate a dataframe summarising the metrics of all rays.
+    # def to_dataframe(self):
+    #     """Generate a dataframe summarising the metrics of all rays.
 
-        Returns
-        -------
-        pandas.DataFrame
-            Dataframe holding all metrics as one ray per row.
+    #     Returns
+    #     -------
+    #     pandas.DataFrame
+    #         Dataframe holding all metrics as one ray per row.
 
-        Raises
-        ------
-        ImportError
-            If pandas is not installed.
-        """
-        try:
-            import pandas as pd
-        except ImportError as exception:
-            raise ImportError("RadialRixResult.to_dataframe() requires pandas.") from exception
+    #     Raises
+    #     ------
+    #     ImportError
+    #         If pandas is not installed.
+    #     """
+    #     try:
+    #         import pandas as pd
+    #     except ImportError as exception:
+    #         raise ImportError("RadialRixResult.to_dataframe() requires pandas.") from exception
 
-        records = [ray.describe() for ray in self.rays]
-        return pd.DataFrame(records)
+    #     records = [ray.describe() for ray in self.rays]
+    #     return pd.DataFrame(records)
 
-    def steep_segments_geodataframe(self):
-        """Generate a GeoDataFrame holding all steep segments.
+    # def steep_segments_geodataframe(self):
+    #     """Generate a GeoDataFrame holding all steep segments.
 
-        Returns
-        -------
-        geopandas.GeoDataFrame
-            Geodataframe where each row contains the geometry of one steep segment.
+    #     Returns
+    #     -------
+    #     geopandas.GeoDataFrame
+    #         Geodataframe where each row contains the geometry of one steep segment.
 
-        Raises
-        ------
-        ImportError
-            If geopandas is not installed.
-        """
-        try:
-            import geopandas as gpd
-        except ImportError as exception:
-            raise ImportError("RadialRixResult.steep_segments_geodataframe() requires geopandas.") from exception
+    #     Raises
+    #     ------
+    #     ImportError
+    #         If geopandas is not installed.
+    #     """
+    #     try:
+    #         import geopandas as gpd
+    #     except ImportError as exception:
+    #         raise ImportError("RadialRixResult.steep_segments_geodataframe() requires geopandas.") from exception
 
-        records = []
-        for ray in self.rays:
-            for i, segment in enumerate(ray.steep_segments):
-                records.append({self.keys.theta: ray.theta, self.keys.segment_id: i, self.keys.geometry: segment})
-        return gpd.GeoDataFrame(
-            records,
-            columns=[self.keys.theta, self.keys.segment_id, self.keys.geometry],
-            geometry=self.keys.geometry,
-            crs=self.rays[0].profile.ray.crs,
-        )
+    #     records = []
+    #     for ray in self.rays:
+    #         for i, segment in enumerate(ray.steep_segments):
+    #             records.append({self.keys.theta: ray.theta, self.keys.segment_id: i, self.keys.geometry: segment})
+    #     return gpd.GeoDataFrame(
+    #         records,
+    #         columns=[self.keys.theta, self.keys.segment_id, self.keys.geometry],
+    #         geometry=self.keys.geometry,
+    #         crs=self.rays[0].profile.ray.crs,
+    #     )
 
     def describe(self) -> dict[str, float]:
         """Summary statistics across all rays.
@@ -372,35 +372,35 @@ class RadialRuggedness:
             self.keys.slope_critical: self.slope_critical,
         }
 
-    def plot_polar(self, ax=None):
-        """Create polar plot of ruggedness values.
+    # def plot_polar(self, ax=None):
+    #     """Create polar plot of ruggedness values.
 
-        Returns
-        -------
-        tuple[Figure, Axes]
-            Matplotlib figure and axes.
+    #     Returns
+    #     -------
+    #     tuple[Figure, Axes]
+    #         Matplotlib figure and axes.
 
-        Raises
-        ------
-        ImportError
-            If matplotlib is not installed.
-        """
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError as exception:
-            raise ImportError("RadialRixResult.plot_polar() requires matplotlib.") from exception
+    #     Raises
+    #     ------
+    #     ImportError
+    #         If matplotlib is not installed.
+    #     """
+    #     try:
+    #         import matplotlib.pyplot as plt
+    #     except ImportError as exception:
+    #         raise ImportError("RadialRixResult.plot_polar() requires matplotlib.") from exception
 
-        angles_radians = np.deg2rad(np.append(self.angles, self.angles[0]))
-        values = self.ruggednesses
-        values = np.append(values, values[0])
+    #     angles_radians = np.deg2rad(np.append(self.angles, self.angles[0]))
+    #     values = self.ruggednesses
+    #     values = np.append(values, values[0])
 
-        if ax is None:
-            figure, ax = plt.subplots(subplot_kw={"projection": "polar"})
+    #     if ax is None:
+    #         figure, ax = plt.subplots(subplot_kw={"projection": "polar"})
 
-        ax.plot(angles_radians, values)
-        ax.set_theta_zero_location("N")
-        ax.set_theta_direction(-1)
-        ax.set_title(f"Directional RIX (threshold={self.slope_critical:.2f})")
-        ax.set_ylabel("RIX")
+    #     ax.plot(angles_radians, values)
+    #     ax.set_theta_zero_location("N")
+    #     ax.set_theta_direction(-1)
+    #     ax.set_title(f"Directional RIX (threshold={self.slope_critical:.2f})")
+    #     ax.set_ylabel("RIX")
 
-        return figure, ax
+    #     return figure, ax
