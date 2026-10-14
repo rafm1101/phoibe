@@ -1,3 +1,5 @@
+from .specification import ProductSpecification
+
 PRODUCT_DEFINITION_TRIX = {
     "name": "T-RIX assessment",
     "description": "TRIX, TR6 Rev.12",
@@ -53,6 +55,7 @@ PRODUCT_DEFINITION_TRIX = {
                 "description": "CRS for validation against data source CRS. To be set by the user.",
                 "unit": None,
                 "value": None,
+                "dtype": "str",
             },
         },
         "slope": {
@@ -108,66 +111,111 @@ PRODUCT_DEFINITION_TRIX = {
             ],
         },
     },
+    "checks": {
+        "check_name": {
+            "description": "Template w/o function.",
+            "severity": "warn",
+            "parameters": {"threshold": 0, "tolerance": 0},
+        },
+        "nan_count": {
+            "description": "Number of NaN encountered during sampling.",
+            "severity": "warn",
+            "parameters": {"max_fraction": 0.05},
+        },
+        "n_angle": {
+            "description": "Number of angles for the assessment.",
+            "severity": "abort",
+            "parameters": {"range": [1, 360]},
+        },
+    },
     "artifacts": {
         "profiles": {
             "summary": ["rix_table", "trix_table", "manifest"],
             "full": ["rix_table", "trix_table", "manifest", "geopackage"],
         },
-        "filenames": {
-            "manifest": "summary.yaml",
-            "rix_table": "rix_table.csv",
-            "trix_table": "trix.csv",
-            "geopackage": "rix_details.gpkg",
+        "files": {
+            "manifest": {"filename": "summary.yaml"},
+            "rix_table": {"filename": "rix_table.csv", "table": "rix_table", "requires_input": "locations_reference"},
+            "trix_table": {"filename": "trix.csv", "table": "trix_table", "requires_input": "locations_reference"},
+            "geopackage": {
+                "filename": "rix_details.gpkg",
+                "table": None,
+                "requires_input": "locations_reference",
+            },
         },
-        "geopackage_layers": {
-            "locations_site": "locations_site",
-            "locations_reference": "locations_reference",
-            "ruggedness": "ruggedness",
-            "trix": "trix",
+        "layers": {
+            "locations_site": {
+                "artifact": "geopackage",
+                "table": "locations_site",
+                "name": "locations_site",
+                "geometry_type": "Point",
+                "requires_input": None,
+            },
+            "locations_reference": {
+                "artifact": "geopackage",
+                "table": "locations_reference",
+                "name": "locations_reference",
+                "geometry_type": "Point",
+                "requires_input": "locations_reference",
+            },
+            "ruggedness": {
+                "artifact": "geopackage",
+                "table": "ruggedness",
+                "name": "ruggedness",
+                "geometry_type": "LineString",
+                "requires_input": None,
+            },
+            "trix_table": {
+                "artifact": "geopackage",
+                "table": "trix_table",
+                "name": "trix_table",
+                "geometry_type": None,
+                "requires_input": "locations_reference",
+            },
         },
     },
-    "schema": {
-        "manifest": {
-            "description": "Run manifest: metadata, config, artifact references, field definitions",
-            "keys": {
-                "project_name": {"name": "project_name", "description": "Project name if provided."},
-                "meta": {"name": "meta", "description": "What is processed."},
-                "parameters": {"name": "parameters", "description": "Configuration of the analysis."},
-                "spatial_context": {"name": "spatial_context", "description": "Context about data sources."},
-                "run": {
-                    "name": "run",
-                    "description": "Context about the run: What has been evaluated and computed, summary statistics.",
-                    "keys": {
-                        "n_sites": {"name": "n_sites", "description": "Number of assessed sites."},
-                        "n_references": {"name": "n_references", "description": "Number of reference sites."},
-                        "computed": {
-                            "name": "computed",
-                            "description": "What has been computed.",
-                            "values": {
-                                "rix_site": "RIX at assessed sites",
-                                "rix_reference": "RIX at reference sites",
-                                "trix": "T-RIX and distances",
-                            },
+    "manifest": {
+        "description": "Run manifest: metadata, config, artifact references, field definitions",
+        "keys": {
+            "project_name": {"name": "project_name", "description": "Project name if provided."},
+            "meta": {"name": "meta", "description": "What is processed."},
+            "parameters": {"name": "parameters", "description": "Configuration of the analysis."},
+            "spatial_context": {"name": "spatial_context", "description": "Context about data sources."},
+            "run": {
+                "name": "run",
+                "description": "Context about the run: What has been evaluated and computed, summary statistics.",
+                "keys": {
+                    "n_sites": {"name": "n_sites", "description": "Number of assessed sites."},
+                    "n_references": {"name": "n_references", "description": "Number of reference sites."},
+                    "computed": {
+                        "name": "computed",
+                        "description": "What has been computed.",
+                        "values": {
+                            "rix_site": "RIX at assessed sites",
+                            "rix_reference": "RIX at reference sites",
+                            "trix": "T-RIX and distances",
                         },
-                        "diagnostics": {
-                            "name": "diagnostics",
-                            "description": "Summary statistics about the results.",
-                            "keys": {
-                                "n_sites_with_nans": {
-                                    "name": "n_sites_with_nans",
-                                    "description": "Number of assessed sites that experienced NaN in their rays.",
-                                },
-                                "transferability_counts": {
-                                    "name": "transferability_counts",
-                                    "description": "Number of pairs for each transferability state.",
-                                },
+                    },
+                    "diagnostics": {
+                        "name": "diagnostics",
+                        "description": "Summary statistics about the results.",
+                        "keys": {
+                            "n_sites_with_nans": {
+                                "name": "n_sites_with_nans",
+                                "description": "Number of assessed sites that experienced NaN in their rays.",
+                            },
+                            "transferability_counts": {
+                                "name": "transferability_counts",
+                                "description": "Number of pairs for each transferability state.",
                             },
                         },
                     },
                 },
-                "artifacts": {"name": "artifacts", "description": "Output files."},
             },
+            "artifacts": {"name": "artifacts", "description": "Output files."},
         },
+    },
+    "tables": {
         "rix_table": {
             "description": "Table of the RIX and elevation values, and summary statistics thereof.",
             "columns": {
@@ -265,106 +313,62 @@ PRODUCT_DEFINITION_TRIX = {
                 },
             },
         },
-        "geopackage": {
-            "layers": {
-                "locations_site": {
-                    "description": "Coordinates of the assessed sites.",
-                    "columns": {
-                        "site_id": {
-                            "description": "Site identifier of the assessed site.",
-                            "unit": None,
-                        },
-                        "geometry": {
-                            "description": "Coordinates of the assessed sites. CRS as presented by the user.",
-                        },
-                    },
-                    "geometry_column": "geometry",
-                    "geometry_type": "Point",
+        "locations_site": {
+            "description": "Coordinates of the assessed sites.",
+            "columns": {
+                "site_id": {
+                    "description": "Site identifier of the assessed site.",
+                    "unit": None,
                 },
-                "locations_reference": {
-                    "description": "Coordinates of the wind data base sites.",
-                    "columns": {
-                        "site_id": {
-                            "description": "Site identifier of the wind data base site.",
-                            "unit": None,
-                        },
-                        "geometry": {
-                            "description": "Coordinates of the wind data base sites. CRS as presented by the user.",
-                        },
-                    },
-                    "geometry_column": "geometry",
-                    "geometry_type": "Point",
+                "geometry": {
+                    "description": "Coordinates of the assessed sites. CRS as presented by the user.",
                 },
-                "ruggedness": {
-                    "description": "Steep segments of the assessed sites on each ray.",
-                    "columns": {
-                        "site_id": {
-                            "description": "Site identifier of the assessed site.",
-                            "unit": None,
-                        },
-                        "theta": {
-                            "name": "theta",
-                            "description": "Direction of the ray.",
-                            "unit": "°",
-                            "dtype": "float",
-                            "range": [0, 360],
-                        },
-                        "segment_id": {
-                            "name": "segment_id",
-                            "description": "Identifier of the steep segment on the given ray of the given site.",
-                            "unit": None,
-                        },
-                        "geometry": {
-                            "description": "Coordinates of segments start/end. CRS as presented by the user.",
-                        },
-                    },
-                    "geometry_column": "geometry",
-                    "geometry_type": "LineString",
+            },
+            # "geometry_column": "geometry",
+            # "geometry_type": "Point",
+        },
+        "locations_reference": {
+            "description": "Coordinates of the wind data base sites.",
+            "columns": {
+                "site_id": {
+                    "description": "Site identifier of the wind data base site.",
+                    "unit": None,
                 },
-                "trix_table": {
-                    "description": "Table of representativity measures and related distances.",
-                    "columns": {
-                        "site_id": {
-                            "description": "Site identifier of the assessed site.",
-                            "unit": None,
-                        },
-                        "reference_id": {
-                            "description": "Site identifier of the wind data base site.",
-                            "unit": None,
-                        },
-                        "transferability": {
-                            "description": "Representability of the wind measurement at the wind date base site. "
-                            "for the assessed site.",
-                            "unit": None,
-                            "dtype": "int",
-                            "values": {
-                                0: "Not representable.",
-                                1: "Conditionally representable with additional uncertainty.",
-                                2: "Representable.",
-                            },
-                        },
-                        "distance": {
-                            "description": "Distance between the assessed site and the wind data base site.",
-                            "unit": "km",
-                        },
-                        "trix": {
-                            "description": "T-RIX measure between the assessed site and the wind data base site.",
-                            "unit": "km",
-                        },
-                        "A": {
-                            "description": "Distance threshold for full representability at the given T-RIX value.",
-                            "unit": "km",
-                        },
-                        "B": {
-                            "description": "Distance threshold for conditional representability at the given T-RIX "
-                            "value.",
-                            "unit": "km",
-                        },
-                    },
-                    "geometry_column": "geometry",
-                    "geometry_type": None,
+                "geometry": {
+                    "description": "Coordinates of the wind data base sites. CRS as presented by the user.",
                 },
-            }
+            },
+            # "geometry_column": "geometry",
+            # "geometry_type": "Point",
+        },
+        "ruggedness": {
+            "description": "Steep segments of the assessed sites on each ray.",
+            "columns": {
+                "site_id": {
+                    "description": "Site identifier of the assessed site.",
+                    "unit": None,
+                },
+                "theta": {
+                    "name": "theta",
+                    "description": "Direction of the ray.",
+                    "unit": "°",
+                    "dtype": "float",
+                    "range": [0, 360],
+                },
+                "segment_id": {
+                    "name": "segment_id",
+                    "description": "Identifier of the steep segment on the given ray of the given site.",
+                    "unit": None,
+                },
+                "geometry": {
+                    "name": "geometry",
+                    "description": "Coordinates of segments start/end. CRS as presented by the user.",
+                },
+            },
+            # "geometry_column": "geometry",
+            # "geometry_type": "LineString",
         },
     },
 }
+
+PRODUCT_SPECIFICATION = ProductSpecification.from_dict(PRODUCT_DEFINITION_TRIX)

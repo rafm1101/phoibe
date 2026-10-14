@@ -1,8 +1,8 @@
 import dataclasses
 import typing
 
+from ..pipeline.schema import PRODUCT_DEFINITION_TRIX
 from .interface import _get_parameter
-from .schema import PRODUCT_DEFINITION_TRIX
 
 
 @dataclasses.dataclass(frozen=True)

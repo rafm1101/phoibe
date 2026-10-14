@@ -1,7 +1,7 @@
 import dataclasses
 import typing
 
-from .schema import PRODUCT_DEFINITION_TRIX
+from ..pipeline.schema import PRODUCT_DEFINITION_TRIX
 
 
 def _get_parameter(definition: dict, *path: str, strict: bool = True) -> typing.Any:

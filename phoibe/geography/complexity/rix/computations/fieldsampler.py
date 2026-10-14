@@ -11,11 +11,11 @@ from numpy.typing import NDArray
 from ..definitions.config import INTERPOLATION_METHODS
 
 # TODO: Remove dependency in the follwoing line.
-from ..definitions.interface import Keys
+# from ..definitions.interface import Keys
 
 LOGGER = logging.getLogger(__name__)
 
-KEYS = Keys()
+# KEYS = Keys()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -33,9 +33,33 @@ class FieldInfo:
     """Resolution of the raster data."""
 
 
+@dataclasses.dataclass(frozen=True)
+class Field:
+    """Field to be sampled from."""
+
+    da: xarray.DataArray
+    info: FieldInfo
+    x: str
+    y: str
+
+    @classmethod
+    def from_array(cls, da: xarray.DataArray, dims: tuple[str, str] = ("x", "y")):
+        if not set(dims).issubset(da.dims):
+            raise ValueError(f"Field must have '{dims[0]}' and '{dims[1]}' coordinates. Found '{da.dims}'.")
+        if hasattr(da, "rio"):
+            info = FieldInfo(
+                crs=crs.to_string() if (crs := da.rio.crs) is not None else None,
+                extent=da.rio.bounds(),
+                resolution=da.rio.resolution(),
+            )
+        else:
+            info = FieldInfo(crs=None, extent=None, resolution=None)
+        return cls(da=da, info=info, x=dims[0], y=dims[1])
+
+
 class FieldSampler(typing.Protocol):
-    field_info: FieldInfo
-    """Metadata of the underlying field if it is rio: CRS, extent and resolution."""
+    field: Field
+    # """Metadata of the underlying field if it is rio: CRS, extent and resolution."""
 
     @property
     def crs(self) -> pyproj.CRS | None:
@@ -43,10 +67,10 @@ class FieldSampler(typing.Protocol):
         raise NotImplementedError
 
     # TODO: Remove.
-    @property
-    def meta(self) -> dict:
-        """Return the sampler's meta information."""
-        raise NotImplementedError
+    # @property
+    # def meta(self) -> dict:
+    #     """Return the sampler's meta information."""
+    #     raise NotImplementedError
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         """Sample field values along a path.
@@ -75,59 +99,48 @@ class FieldSampler(typing.Protocol):
 class RegularGridXYSampler:
     """Sample from a 2D field on a regular xy grid."""
 
-    da: xarray.DataArray
+    field: Field  # xarray.DataArray
     """Field to be sampled from. Assume that coordinates are `keys.x` and `keys.y`."""
     method: INTERPOLATION_METHODS
     """Interpolation method. One of 'linear' and 'nearest'."""
-    field_info: FieldInfo
-    """Metadata of the underlying field if it is rio: CRS, extent and resolution."""
-    keys: Keys
-    """Keys identifying dimensions. Requires: `x`, `y`."""
+    # TODO: FieldInfo now part of Field.
+    # field_info: FieldInfo
+    # """Metadata of the underlying field if it is rio: CRS, extent and resolution."""
+    # keys: Keys
+    # """Keys identifying dimensions. Requires: `x`, `y`."""
 
-    def __init__(self, da: xarray.DataArray, method: INTERPOLATION_METHODS, keys: Keys = KEYS):
-        if not {keys.x, keys.y}.issubset(da.dims):
-            raise ValueError(f"Field must have '{keys.x}' and '{keys.y}' coordinates.")
-        self.da = da
+    def __init__(self, field: Field, method: INTERPOLATION_METHODS):
+        self.field = field
         self.method = method
-        self.keys = keys
 
-        x = da[keys.x].values
-        y = da[keys.y].values
+        x = field.da[field.x].values
+        y = field.da[field.y].values
         self._interpolator = scipy.interpolate.RegularGridInterpolator(
             points=(y, x),
-            values=da.transpose(keys.y, keys.x).values,
+            values=field.da.transpose(field.y, field.x).values,
             method=method,
             bounds_error=False,
             fill_value=np.nan,
         )
 
-        if hasattr(da, "rio"):
-            self.field_info = FieldInfo(
-                crs=crs.to_string() if (crs := da.rio.crs) is not None else None,
-                extent=da.rio.bounds(),
-                resolution=da.rio.resolution(),
-            )
-        else:
-            self.field_info = FieldInfo(crs=None, extent=None, resolution=None)
-
     @property
     def crs(self) -> pyproj.CRS | None:
-        if hasattr(self.da, "rio"):
-            return self.da.rio.crs
+        if hasattr(self.field.da, "rio"):
+            return self.field.da.rio.crs
         else:
             return None
 
     # TODO: Remove.
-    @property
-    def meta(self) -> dict:
-        records: dict = {self.keys.dem: {}}
-        if hasattr(self.da, "rio"):
-            records[self.keys.dem][self.keys.crs_dem] = (
-                crs.to_string() if (crs := self.da.rio.crs) is not None else None
-            )
-            records[self.keys.dem][self.keys.extent_dem] = self.da.rio.bounds()
-            records[self.keys.dem][self.keys.resolution_dem] = self.da.rio.resolution()
-        return records
+    # @property
+    # def meta(self) -> dict:
+    #     records: dict = {self.keys.dem: {}}
+    #     if hasattr(self.field.da, "rio"):
+    #         records[self.keys.dem][self.keys.crs_dem] = (
+    #             crs.to_string() if (crs := self.field.rio.crs) is not None else None
+    #         )
+    #         records[self.keys.dem][self.keys.extent_dem] = self.field.rio.bounds()
+    #         records[self.keys.dem][self.keys.resolution_dem] = self.field.rio.resolution()
+    #     return records
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         _xs = np.asarray(xs, dtype=float)

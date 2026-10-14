@@ -6,12 +6,12 @@ import functools
 import numpy as np
 import shapely
 
-from ..definitions.interface import Keys, _get_parameter
+# from ..definitions.interface import Keys, _get_parameter
 from . import evaluate
 from .fieldsampler import FieldInfo
 from .profiles import RayProfile, SamplingInfo
 
-KEYS = Keys()
+# KEYS = Keys()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -62,19 +62,27 @@ class RayRuggedness:
     """Ray profile of some field."""
     slope_critical: float
     """Slope [m/m] above which a segment is consideres as steep."""
-    keys: Keys = dataclasses.field(repr=False, default=KEYS)
+    # keys: Keys = dataclasses.field(repr=False, default=KEYS)
 
     @property
     def meta(self) -> RayProfileMeta:
         """Metadata relating to `RayProfile`. Includes CRS, (resolution), out-of-bound point count, messages."""
-        dem_meta = _get_parameter(self.profile.meta, self.keys.dem, strict=False) or {}
+        # dem_meta = _get_parameter(self.profile.meta, self.keys.dem, strict=False) or {}
+        # ray_profile_meta = RayProfileMeta(
+        #     crs_ray=_get_parameter(self.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False),
+        #     crs_dem=_get_parameter(dem_meta, self.keys.crs_dem, strict=False),
+        #     resolution=_get_parameter(dem_meta, self.keys.resolution_dem, strict=False),
+        #     extent=(0, 0, 0, 0),
+        #     nan_count=_get_parameter(self.profile.meta, self.keys.rays, self.keys.nan_count, strict=False),
+        #     messages=str(_get_parameter(self.profile.meta, self.keys.alignment, self.keys.message, strict=False)),
+        # )
         ray_profile_meta = RayProfileMeta(
-            crs_ray=_get_parameter(self.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False),
-            crs_dem=_get_parameter(dem_meta, self.keys.crs_dem, strict=False),
-            resolution=_get_parameter(dem_meta, self.keys.resolution_dem, strict=False),
-            extent=(0, 0, 0, 0),
-            nan_count=_get_parameter(self.profile.meta, self.keys.rays, self.keys.nan_count, strict=False),
-            messages=str(_get_parameter(self.profile.meta, self.keys.alignment, self.keys.message, strict=False)),
+            crs_ray=self.profile.sampling_info.crs,
+            crs_dem=self.profile.sampling_info.field_info.crs,
+            resolution=self.profile.sampling_info.field_info.resolution,
+            extent=self.profile.sampling_info.field_info.extent,
+            nan_count=self.profile.sampling_info.nan_count,
+            messages=str(self.profile.sampling_info.message),
         )
         return ray_profile_meta
 
@@ -122,12 +130,12 @@ class RayRuggedness:
         # TODO: Shall be typed, and no keys here.
         """Summary statistics for this ray."""
         return {
-            self.keys.theta: self.theta,
-            self.keys.ruggedness: self.ruggedness,
-            self.keys.total_length_m: self.total_length_m,
-            self.keys.steep_length_m: self.steep_length_m,
-            self.keys.max_abs_slope: self.max_abs_slope,
-            self.keys.n_steep_segments: self.n_steep_segments,
+            "theta": self.theta,
+            "ruggedness": self.ruggedness,
+            "total_length_m": self.total_length_m,
+            "steep_length_m": self.steep_length_m,
+            "max_abs_slope": self.max_abs_slope,
+            "n_steep_segments": self.n_steep_segments,
         }
 
     # def steep_segments_geodataframe(self):
@@ -174,8 +182,8 @@ class RadialRuggedness:
     """Collection of rays being evaluated."""
     _ray_by_angle: dict[float, RayRuggedness] = dataclasses.field(init=False, repr=False, compare=False)
     """Access ray results by their angle."""
-    keys: Keys = dataclasses.field(repr=False, default=KEYS)
-    """Column keys to employ."""
+    # keys: Keys = dataclasses.field(repr=False, default=KEYS)
+    # """Column keys to employ."""
     runs: RayProfileMeta = dataclasses.field(init=False, repr=False)
     """Run summary statistics."""
 
@@ -236,47 +244,47 @@ class RadialRuggedness:
         """
         return np.array([ray.ruggedness for ray in self.rays], dtype=float)
 
-    @property
-    def meta(self) -> dict:
-        crs_ray = list(
-            {_get_parameter(ray.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False) for ray in self.rays}
-        )
-        dem_metas = [_get_parameter(ray.profile.meta, self.keys.dem, strict=False) or {} for ray in self.rays]
-        crs_dem = list({_get_parameter(dem_meta, self.keys.crs_dem, strict=False) for dem_meta in dem_metas})
-        extent_dem = list({_get_parameter(dem_meta, self.keys.extent_dem, strict=False) for dem_meta in dem_metas})
-        resolution_dem = list(
-            {_get_parameter(dem_meta, self.keys.resolution_dem, strict=False) for dem_meta in dem_metas}
-        )
-        message = list(
-            {
-                _get_parameter(ray.profile.meta, self.keys.alignment, self.keys.message, strict=False)
-                for ray in self.rays
-            }
-        )
-        nan_count = int(
-            np.sum(
-                [
-                    _get_parameter(ray.profile.meta, self.keys.rays, self.keys.nan_count, strict=False)
-                    for ray in self.rays
-                ],
-                dtype=float,
-            )
-        )
-        records = {
-            self.keys.rays: {
-                self.keys.crs_ray: crs_ray,
-                self.keys.nan_count: nan_count,
-            },
-            self.keys.dem: {
-                self.keys.crs_dem: crs_dem,
-                self.keys.extent_dem: extent_dem,
-                self.keys.resolution_dem: resolution_dem,
-            },
-            self.keys.alignment: {
-                self.keys.message: message,
-            },
-        }
-        return records
+    # @property
+    # def meta(self) -> dict:
+    #     crs_ray = list(
+    #         {_get_parameter(ray.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False) for ray in self.rays}
+    #     )
+    #     dem_metas = [_get_parameter(ray.profile.meta, self.keys.dem, strict=False) or {} for ray in self.rays]
+    #     crs_dem = list({_get_parameter(dem_meta, self.keys.crs_dem, strict=False) for dem_meta in dem_metas})
+    #     extent_dem = list({_get_parameter(dem_meta, self.keys.extent_dem, strict=False) for dem_meta in dem_metas})
+    #     resolution_dem = list(
+    #         {_get_parameter(dem_meta, self.keys.resolution_dem, strict=False) for dem_meta in dem_metas}
+    #     )
+    #     message = list(
+    #         {
+    #             _get_parameter(ray.profile.meta, self.keys.alignment, self.keys.message, strict=False)
+    #             for ray in self.rays
+    #         }
+    #     )
+    #     nan_count = int(
+    #         np.sum(
+    #             [
+    #                 _get_parameter(ray.profile.meta, self.keys.rays, self.keys.nan_count, strict=False)
+    #                 for ray in self.rays
+    #             ],
+    #             dtype=float,
+    #         )
+    #     )
+    #     records = {
+    #         self.keys.rays: {
+    #             self.keys.crs_ray: crs_ray,
+    #             self.keys.nan_count: nan_count,
+    #         },
+    #         self.keys.dem: {
+    #             self.keys.crs_dem: crs_dem,
+    #             self.keys.extent_dem: extent_dem,
+    #             self.keys.resolution_dem: resolution_dem,
+    #         },
+    #         self.keys.alignment: {
+    #             self.keys.message: message,
+    #         },
+    #     }
+    #     return records
 
     def ray(self, theta: float, atol: float = 1e-5) -> RayRuggedness:
         """Get RayResult for a specific angle.
@@ -365,13 +373,17 @@ class RadialRuggedness:
         rix_values = [ray.ruggedness for ray in self.rays]
 
         return {
-            self.keys.rix: float(np.mean(rix_values)),
-            self.keys.rix_std: float(np.std(rix_values)),
-            self.keys.rix_min: float(np.min(rix_values)),
-            self.keys.rix_max: float(np.max(rix_values)),
-            self.keys.n_rays: self.n_rays,
-            self.keys.slope_critical: self.slope_critical,
+            "rix": float(np.mean(rix_values)),
+            "rix_std": float(np.std(rix_values)),
+            "rix_min": float(np.min(rix_values)),
+            "rix_max": float(np.max(rix_values)),
+            "n_rays": self.n_rays,
+            "slope_critical": self.slope_critical,
         }
+
+    @property
+    def stats(self) -> RayProfileMeta:
+        return RayProfileMeta.from_runs({key: value.profile.sampling_info for key, value in self._ray_by_angle.items()})
 
     # def plot_polar(self, ax=None):
     #     """Create polar plot of ruggedness values.

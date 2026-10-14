@@ -1,6 +1,7 @@
 import numpy as np
 
 from ..computations.results import RadialRuggedness
+from ..pipeline.schema import PRODUCT_SPECIFICATION
 
 
 def to_dataframe(radial_ruggedness: RadialRuggedness):
@@ -48,15 +49,19 @@ def steep_segments_geodataframe(radial_ruggedness: RadialRuggedness):
         for i, segment in enumerate(ray.steep_segments):
             records.append(
                 {
-                    radial_ruggedness.keys.theta: ray.theta,
-                    radial_ruggedness.keys.segment_id: i,
-                    radial_ruggedness.keys.geometry: segment,
+                    PRODUCT_SPECIFICATION.tables["ruggedness"].column("theta").name: ray.theta,
+                    PRODUCT_SPECIFICATION.tables["ruggedness"].column("segment_id").name: i,
+                    PRODUCT_SPECIFICATION.tables["ruggedness"].column("geometry").name: segment,
                 }
             )
     return gpd.GeoDataFrame(
         records,
-        columns=[radial_ruggedness.keys.theta, radial_ruggedness.keys.segment_id, radial_ruggedness.keys.geometry],
-        geometry=radial_ruggedness.keys.geometry,
+        columns=[
+            PRODUCT_SPECIFICATION.tables["ruggedness"].column("theta").name,
+            PRODUCT_SPECIFICATION.tables["ruggedness"].column("segment_id").name,
+            PRODUCT_SPECIFICATION.tables["ruggedness"].column("geometry").name,
+        ],
+        geometry=PRODUCT_SPECIFICATION.tables["ruggedness"].column("geometry").name,
         crs=radial_ruggedness.rays[0].profile.ray.crs,
     )
 
