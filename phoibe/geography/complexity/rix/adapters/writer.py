@@ -127,14 +127,7 @@ class FileResultWriter:
             if layer.geometry_type is None:
                 pyogrio.write_dataframe(pd.DataFrame(frame), path, layer=layer.name, driver="GPKG")
             else:
-                pass
-                # frame.to_file(
-                #     path,
-                #     layer=layer.name,
-                #     driver="GPKG",
-                #     index=False,
-                #     # geometry_type=layer.geometry_type,
-                # )
+                frame.to_file(path, layer=layer.name, driver="GPKG", index=False, geometry_type=layer.geometry_type)  # type: ignore [operator]
 
         read_back = {}
         for layer in layers:
