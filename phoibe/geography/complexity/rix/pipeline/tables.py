@@ -1,3 +1,8 @@
+import typing
+import warnings
+from collections.abc import Hashable, Mapping, Sequence
+
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 
@@ -5,11 +10,119 @@ from ..computations import trix
 from ..computations.results import RadialRuggedness
 from ..definitions.interface import Keys
 from .schema import PRODUCT_SPECIFICATION
-from .specification import TableSpecification
+from .specification import ProductSpecification, TableSpecification
 
 KEYS = Keys()
 
+RIX_TABLE = "rix_table"
+TRIX_TABLE = "trix_table"
+LOCATIONS_SITE_TABLE = "locations_site"
+LOCATIONS_REFERENCE_TABLE = "locations_reference"
+RUGGEDNESS_TABLE = "ruggedness"
 
+SITE_ID = "site_id"
+REFERENCE_ID = "reference_id"
+GEOMETRY = "geometry"
+
+
+def rix_table(spec: ProductSpecification, results: Mapping[Hashable, RadialRuggedness]) -> pd.DataFrame:
+    """RIX and elevation of every site, indexed by the site identifier."""
+    table = spec.table(RIX_TABLE)
+    ids = pd.Index(list(results), name=table.column(SITE_ID).name)
+    radials = list(results.values())
+    z = [radial.z for radial in radials]
+    ruggedness = [radial.ruggednesses for radial in radials]
+    quantities = {
+        "elevation": [mean for mean, _ in z],
+        "elevation_std": [std for _, std in z],
+        "rix": [radial.rix for radial in radials],
+        "rix_std": [float(np.std(values)) for values in ruggedness],
+        "rix_min": [float(np.min(values)) for values in ruggedness],
+        "rix_max": [float(np.max(values)) for values in ruggedness],
+        "n_rays": [radial.n_rays for radial in radials],
+        "slope_critical": [radial.slope_critical for radial in radials],
+    }
+    return _to_df(table, ids, quantities)
+
+
+def trix_table(
+    spec: ProductSpecification,
+    assessment: trix.TrixAssessment,
+    site_ids: Sequence[Hashable],
+    reference_ids: Sequence[Hashable],
+) -> pd.DataFrame:
+    """One row per pair of site and reference location, indexed by both identifiers."""
+    table = spec.table(TRIX_TABLE)
+    index = pd.MultiIndex.from_product(
+        [list(site_ids), list(reference_ids)],
+        names=[table.column(SITE_ID).name, table.column(REFERENCE_ID).name],
+    )
+    quantities = {
+        "transferability": assessment.transferability.ravel(),
+        "distance": assessment.distance_km.ravel(),
+        "trix": assessment.trix.ravel(),
+        "A": assessment.A.ravel(),
+        "B": assessment.B.ravel(),
+    }
+    return _to_df(table, index, quantities)
+
+
+def transferability_counts(spec: ProductSpecification, table: pd.DataFrame) -> dict[int, int]:
+    """Number of pairs per transferability state."""
+    column = spec.table(TRIX_TABLE).column("transferability").name
+    counts = table[column].value_counts().sort_index()
+    return {int(str(state)): int(count) for state, count in counts.items()}
+
+
+def locations_table(spec: ProductSpecification, name: str, locations: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Identifier and geometry of the locations. Other columns of the input are not part of the product."""
+    table = spec.table(name)
+    geometry = table.column(GEOMETRY).name
+    index = locations.index.rename(table.column(SITE_ID).name)
+    frame = _to_df(table, index, {geometry: locations.geometry.values})
+    return gpd.GeoDataFrame(frame, geometry=geometry, crs=locations.crs)
+
+
+def steep_segments(spec: ProductSpecification, results: Mapping[Hashable, RadialRuggedness]) -> gpd.GeoDataFrame:
+    """Steep segments of all sites, one row per segment, indexed by the site identifier."""
+    table = spec.table(RUGGEDNESS_TABLE)
+    geometry = table.column(GEOMETRY).name
+    ids, thetas, segment_ids, segments = [], [], [], []
+    crs = None
+    for location_id, radial in results.items():
+        for ray in radial.rays:
+            crs = ray.profile.ray.crs if crs is None else crs
+            for segment_id, segment in enumerate(ray.steep_segments):
+                ids.append(location_id)
+                thetas.append(ray.theta)
+                segment_ids.append(segment_id)
+                segments.append(segment)
+    index = pd.Index(ids, name=table.column(SITE_ID).name)
+    frame = _to_df(table, index, {"theta": thetas, "segment_id": segment_ids, geometry: segments})
+    return gpd.GeoDataFrame(frame, geometry=geometry, crs=crs)
+
+
+def rose(results: Mapping[Hashable, RadialRuggedness]) -> pd.DataFrame:
+    """Ruggedness rose: one row per site, one column per ray direction. Not an output of the product."""
+    rows = [
+        pd.Series(index=radial.angles, data=radial.ruggednesses, name=location_id)
+        for location_id, radial in results.items()
+    ]
+    return pd.DataFrame(rows)
+
+
+def _to_df(table: TableSpecification, index: pd.Index, quantities: Mapping[str, typing.Any]) -> pd.DataFrame:
+    """Frame with the columns of `table`, in order. The identifier columns form the index."""
+    for name in index.names:
+        table.column(str(name))
+    columns = [name for name in table.column_names if name not in index.names]
+    missing = [name for name in columns if name not in quantities]
+    if missing:
+        raise ValueError(f"Table '{table.name}' lists column(s) this builder cannot provide: {', '.join(missing)}.")
+    return pd.DataFrame({name: quantities[name] for name in columns}, index=index)
+
+
+@warnings.deprecated("`steep_segments_geodataframe` will be removed.")
 def steep_segments_geodataframe(radial_ruggedness: RadialRuggedness):
     """Generate a GeoDataFrame holding all steep segments.
 
@@ -50,6 +163,7 @@ def steep_segments_geodataframe(radial_ruggedness: RadialRuggedness):
     )
 
 
+@warnings.deprecated("`_build_rix_rose` will be removed.")
 def _build_rix_rose(radial_results: dict[object, RadialRuggedness]) -> pd.DataFrame:
     """Build summary DataFrame and detail GeoDataFrame from radial results."""
     rix_rose_rows = []
@@ -63,6 +177,7 @@ def _build_rix_rose(radial_results: dict[object, RadialRuggedness]) -> pd.DataFr
     return rix_roses
 
 
+@warnings.deprecated("`_build_summary` will be removed.")
 def _build_summary(
     radial_results: dict[object, RadialRuggedness],
     spec: TableSpecification,
@@ -91,6 +206,7 @@ def _build_summary(
     return summary
 
 
+@warnings.deprecated("`_compute_trix` will be removed.")
 def _compute_trix(
     summary_site: pd.DataFrame, summary_reference: pd.DataFrame, spec: TableSpecification
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:

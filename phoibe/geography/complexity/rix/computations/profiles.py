@@ -31,6 +31,7 @@ class NaNPolicy(enum.StrEnum):
 class SamplingInfo:
     field_info: FieldInfo
     crs: str | None
+    n_points: int
     nan_count: int
     message: str
 
@@ -94,7 +95,7 @@ class RayProfile:
         #     crs_ray=ray.crs, meta_sampler=sampler.meta, message=message, nan_count=nan_count, keys=keys
         # )
         sampling_info = cls._build_info(
-            crs_ray=ray.crs, field_info=sampler.field.info, message=message, nan_count=nan_count
+            crs_ray=ray.crs, field_info=sampler.field.info, message=message, n_points=z.size, nan_count=nan_count
         )
         r_m, z = _apply_nan_policy(r_m=ray.r_m, z=z, theta=ray.theta, policy=nan_policy)
         return cls(ray_=ray, r_m=r_m, z=z, sampling_info=sampling_info)
@@ -139,13 +140,17 @@ class RayProfile:
         # meta = cls._build_meta(
         #     crs_ray=ray.crs, meta_sampler=sampler.meta, message=message, nan_count=nan_count, keys=keys
         # )
-        sampling_info = cls._build_info(
-            crs_ray=ray.crs, field_info=sampler.field.info, message=message, nan_count=nan_count
-        )
         r_regular, z_regular = _apply_nan_policy(r_m=ray.r_m, z=z_regular, theta=ray.theta, policy=nan_policy)
 
         levels = np.asarray(levels, dtype=float)
         r_crossings, z_crossings = _compute_level_crossings(r=r_regular, z=z_regular, levels=levels)
+        sampling_info = cls._build_info(
+            crs_ray=ray.crs,
+            field_info=sampler.field.info,
+            message=message,
+            n_points=z_crossings.size,
+            nan_count=nan_count,
+        )
 
         ray_resampled = RayGeometry.from_compass(location=ray.location, theta=ray.theta, r_m=r_crossings, crs=ray.crs)
         return cls(ray_=ray_resampled, r_m=r_crossings, z=z_crossings, sampling_info=sampling_info)
@@ -163,9 +168,9 @@ class RayProfile:
     #     return records
 
     @staticmethod
-    def _build_info(crs_ray, field_info, message, nan_count):
+    def _build_info(crs_ray, field_info, message, nan_count, n_points):
         crs = crs_ray.to_string() if crs_ray is not None else None
-        return SamplingInfo(field_info=field_info, crs=crs, nan_count=nan_count, message=message)
+        return SamplingInfo(field_info=field_info, crs=crs, n_points=n_points, nan_count=nan_count, message=message)
 
 
 def _apply_nan_policy(

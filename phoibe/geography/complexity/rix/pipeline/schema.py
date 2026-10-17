@@ -72,6 +72,11 @@ PRODUCT_DEFINITION_TRIX = {
                 "description": "Sampling method of the site elevations from the raster DEM.",
                 "value": "linear",
             },
+            "nan_policy": {
+                "description": "Handle NaNs in field.",
+                "value": "error",
+                "locked": True,
+            },
         },
     },
     "inputs": {
@@ -116,6 +121,31 @@ PRODUCT_DEFINITION_TRIX = {
             "description": "Template w/o function.",
             "severity": "warn",
             "parameters": {"threshold": 0, "tolerance": 0},
+        },
+        "crs_site_vs_reference": {
+            "description": "Coordinates of sites and references are provided in the same CRS.",
+            "severity": "warn",
+            "parameters": {},
+        },
+        "crs_vs_config": {
+            "description": "Other CRS mismatch to be determined.",
+            "severity": "warn",
+            "parameters": {},
+        },
+        "unique_ids": {
+            "description": "Provided locations are identifyable uniquely.",
+            "severity": "warn",
+            "parameters": {},
+        },
+        "centre_elevation": {
+            "description": "When sampling rays, all rays' origin shall agree.",
+            "severity": "warn",
+            "parameters": {},
+        },
+        "locked_parameter_change": {
+            "description": "Check if chosen parameters comply with TR6.",
+            "severity": "warn",
+            "parameters": {},
         },
         "nan_count": {
             "description": "Number of NaN encountered during sampling.",
@@ -311,6 +341,15 @@ PRODUCT_DEFINITION_TRIX = {
                     "description": "Distance threshold for conditional representability at the given T-RIX value.",
                     "unit": "km",
                 },
+            },
+            "presentation": {
+                "decimals": {
+                    "description": "Number of decimals presented in the table.",
+                    "unit": None,
+                    "value": 1,
+                    "source": "TR6",
+                    "locked": True,
+                }
             },
         },
         "locations_site": {

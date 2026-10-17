@@ -1,5 +1,5 @@
 import dataclasses
-import typing
+import enum
 
 from ..pipeline.schema import PRODUCT_DEFINITION_TRIX
 from .interface import _get_parameter
@@ -15,12 +15,27 @@ class RunParameters:
     slope_critical: float
     crs: str | None
 
+    def __post_init__(self):
+        if not 0 < self.dr_km < self.R_km:
+            raise ValueError(f"dr_km must lie within (0, R_km), got {self.dr_km}.")
+        if self.slope_critical <= 0:
+            raise ValueError("slope_critical must be positive.")
+
+
+class InterpolationMethods(enum.StrEnum):
+    LINEAR = "linear"
+    NEAREST = "nearest"
+
 
 @dataclasses.dataclass(frozen=True)
 class SampleParameters:
     """Sample parameters for the fieldsampler."""
 
-    interpolation_method: str
+    interpolation_method: InterpolationMethods
+
+    def __post_init__(self):
+        if self.interpolation_method not in ("linear", "nearest"):
+            raise ValueError(f"Unknown interpolation_method {self.interpolation_method!r}.")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -52,16 +67,15 @@ ANALYZER_DEFAULTS = AnalyzerConfig(
     ),
 )
 
-INTERPOLATION_METHODS = typing.Literal["linear", "nearest"]
 
 WRITER_DEFAULTS: dict = {
     "filenames": {
-        file: _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "filenames", file)
+        file: _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "files", file, "filename")
         for file in ["manifest", "rix_table", "trix_table", "geopackage"]
     },
     "gpkg_layers": {
-        layer: _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "geopackage_layers", layer)
-        for layer in ["locations_site", "locations_reference", "ruggedness", "trix"]
+        layer: _get_parameter(PRODUCT_DEFINITION_TRIX, "artifacts", "layers", layer)
+        for layer in ["locations_site", "locations_reference", "ruggedness", "trix_table"]
     },
 }
 

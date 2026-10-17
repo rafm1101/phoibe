@@ -41,51 +41,49 @@ class Keys:
     """Keys employed at publsihed artifacts. Changes require version bumps."""
 
     """Joint table columns:"""
-    site_id: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "site_id", "name")
+    site_id: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "rix_table", "columns", "site_id", "name")
     """Id of the site to assess."""
-    geometry: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "geopackage", "layers", "locations_site", "geometry_column"
-    )
+    geometry: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "ruggedness", "columns", "geometry", "name")
     """Coordinates of geometric objects."""
 
     """Summary:"""
-    elevation: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "elevation", "name")
+    elevation: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "rix_table", "columns", "elevation", "name")
     """Site elevation."""
     elevation_std: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "elevation_std", "name"
+        PRODUCT_DEFINITION_TRIX, "tables", "rix_table", "columns", "elevation_std", "name"
     )
     """Site elevation standard deviation (if measured in different occasions)."""
-    n_rays: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "n_rays", "name")
+    n_rays: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "rix_table", "columns", "n_rays", "name")
     """Number of rays evaluated."""
-    rix: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "rix", "name")
+    rix: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "rix_table", "columns", "rix", "name")
     """RIX value."""
-    rix_std: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "rix_std", "name")
+    rix_std: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "rix_table", "columns", "rix_std", "name")
     """Standard deviation of directional rix values."""
-    rix_min: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "rix_min", "name")
+    rix_min: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "rix_table", "columns", "rix_min", "name")
     """Minimum of directional rix values."""
-    rix_max: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "rix_max", "name")
+    rix_max: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "rix_table", "columns", "rix_max", "name")
     """Maximum of directional rix values."""
     slope_critical: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "rix_table", "columns", "slope_critical", "name"
+        PRODUCT_DEFINITION_TRIX, "tables", "rix_table", "columns", "slope_critical", "name"
     )
     """Slope threshold considered as steepness."""
 
     """TRIX evaluation:"""
     reference_id: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "trix_table", "columns", "reference_id", "name"
+        PRODUCT_DEFINITION_TRIX, "tables", "trix_table", "columns", "reference_id", "name"
     )
     """ID of reference site"""
     transferability: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "trix_table", "columns", "transferability", "name"
+        PRODUCT_DEFINITION_TRIX, "tables", "trix_table", "columns", "transferability", "name"
     )
     """Transferability according to the distance thresholds."""
-    distance: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "trix_table", "columns", "distance", "name")
+    distance: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "trix_table", "columns", "distance", "name")
     """Distance [km] between site and reference."""
-    trix: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "trix_table", "columns", "trix", "name")
+    trix: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "trix_table", "columns", "trix", "name")
     """T-RIX."""
-    A: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "trix_table", "columns", "A", "name")
+    A: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "trix_table", "columns", "A", "name")
     """Distance A [km]."""
-    B: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "trix_table", "columns", "B", "name")
+    B: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "trix_table", "columns", "B", "name")
     """Distance B [km]."""
 
     """Ray evaluation results:"""
@@ -101,13 +99,9 @@ class Keys:
     """Number of steep segments encountered along a ray."""
 
     """Steep segments:"""
-    segment_id: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "geopackage", "layers", "ruggedness", "columns", "segment_id", "name"
-    )
+    segment_id: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "ruggedness", "columns", "segment_id", "name")
     """Ientifier of a (steep) ray segment."""
-    theta: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "geopackage", "layers", "ruggedness", "columns", "theta", "name"
-    )
+    theta: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "tables", "ruggedness", "columns", "theta", "name")
     """Ray angle."""
 
     """Writer keys:"""
@@ -135,19 +129,17 @@ class Keys:
     """Meridonal dimension."""
 
     """Summary/top-level keys:"""
-    project_name: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "project_name", "name")
+    project_name: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "manifest", "keys", "project_name", "name")
     """Project name."""
-    meta: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "meta", "name")
+    meta: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "manifest", "keys", "meta", "name")
     """Context about the process."""
-    parameters: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "parameters", "name")
+    parameters: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "manifest", "keys", "parameters", "name")
     """Context about the parameters."""
-    spatial_context: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "spatial_context", "name"
-    )
+    spatial_context: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "manifest", "keys", "spatial_context", "name")
     """Context about the data sources evaluated."""
-    run: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "name")
+    run: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "manifest", "keys", "run", "name")
     """Information about the run."""
-    artifacts: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "artifacts", "name")
+    artifacts: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "manifest", "keys", "artifacts", "name")
     """Information about the artifacts stored."""
 
     """Metainformation/internal keys:"""
@@ -157,25 +149,18 @@ class Keys:
     """spatial_context: Context about the DEM."""
     source_ray: str = "source_ray"
     """spatial_context: Context about the rays."""
-    n_sites: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "keys", "n_sites", "name"
-    )
+    n_sites: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "manifest", "keys", "run", "keys", "n_sites", "name")
     """run: Number of assessed sites."""
     n_references: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "keys", "n_references", "name"
+        PRODUCT_DEFINITION_TRIX, "manifest", "keys", "run", "keys", "n_references", "name"
     )
     """run: Number of assessed references."""
-    computed: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "keys", "computed", "name"
-    )
+    computed: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "manifest", "keys", "run", "keys", "computed", "name")
     """run: What has been computed."""
-    diagnostics: str = _get_parameter(
-        PRODUCT_DEFINITION_TRIX, "schema", "manifest", "keys", "run", "keys", "diagnostics", "name"
-    )
+    diagnostics: str = _get_parameter(PRODUCT_DEFINITION_TRIX, "manifest", "keys", "run", "keys", "diagnostics", "name")
     """run: Summary statistics."""
     n_sites_with_nans: str = _get_parameter(
         PRODUCT_DEFINITION_TRIX,
-        "schema",
         "manifest",
         "keys",
         "run",
@@ -188,7 +173,6 @@ class Keys:
     """run.diagnostics: Summary statistics."""
     transferability_counts: str = _get_parameter(
         PRODUCT_DEFINITION_TRIX,
-        "schema",
         "manifest",
         "keys",
         "run",

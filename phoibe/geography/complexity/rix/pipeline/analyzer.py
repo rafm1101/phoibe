@@ -3,7 +3,6 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import logging
-import typing
 
 import geopandas as gpd
 import numpy as np
@@ -13,7 +12,7 @@ import scipy.spatial.distance
 import xarray
 
 from ..computations import trix
-from ..computations.fieldsampler import INTERPOLATION_METHODS, Field, RegularGridXYSampler
+from ..computations.fieldsampler import Field, InterpolationMethods, RegularGridXYSampler
 from ..computations.results import RadialRuggedness
 from ..computations.rix import compute_regular_rix
 from ..definitions.interface import Keys
@@ -182,9 +181,7 @@ class TRIXAnalyzer:
             dem=dem, locations_site=locations_site, locations_reference=locations_reference, keys=keys
         )
         field = Field.from_array(da=dem, dims=("x", "y"))
-        interpolation_method = typing.cast(
-            INTERPOLATION_METHODS, self._config.parameter("sampler", "interpolation_method")
-        )
+        interpolation_method = InterpolationMethods(self._config.parameter("sampler", "interpolation_method").value)
         sampler = RegularGridXYSampler(field=field, method=interpolation_method)
 
         radial_rix_site = self._compute_rix_results(sampler, locations_site)

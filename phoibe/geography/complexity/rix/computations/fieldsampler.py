@@ -8,7 +8,7 @@ import scipy.interpolate
 import xarray
 from numpy.typing import NDArray
 
-from ..definitions.config import INTERPOLATION_METHODS
+from ..definitions.config import InterpolationMethods
 
 # TODO: Remove dependency in the follwoing line.
 # from ..definitions.interface import Keys
@@ -101,7 +101,7 @@ class RegularGridXYSampler:
 
     field: Field  # xarray.DataArray
     """Field to be sampled from. Assume that coordinates are `keys.x` and `keys.y`."""
-    method: INTERPOLATION_METHODS
+    method: InterpolationMethods
     """Interpolation method. One of 'linear' and 'nearest'."""
     # TODO: FieldInfo now part of Field.
     # field_info: FieldInfo
@@ -109,7 +109,7 @@ class RegularGridXYSampler:
     # keys: Keys
     # """Keys identifying dimensions. Requires: `x`, `y`."""
 
-    def __init__(self, field: Field, method: INTERPOLATION_METHODS):
+    def __init__(self, field: Field, method: InterpolationMethods):
         self.field = field
         self.method = method
 
