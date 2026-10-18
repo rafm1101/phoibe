@@ -12,7 +12,7 @@ import scipy.spatial.distance
 import xarray
 
 from ..computations import trix
-from ..computations.fieldsampler import Field, InterpolationMethods, RegularGridXYSampler
+from ..computations.fieldsampler import Field, RegularGridXYSampler
 from ..computations.results import RadialRuggedness
 from ..computations.rix import compute_regular_rix
 from ..definitions.interface import Keys
@@ -181,7 +181,8 @@ class TRIXAnalyzer:
             dem=dem, locations_site=locations_site, locations_reference=locations_reference, keys=keys
         )
         field = Field.from_array(da=dem, dims=("x", "y"))
-        interpolation_method = InterpolationMethods(self._config.parameter("sampler", "interpolation_method").value)
+        # interpolation_method = InterpolationMethods(self._config.parameter("sampler", "interpolation_method").value)
+        interpolation_method = self._config.parameter("sampler", "interpolation_method").value
         sampler = RegularGridXYSampler(field=field, method=interpolation_method)
 
         radial_rix_site = self._compute_rix_results(sampler, locations_site)

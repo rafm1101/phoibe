@@ -1,8 +1,11 @@
 import dataclasses
 import enum
+import typing
 
 from ..pipeline.schema import PRODUCT_DEFINITION_TRIX
 from .interface import _get_parameter
+
+INTERPOLATION_METHODS = typing.Literal["linear", "nearest"]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -31,7 +34,7 @@ class InterpolationMethods(enum.StrEnum):
 class SampleParameters:
     """Sample parameters for the fieldsampler."""
 
-    interpolation_method: InterpolationMethods
+    interpolation_method: INTERPOLATION_METHODS
 
     def __post_init__(self):
         if self.interpolation_method not in ("linear", "nearest"):

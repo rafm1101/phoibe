@@ -110,8 +110,8 @@ class FileResultWriter:
             )
 
     @staticmethod
-    def _write_csv(path: pathlib.Path, frame: pd.DataFrame) -> tuple[tuple[str, ...], int]:
-        frame.reset_index().to_csv(path, index=False)
+    def _write_csv(path: pathlib.Path, df: pd.DataFrame) -> tuple[tuple[str, ...], int]:
+        df.reset_index().to_csv(path, index=False)
         written = pd.read_csv(path)
         return tuple(written.columns), len(written)
 
@@ -123,11 +123,15 @@ class FileResultWriter:
             raise PortError(f"Artifact {artifact.key!r} has neither a table nor layers; nothing to serialise.")
         path.unlink(missing_ok=True)  # no stale layers from an earlier run
         for layer in layers:
-            frame = result.tables[layer.table].reset_index()
+            df = result.tables[layer.table].reset_index()
             if layer.geometry_type is None:
-                pyogrio.write_dataframe(pd.DataFrame(frame), path, layer=layer.name, driver="GPKG")
+                pyogrio.write_dataframe(pd.DataFrame(df), path, layer=layer.name, driver="GPKG")
             else:
-                frame.to_file(path, layer=layer.name, driver="GPKG", index=False, geometry_type=layer.geometry_type)  # type: ignore [operator]
+                if not isinstance(df, gpd.GeoDataFrame):
+                    raise ContractViolation(
+                        [f"Table {layer.table} has no geometry, but layer {layer.key!r} is {layer.geometry_type}."]
+                    )
+                df.to_file(path, layer=layer.name, driver="GPKG", index=False, geometry_type=layer.geometry_type)  # type: ignore [operator]
 
         read_back = {}
         for layer in layers:

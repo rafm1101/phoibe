@@ -113,9 +113,13 @@ def rose(results: Mapping[Hashable, RadialRuggedness]) -> pd.DataFrame:
 
 def _to_df(table: TableSpecification, index: pd.Index, quantities: Mapping[str, typing.Any]) -> pd.DataFrame:
     """Frame with the columns of `table`, in order. The identifier columns form the index."""
+    index_names: list[str] = []
     for name in index.names:
-        table.column(str(name))
-    columns = [name for name in table.column_names if name not in index.names]
+        if not isinstance(name, str):
+            raise ValueError(f"Table '{table.name}': Each index level must be named after a column, got {name!r}.")
+        table.column(name)
+        index_names.append(name)
+    columns = [name for name in table.column_names if name not in index_names]
     missing = [name for name in columns if name not in quantities]
     if missing:
         raise ValueError(f"Table '{table.name}' lists column(s) this builder cannot provide: {', '.join(missing)}.")
