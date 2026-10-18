@@ -27,6 +27,11 @@ PRODUCT_DEFINITION_TRIX = {
             "publisher": "Zenodo",
             "year": "2023",
         },
+        "implementation": {
+            "title": "T-RIX assessment, implementation.",
+            "description": "Choices of this implementation that fix the meaning of numbers, but are not prescribed by "
+            "other sources.",
+        },
     },
     "parameters": {
         "ray": {
@@ -73,10 +78,22 @@ PRODUCT_DEFINITION_TRIX = {
                 "value": "linear",
             },
             "nan_policy": {
-                "description": "Handle NaNs in field.",
-                "value": "error",
+                "description": "Handling of NaN values encountered while sampling a ray: "
+                "keep (mask), cut ray at the first one (truncate) or fail (error).",
+                "value": "truncate",
+                "dtype": "str",
+                "source": "implementation",
                 "locked": True,
             },
+        },
+        "trix": {
+            "decimals": {
+                "description": "Number of decimals presented in the table.",
+                "unit": None,
+                "value": 1,
+                "source": "TR6",
+                "locked": True,
+            }
         },
     },
     "inputs": {
@@ -128,13 +145,13 @@ PRODUCT_DEFINITION_TRIX = {
             "parameters": {},
         },
         "crs_vs_config": {
-            "description": "Other CRS mismatch to be determined.",
+            "description": "CRS of the sites agrees with configured CRS..",
             "severity": "warn",
             "parameters": {},
         },
         "unique_ids": {
             "description": "Provided locations are identifyable uniquely.",
-            "severity": "warn",
+            "severity": "abort",
             "parameters": {},
         },
         "centre_elevation": {
@@ -142,7 +159,7 @@ PRODUCT_DEFINITION_TRIX = {
             "severity": "warn",
             "parameters": {},
         },
-        "locked_parameter_change": {
+        "locked_parameter_changed": {
             "description": "Check if chosen parameters comply with TR6.",
             "severity": "warn",
             "parameters": {},
@@ -341,15 +358,6 @@ PRODUCT_DEFINITION_TRIX = {
                     "description": "Distance threshold for conditional representability at the given T-RIX value.",
                     "unit": "km",
                 },
-            },
-            "presentation": {
-                "decimals": {
-                    "description": "Number of decimals presented in the table.",
-                    "unit": None,
-                    "value": 1,
-                    "source": "TR6",
-                    "locked": True,
-                }
             },
         },
         "locations_site": {
