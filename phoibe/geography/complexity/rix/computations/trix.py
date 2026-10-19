@@ -89,11 +89,14 @@ def evaluate_transferability_limits(distances: NDArray, A: NDArray, B: NDArray) 
        - 2: Unconditional transferability (below limits A).
        - 1: Transferrable subject to additional uncertainties (below limits B).
        - 0: No transfer (above limits B).
+    2. Transfers are not established if not granted, e.g. in case of distance or threshold is NaN.
+       Catch comparisons with NaN as they yield `False` and thus an unconditional 2.
     """
     result = 2 * np.ones_like(distances, dtype=int)
 
     result = np.where(distances > A, 1, result)
     result = np.where(distances > B, 0, result)
+    result = np.where(np.isnan(distances) | np.isnan(A) | np.isnan(B), 0, result)
     return result
 
 
