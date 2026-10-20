@@ -29,7 +29,7 @@ from ..pipeline.errors import (
     PortError,
 )
 from ..pipeline.ports import WrittenArtifacts
-from ..pipeline.result_summary import ResultSummary
+from ..pipeline.results.result_summary import ResultSummary
 
 EXIT_OK = 0
 EXIT_INPUT = 1

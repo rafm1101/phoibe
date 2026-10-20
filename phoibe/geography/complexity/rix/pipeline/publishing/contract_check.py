@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Collection
 
-from .errors import ContractViolation
-from .ports import WrittenArtifacts
-from .specification import ProductSpecification
-from .tables import GEOMETRY
+from ..errors import ContractViolation
+from ..ports import WrittenArtifacts
+from ..product.specification import ProductSpecification
+from ..results.tables import GEOMETRY
 
 _MANIFEST_ARTIFACT = "manifest"
 

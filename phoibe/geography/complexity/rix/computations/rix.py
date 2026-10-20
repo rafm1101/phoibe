@@ -38,8 +38,6 @@ def compute_regular_rix(
         CRS of the location.
     slope_critical
         Threshold on the slope between two points for a segment to be considered steep.
-    # keys
-    #     Column keys for the output.
 
     Returns
     -------

@@ -33,12 +33,12 @@ from .adapters.locations_reader import read_locations
 from .adapters.writer import FileResultWriter
 from .entrypoints import cli
 from .entrypoints.config_file import RunConfiguration, default_configuration, load_configuration
-from .pipeline.analyzer_refactored import TRIXAnalyzer
-from .pipeline.contract import render_contract
+from .pipeline.analyzer import TRIXAnalyzer
 from .pipeline.errors import PipelineError
 from .pipeline.ports import ResultWriter
-from .pipeline.schema import PRODUCT_SPECIFICATION
-from .pipeline.specification import ProductSpecification
+from .pipeline.product.schema import PRODUCT_SPECIFICATION
+from .pipeline.product.specification import ProductSpecification
+from .pipeline.publishing.contract import render_contract
 
 __all__ = ["build_analyzer", "main", "read_field", "read_locations"]
 

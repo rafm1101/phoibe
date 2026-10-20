@@ -11,8 +11,8 @@ from collections.abc import Hashable
 import numpy as np
 import pandas as pd
 
-from ..pipeline import tables
-from ..pipeline.specification import ProductSpecification
+from ..pipeline.product.specification import ProductSpecification
+from ..pipeline.results import tables
 
 if typing.TYPE_CHECKING:
     import geopandas as gpd

@@ -5,10 +5,10 @@ from __future__ import annotations
 import typing
 from collections.abc import Collection
 
-from ..computations.checks import crs_config_findings, crs_consistency_findings, unique_id_findings
-from .errors import InputRequirementError
+from ...computations.checks import crs_config_findings, crs_consistency_findings, unique_id_findings
+from ..errors import InputRequirementError
+from ..product.specification import ProductSpecification
 from .findings import LocatedFinding, locate
-from .specification import ProductSpecification
 
 if typing.TYPE_CHECKING:
     import geopandas as gpd

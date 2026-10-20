@@ -17,8 +17,8 @@ from ..definitions.config import WRITER_DEFAULTS
 from ..definitions.interface import Keys
 from ..pipeline.errors import ContractViolation, PortError
 from ..pipeline.ports import Target, WrittenArtifacts
-from ..pipeline.result_summary import ResultSummary
-from ..pipeline.specification import ArtifactSpecification, ProductSpecification
+from ..pipeline.product.specification import ArtifactSpecification, ProductSpecification
+from ..pipeline.results.result_summary import ResultSummary
 
 LOGGER = logging.getLogger(__name__)
 

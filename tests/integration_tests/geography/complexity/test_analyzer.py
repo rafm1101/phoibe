@@ -4,7 +4,7 @@ import xarray
 import yaml
 
 from phoibe.geography.complexity.rix.definitions.config import ANALYZER_DEFAULTS
-from phoibe.geography.complexity.rix.pipeline.analyzer import TRIXAnalyzer
+from phoibe.geography.complexity.rix.pipeline.analyzer_legacy import TRIXAnalyzer
 
 
 def _make_config(n_angles=4, R_km=0.5, dr_km=0.05, slope_critical=0.1, crs=None):

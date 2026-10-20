@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import typing
 
-from .specification import ColumnSpecification, LayerSpecification, ProductSpecification
+from ..product.specification import ColumnSpecification, LayerSpecification, ProductSpecification
 
 
 def render_contract(spec: ProductSpecification) -> dict[str, typing.Any]:

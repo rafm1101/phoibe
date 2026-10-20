@@ -28,7 +28,7 @@ import yaml
 
 from ..definitions.config import ANALYZER_DEFAULTS, AnalyzerConfig, RunParameters, SampleParameters
 from ..pipeline.errors import ConfigurationError
-from ..pipeline.specification import ParameterSpecification, ProductSpecification
+from ..pipeline.product.specification import ParameterSpecification, ProductSpecification
 
 _TOP_LEVEL_KEYS = ("project_name", "parameters")
 

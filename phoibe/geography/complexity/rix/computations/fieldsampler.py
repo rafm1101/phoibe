@@ -10,12 +10,7 @@ from numpy.typing import NDArray
 
 from ..definitions.config import INTERPOLATION_METHODS
 
-# TODO: Remove dependency in the follwoing line.
-# from ..definitions.interface import Keys
-
 LOGGER = logging.getLogger(__name__)
-
-# KEYS = Keys()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -38,9 +33,13 @@ class Field:
     """Field to be sampled from."""
 
     da: xarray.DataArray
+    """Field data."""
     info: FieldInfo
+    """Fields metadata. Filled from `rio` atttribute while calling `from_array`."""
     x: str
+    """Name of the `da`'s zonal coordinate."""
     y: str
+    """Name of the `da`'s meridional coordinate."""
 
     @classmethod
     def from_array(cls, da: xarray.DataArray, dims: tuple[str, str] = ("x", "y")):
@@ -58,19 +57,15 @@ class Field:
 
 
 class FieldSampler(typing.Protocol):
+    """Protocol for all samplers."""
+
     field: Field
-    # """Metadata of the underlying field if it is rio: CRS, extent and resolution."""
+    """The field sampled from."""
 
     @property
     def crs(self) -> pyproj.CRS | None:
         """Return the sampler's CRS in case it has one."""
         raise NotImplementedError
-
-    # TODO: Remove.
-    # @property
-    # def meta(self) -> dict:
-    #     """Return the sampler's meta information."""
-    #     raise NotImplementedError
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         """Sample field values along a path.
@@ -89,7 +84,7 @@ class FieldSampler(typing.Protocol):
 
         Notes
         -----
-        1. Implementation may truncate the result if NaN values are encountered.
+        1. Implementation may truncate the result if NaN values are encountered. The sampler shall manage that.
         2. NaN counts shall be passed for diagnosis reasons.
            They may the user to check the map bounds or data gaps.
         """
@@ -99,15 +94,10 @@ class FieldSampler(typing.Protocol):
 class RegularGridXYSampler:
     """Sample from a 2D field on a regular xy grid."""
 
-    field: Field  # xarray.DataArray
-    """Field to be sampled from. Assume that coordinates are `keys.x` and `keys.y`."""
+    field: Field
+    """Field to be sampled from."""
     method: INTERPOLATION_METHODS
     """Interpolation method. One of 'linear' and 'nearest'."""
-    # TODO: FieldInfo now part of Field.
-    # field_info: FieldInfo
-    # """Metadata of the underlying field if it is rio: CRS, extent and resolution."""
-    # keys: Keys
-    # """Keys identifying dimensions. Requires: `x`, `y`."""
 
     def __init__(self, field: Field, method: INTERPOLATION_METHODS):
         self.field = field
@@ -129,18 +119,6 @@ class RegularGridXYSampler:
             return self.field.da.rio.crs
         else:
             return None
-
-    # TODO: Remove.
-    # @property
-    # def meta(self) -> dict:
-    #     records: dict = {self.keys.dem: {}}
-    #     if hasattr(self.field.da, "rio"):
-    #         records[self.keys.dem][self.keys.crs_dem] = (
-    #             crs.to_string() if (crs := self.field.rio.crs) is not None else None
-    #         )
-    #         records[self.keys.dem][self.keys.extent_dem] = self.field.rio.bounds()
-    #         records[self.keys.dem][self.keys.resolution_dem] = self.field.rio.resolution()
-    #     return records
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:
         _xs = np.asarray(xs, dtype=float)

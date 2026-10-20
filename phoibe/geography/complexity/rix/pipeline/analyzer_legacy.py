@@ -16,9 +16,9 @@ from ..computations.fieldsampler import Field, RegularGridXYSampler
 from ..computations.results import RadialRuggedness
 from ..computations.rix import compute_regular_rix
 from ..definitions.interface import Keys
-from .schema import PRODUCT_SPECIFICATION
-from .specification import ProductSpecification
-from .tables import _build_rix_rose, _build_summary, _compute_trix
+from .product.schema import PRODUCT_SPECIFICATION
+from .product.specification import ProductSpecification
+from .results.tables import _build_rix_rose, _build_summary, _compute_trix
 
 LOGGER = logging.getLogger(__name__)
 

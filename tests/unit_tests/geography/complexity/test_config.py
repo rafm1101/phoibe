@@ -6,7 +6,7 @@ from phoibe.geography.complexity.rix.definitions.config import (
     INTERPOLATION_METHODS,
     WRITER_DEFAULTS,
 )
-from phoibe.geography.complexity.rix.pipeline.schema import PRODUCT_DEFINITION_TRIX
+from phoibe.geography.complexity.rix.pipeline.product.schema import PRODUCT_DEFINITION_TRIX
 
 
 def test_analyzer_defaults_match_expected_snapshot():

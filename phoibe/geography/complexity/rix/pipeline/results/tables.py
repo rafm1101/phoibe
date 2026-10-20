@@ -6,11 +6,11 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-from ..computations import trix
-from ..computations.results import RadialRuggedness
-from ..definitions.interface import Keys
-from .schema import PRODUCT_SPECIFICATION
-from .specification import ProductSpecification, TableSpecification
+from ...computations import trix
+from ...computations.results import RadialRuggedness
+from ...definitions.interface import Keys
+from ..product.schema import PRODUCT_SPECIFICATION
+from ..product.specification import ProductSpecification, TableSpecification
 
 KEYS = Keys()
 

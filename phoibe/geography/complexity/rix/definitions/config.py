@@ -2,7 +2,7 @@ import dataclasses
 import enum
 import typing
 
-from ..pipeline.schema import PRODUCT_DEFINITION_TRIX
+from ..pipeline.product.schema import PRODUCT_DEFINITION_TRIX
 from .interface import _get_parameter
 
 INTERPOLATION_METHODS = typing.Literal["linear", "nearest"]

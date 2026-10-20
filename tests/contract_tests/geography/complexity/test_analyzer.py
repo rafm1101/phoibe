@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray
 
-from phoibe.geography.complexity.rix.pipeline.analyzer import ResultSummary, TRIXAnalyzer
+from phoibe.geography.complexity.rix.pipeline.analyzer_legacy import ResultSummary, TRIXAnalyzer
 
 
 def _make_config(n_angles=4, R_km=0.5, dr_km=0.05, slope_critical=0.1, crs=None):

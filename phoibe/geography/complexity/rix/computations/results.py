@@ -6,12 +6,9 @@ import functools
 import numpy as np
 import shapely
 
-# from ..definitions.interface import Keys, _get_parameter
 from . import evaluate
 from .fieldsampler import FieldInfo
 from .profiles import RayProfile, SamplingInfo
-
-# KEYS = Keys()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -62,7 +59,6 @@ class RayRuggedness:
     """Ray profile of some field."""
     slope_critical: float
     """Slope [m/m] above which a segment is consideres as steep."""
-    # keys: Keys = dataclasses.field(repr=False, default=KEYS)
 
     @property
     def meta(self) -> RayProfileMeta:
@@ -138,37 +134,6 @@ class RayRuggedness:
             "n_steep_segments": self.n_steep_segments,
         }
 
-    # def steep_segments_geodataframe(self):
-    #     """GeoDataFrame of steep segments for visualization.
-
-    #     Returns
-    #     -------
-    #     geopandas.GeoDataFrame
-    #         Geodataframe where each row contains the geometry of one steep segment.
-
-    #     Raises
-    #     ------
-    #     ImportError
-    #         If geopandas is not installed.
-    #     """
-    #     try:
-    #         import geopandas as gpd
-    #     except ImportError as exception:
-    #         raise ImportError("RayResult.steep_segments_geodataframe() requires geopandas.") from exception
-
-    #     records = [{self.keys.segment_id: i, self.keys.geometry: seg} for i, seg in enumerate(self.steep_segments)]
-
-    #     if records:
-    #         steep_segments = gpd.GeoDataFrame(records, geometry=self.keys.geometry, crs=self.profile.ray.crs)
-    #     else:
-    #         steep_segments = gpd.GeoDataFrame(
-    #             columns=[self.keys.segment_id, self.keys.geometry],
-    #             geometry=self.keys.geometry,
-    #             crs=self.profile.ray.crs,
-    #         )
-
-    #     return steep_segments
-
 
 @dataclasses.dataclass(frozen=True)
 class RadialRuggedness:
@@ -182,8 +147,6 @@ class RadialRuggedness:
     """Collection of rays being evaluated."""
     _ray_by_angle: dict[float, RayRuggedness] = dataclasses.field(init=False, repr=False, compare=False)
     """Access ray results by their angle."""
-    # keys: Keys = dataclasses.field(repr=False, default=KEYS)
-    # """Column keys to employ."""
     runs: RayProfileMeta = dataclasses.field(init=False, repr=False)
     """Run summary statistics."""
 
@@ -244,48 +207,6 @@ class RadialRuggedness:
         """
         return np.array([ray.ruggedness for ray in self.rays], dtype=float)
 
-    # @property
-    # def meta(self) -> dict:
-    #     crs_ray = list(
-    #         {_get_parameter(ray.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False) for ray in self.rays}
-    #     )
-    #     dem_metas = [_get_parameter(ray.profile.meta, self.keys.dem, strict=False) or {} for ray in self.rays]
-    #     crs_dem = list({_get_parameter(dem_meta, self.keys.crs_dem, strict=False) for dem_meta in dem_metas})
-    #     extent_dem = list({_get_parameter(dem_meta, self.keys.extent_dem, strict=False) for dem_meta in dem_metas})
-    #     resolution_dem = list(
-    #         {_get_parameter(dem_meta, self.keys.resolution_dem, strict=False) for dem_meta in dem_metas}
-    #     )
-    #     message = list(
-    #         {
-    #             _get_parameter(ray.profile.meta, self.keys.alignment, self.keys.message, strict=False)
-    #             for ray in self.rays
-    #         }
-    #     )
-    #     nan_count = int(
-    #         np.sum(
-    #             [
-    #                 _get_parameter(ray.profile.meta, self.keys.rays, self.keys.nan_count, strict=False)
-    #                 for ray in self.rays
-    #             ],
-    #             dtype=float,
-    #         )
-    #     )
-    #     records = {
-    #         self.keys.rays: {
-    #             self.keys.crs_ray: crs_ray,
-    #             self.keys.nan_count: nan_count,
-    #         },
-    #         self.keys.dem: {
-    #             self.keys.crs_dem: crs_dem,
-    #             self.keys.extent_dem: extent_dem,
-    #             self.keys.resolution_dem: resolution_dem,
-    #         },
-    #         self.keys.alignment: {
-    #             self.keys.message: message,
-    #         },
-    #     }
-    #     return records
-
     def ray(self, theta: float, atol: float = 1e-5) -> RayRuggedness:
         """Get RayResult for a specific angle.
 
@@ -311,56 +232,6 @@ class RadialRuggedness:
             return self.rays[idx]
         else:
             raise KeyError(f"No ray found for theta={theta:.1f}°. Available angles: {self.angles}")
-
-    # def to_dataframe(self):
-    #     """Generate a dataframe summarising the metrics of all rays.
-
-    #     Returns
-    #     -------
-    #     pandas.DataFrame
-    #         Dataframe holding all metrics as one ray per row.
-
-    #     Raises
-    #     ------
-    #     ImportError
-    #         If pandas is not installed.
-    #     """
-    #     try:
-    #         import pandas as pd
-    #     except ImportError as exception:
-    #         raise ImportError("RadialRixResult.to_dataframe() requires pandas.") from exception
-
-    #     records = [ray.describe() for ray in self.rays]
-    #     return pd.DataFrame(records)
-
-    # def steep_segments_geodataframe(self):
-    #     """Generate a GeoDataFrame holding all steep segments.
-
-    #     Returns
-    #     -------
-    #     geopandas.GeoDataFrame
-    #         Geodataframe where each row contains the geometry of one steep segment.
-
-    #     Raises
-    #     ------
-    #     ImportError
-    #         If geopandas is not installed.
-    #     """
-    #     try:
-    #         import geopandas as gpd
-    #     except ImportError as exception:
-    #         raise ImportError("RadialRixResult.steep_segments_geodataframe() requires geopandas.") from exception
-
-    #     records = []
-    #     for ray in self.rays:
-    #         for i, segment in enumerate(ray.steep_segments):
-    #             records.append({self.keys.theta: ray.theta, self.keys.segment_id: i, self.keys.geometry: segment})
-    #     return gpd.GeoDataFrame(
-    #         records,
-    #         columns=[self.keys.theta, self.keys.segment_id, self.keys.geometry],
-    #         geometry=self.keys.geometry,
-    #         crs=self.rays[0].profile.ray.crs,
-    #     )
 
     def describe(self) -> dict[str, float]:
         """Summary statistics across all rays.

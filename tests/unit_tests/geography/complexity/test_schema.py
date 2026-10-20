@@ -1,6 +1,6 @@
 import pytest
 
-from phoibe.geography.complexity.rix.pipeline.schema import PRODUCT_DEFINITION_TRIX
+from phoibe.geography.complexity.rix.pipeline.product.schema import PRODUCT_DEFINITION_TRIX
 
 
 def _iter_parameter_entries(definition):

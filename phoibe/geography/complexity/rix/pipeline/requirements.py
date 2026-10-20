@@ -15,10 +15,10 @@ from ..computations.checks import (
     NAN_COUNT,
     UNIQUE_IDS,
 )
-from .findings import LOCKED_PARAMETER_CHANGED
-from .inputs import DEM, LOCATIONS_REFERENCE, LOCATIONS_SITE
-from .specification import ProductSpecification, SpecificationError
-from .tables import (
+from .checks.findings import LOCKED_PARAMETER_CHANGED
+from .checks.inputs import DEM, LOCATIONS_REFERENCE, LOCATIONS_SITE
+from .product.specification import ProductSpecification, SpecificationError
+from .results.tables import (
     LOCATIONS_REFERENCE_TABLE,
     LOCATIONS_SITE_TABLE,
     RIX_TABLE,

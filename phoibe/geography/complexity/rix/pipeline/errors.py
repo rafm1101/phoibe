@@ -10,7 +10,7 @@ import typing
 from collections.abc import Sequence
 
 if typing.TYPE_CHECKING:
-    from .findings import LocatedFinding
+    from .checks.findings import LocatedFinding
 
 
 class PipelineError(Exception):

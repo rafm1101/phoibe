@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..computations.results import RadialRuggedness
-from ..pipeline.schema import PRODUCT_SPECIFICATION
+from ..pipeline.product.schema import PRODUCT_SPECIFICATION
 
 
 def to_dataframe(radial_ruggedness: RadialRuggedness):

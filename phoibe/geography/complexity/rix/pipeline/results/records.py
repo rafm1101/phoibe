@@ -12,13 +12,13 @@ import datetime
 import typing
 from collections.abc import Hashable, Mapping, Sequence
 
-from ..computations.fieldsampler import FieldInfo
-from .findings import LocatedFinding
-from .inputs import DEM, LOCATIONS_REFERENCE, LOCATIONS_SITE
-from .specification import ProductSpecification
+from ...computations.fieldsampler import FieldInfo
+from ..checks.findings import LocatedFinding
+from ..checks.inputs import DEM, LOCATIONS_REFERENCE, LOCATIONS_SITE
+from ..product.specification import ProductSpecification
 
 if typing.TYPE_CHECKING:
-    from ..computations.results import RadialRuggedness
+    from ...computations.results import RadialRuggedness
 
 MAX_FINDINGS_PER_CHECK = 100
 """Located findings kept per check. Counts always cover all findings."""

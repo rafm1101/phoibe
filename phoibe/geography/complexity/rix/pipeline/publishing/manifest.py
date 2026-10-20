@@ -36,11 +36,11 @@ from collections.abc import Mapping
 
 import numpy as np
 
+from ..checks.inputs import LOCATIONS_REFERENCE, LOCATIONS_SITE
+from ..ports import WrittenArtifacts
+from ..product.specification import ProductSpecification
+from ..results.records import RunRecord
 from .contract import render_contract
-from .inputs import LOCATIONS_REFERENCE, LOCATIONS_SITE
-from .ports import WrittenArtifacts
-from .records import RunRecord
-from .specification import ProductSpecification
 
 _MANIFEST_ARTIFACT = "manifest"
 _EXTENT_KEYS = ("west", "south", "east", "north")

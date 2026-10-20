@@ -10,7 +10,7 @@ import os
 import typing
 from collections.abc import Mapping
 
-from .result_summary import ResultSummary
+from .results.result_summary import ResultSummary
 
 Target = str | os.PathLike[str]
 """Where artifacts are written, e.g. a directory."""

@@ -13,7 +13,7 @@ import typing
 import warnings
 from collections.abc import Hashable, Iterable, Mapping, Sequence
 
-from ..computations.checks import (
+from ...computations.checks import (
     CENTRE_ELEVATION,
     N_ANGLE,
     NAN_COUNT,
@@ -22,11 +22,11 @@ from ..computations.checks import (
     n_angle_findings,
     nan_findings,
 )
-from .errors import CheckAborted
-from .specification import ProductSpecification, Severity
+from ..errors import CheckAborted
+from ..product.specification import ProductSpecification, Severity
 
 if typing.TYPE_CHECKING:
-    from ..computations.results import RadialRuggedness
+    from ...computations.results import RadialRuggedness
 
 LOGGER = logging.getLogger(__name__)
 
