@@ -28,7 +28,6 @@ from ..computations.results import RadialRuggedness
 from ..computations.rix import compute_regular_rix
 from ..computations.trix import assess_transferability
 from ..definitions.config import RunParameters, SampleParameters
-from .errors import ContractViolation
 from .checks.findings import (
     location_findings,
     locked_parameter_findings,
@@ -42,13 +41,14 @@ from .checks.inputs import (
     input_findings,
     normalise_locations,
 )
+from .errors import ContractViolation
 from .ports import ResultWriter, Target, WrittenArtifacts
 from .product.specification import ProductSpecification
 from .publishing.contract_check import check_written_artifacts, tables_missing_for
 from .publishing.manifest import build_manifest
+from .results import tables
 from .results.records import build_run_record, fixed_parameter, parameter_values
 from .results.result_summary import ResultSummary
-from .results import tables
 
 if typing.TYPE_CHECKING:
     import geopandas as gpd
