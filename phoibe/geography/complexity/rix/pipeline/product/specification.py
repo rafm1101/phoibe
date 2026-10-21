@@ -101,7 +101,9 @@ class ArtifactSpecification:
     """An output file."""
 
     key: str
+    """Artifact key."""
     filename: str
+    """Filename of the artifact."""
     table: str | None = None
     """Table written to this file, if any."""
     requires_input: str | None = None
@@ -113,10 +115,13 @@ class LayerSpecification:
     """A layer inside a container artifact, e.g. a GeoPackage."""
 
     key: str
+    """Layer key."""
     artifact: str
+    """Artifact that holds this layer."""
     name: str
     """Layer name inside the file."""
     table: str
+    """Key of the table for this layer."""
     geometry_type: str | None = None
     """None for attribute-only layers."""
     requires_input: str | None = None
@@ -152,18 +157,29 @@ class ProductSpecification:
     """
 
     name: str
+    """Product name."""
     description: str
+    """Product description."""
     version: str
+    """Product version."""
     references: Mapping[str, Mapping[str, str]]
+    """References relied on."""
     parameters: tuple[ParameterSpecification, ...]
+    """Parameters for the run."""
     inputs: Mapping[str, InputSpecification]
+    """Specifications of the inputs."""
     checks: Mapping[str, CheckSpecification]
+    """Configurations ot the checks to perform."""
     tables: Mapping[str, TableSpecification]
+    """Configurations of the tables to create."""
     artifacts: Mapping[str, ArtifactSpecification]
+    """Specifications of the artifacts that are produced."""
     layers: Mapping[str, LayerSpecification]
+    """Layers of the geodata."""
     profiles: Mapping[str, tuple[str, ...]]
     """Artifact keys per output profile."""
     manifest: ManifestKeySpecification
+    """Specification of the manifest."""
 
     @classmethod
     def from_dict(cls, raw: Mapping[str, typing.Any]) -> ProductSpecification:

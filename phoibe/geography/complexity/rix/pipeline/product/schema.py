@@ -184,11 +184,7 @@ PRODUCT_DEFINITION_TRIX = {
             "manifest": {"filename": "summary.yaml"},
             "rix_table": {"filename": "rix_table.csv", "table": "rix_table", "requires_input": None},
             "trix_table": {"filename": "trix.csv", "table": "trix_table", "requires_input": "locations_reference"},
-            "geopackage": {
-                "filename": "rix_details.gpkg",
-                "table": None,
-                "requires_input": "locations_reference",
-            },
+            "geopackage": {"filename": "rix_details.gpkg", "table": None, "requires_input": "locations_reference"},
         },
         "layers": {
             "locations_site": {

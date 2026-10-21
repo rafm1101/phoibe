@@ -244,11 +244,11 @@ class TRIXAnalyzer:
 
 
 def _rix(results: dict[Hashable, RadialRuggedness]) -> np.ndarray:
-    return np.array([radial.rix for radial in results.values()], dtype=float)
+    return np.array([radial_rugs.rix for radial_rugs in results.values()], dtype=float)
 
 
 def _elevation(results: dict[Hashable, RadialRuggedness]) -> np.ndarray:
-    return np.array([radial.z[0] for radial in results.values()], dtype=float)
+    return np.array([radial_rugs.z for radial_rugs in results.values()], dtype=float)
 
 
 def _xy(locations: gpd.GeoDataFrame) -> np.ndarray:

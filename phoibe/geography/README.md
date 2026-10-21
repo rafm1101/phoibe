@@ -102,19 +102,39 @@ writer.RIXWriter(result=results, profile=writer.WriterProfile.FULL).write(
 | **crs** | Coordinate system reprojections |
 | **plot** | Raster visualization with CRS awareness |
 
-Within `rix`:
+Within `rix` hexagonal (see ADR 0001), dependencies point inwards:
 
-- `schema`: Central product definition including descriptions.
-- `interface`: Key definitions.
-- `config`: Gathered configurations used throughout the subpackage.
-- `geometry`: Definition of rays as representatives in 2D world.
-- `profiles`: Generate 1D profiles along rays.
-- `fieldsampler`: Sample from 2D fields.
-- `results`: Gather and provide results for single locations.
-- `evaluate`: Computations, functional interface for single locations.
-- `trix`: T-RIX computations and evaluations.
-- `analyzer`: Interface for full T-RIX assessment.
-- `writer`: Serialise the assessment results.
+| Layer | Responsibility | Allowed third-party | Forbidden |
+|---|---|---|---|
+| `computations` | Scientific rules and computations on in-memory values | numpy, scipy, shapely, pyproj, xarray (loaded arrays) | pandas, geopandas, yaml, matplotlib, rioxarray, pyogrio, file or network I/O |
+| `pipeline` | Use case: order of steps, severities of checks, tables, run record, manifest, contract. Defines specification, ports and errors | pandas, geopandas (as data structures) | I/O libraries, adapters |
+| `adapters` | Implementations for the outside world: reading rasters and locations, writing files | rioxarray, pyogrio, geopandas I/O, yaml | importing each other or `entrypoints` |
+| `entrypoints` | Command line, configuration file, notebook interface | argparse, yaml, matplotlib | importing adapters |
+| `main.py` | Composition root: wires adapters into the use case, hosts `main()` | all | business logic |
+
+```
+/
+├── computations/
+│   ├── geometry.py  fieldsampler.py  profiles.py     rays, field, sampled profiles
+│   ├── evaluate.py  results.py  rix.py  trix.py      metrics, results, RIX, T-RIX
+│   └── checks.py                                     rules that report findings
+├── pipeline/
+│   ├── analyzer.py          the use case, knows all others
+│   ├── requirements.py      checks that the specification has what the code uses
+│   ├── ports.py  errors.py
+│   ├── product/             WHAT the product is: specification.py, definition.py
+│   ├── checks/              findings.py, inputs.py
+│   ├── results/             tables.py, record.py, result_summary.py
+│   └── publishing/          manifest.py, contract.py, contract_check.py
+├── adapters/                dem_reader.py, locations_reader.py, writer_files.py
+├── entrypoints/             cli.py, config_file.py, notebook.py
+└── main.py
+```
+
+Inside `pipeline`, dependencies run downwards only: `analyzer` → `publishing` → `ports` → `results` → `checks` →
+`product`/`errors`.
+
+Flow of a run: the entrypoint reads parameters and files through adapters → the use case checks inputs and parameters → domain functions compute RIX per location → findings are collected → tables, TRIX and the run record are built → `publish`: the writer writes the data files and reads them back → the contract check compares them with the specification → the manifest is written last.
 
 Within `crs`:
 
@@ -128,9 +148,12 @@ Within `plot`:
 ### Best practices and considerations
 
 1. Central anchor for configuration, version, parameters, artifact schema, and field definitions and descriptions are contained in `schema.py`.
-   - `interface.py` contains relevant keys.
-   - `config.py` extracts relevant parameters.
-   - Parameters that rely on TR6 are marked as `locked`.
+   - A rule or computation on values goes into `computations`, as a function if it needs nothing else.
+   - Something that needs a resource (file, clock) is a service: the contract goes into `pipeline`, the implementation into `adapters`.
+   - A name, filename, severity, threshold or fixed parameter goes into the product definition, never into code.
+   - A view for people (DataFrame, plot, manifest) goes into `pipeline` or `entrypoints`, never onto a domain value.
+   - An anomaly that should be visible but not stop the run is a `Finding` from the domain, with its severity in the
+   definition.
 1. DEM metadata remains to be refined.
    - Includes: Source and metadata.
 1. Multi-CRS supported. Provide assessed sites in a projected CRS measuring in meters. Maps in a geographic CRS are handled accordingly by transforming the sites' coordinates and sampling these.
@@ -148,7 +171,7 @@ Within `plot`:
 1. Objects separate concerns:
    - `RayGeometry` represents a single ray only. It may change its representation to another CRS.
    - `RayProfile` represents the elevation profile along its ray. For its instantiation, a `FieldSampler` is required.
-   - `FieldSampler` samples coordinates from a 2D field. In case of a CRS mismatch, it provides a matching representation of the coordinates in a requested CRS.
+   - `FieldSampler` samples coordinates from a 2D field. In case of a CRS mismatch, it provides a matching representation of the coordinates of the ray in the field's CRS.
    - `RayRuggedness` evaluates a single `RayProfile` instance.
    - `RadialRuggedness` collects multiples `RayRuggedness`es.
    - `TRIXAnalyzer` manages the RIX assessment, and if also reference locations are provided, also the full TRIX assessment of representativity.

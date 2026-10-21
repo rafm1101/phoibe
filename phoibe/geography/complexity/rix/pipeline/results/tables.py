@@ -29,18 +29,17 @@ def rix_table(spec: ProductSpecification, results: Mapping[Hashable, RadialRugge
     """RIX and elevation of every site, indexed by the site identifier."""
     table = spec.table(RIX_TABLE)
     ids = pd.Index(list(results), name=table.column(SITE_ID).name)
-    radials = list(results.values())
-    z = [radial.z for radial in radials]
-    ruggedness = [radial.ruggednesses for radial in radials]
+    radial_rugs = list(results.values())
+    zs = [radial_rug.z for radial_rug in radial_rugs]
+    ruggedness = [radial_rug.ruggednesses for radial_rug in radial_rugs]
     quantities = {
-        "elevation": [mean for mean, _ in z],
-        "elevation_std": [std for _, std in z],
-        "rix": [radial.rix for radial in radials],
+        "elevation": [z_mean for z_mean in zs],
+        "rix": [radial.rix for radial in radial_rugs],
         "rix_std": [float(np.std(values)) for values in ruggedness],
         "rix_min": [float(np.min(values)) for values in ruggedness],
         "rix_max": [float(np.max(values)) for values in ruggedness],
-        "n_rays": [radial.n_rays for radial in radials],
-        "slope_critical": [radial.slope_critical for radial in radials],
+        "n_rays": [radial.n_rays for radial in radial_rugs],
+        "slope_critical": [radial.slope_critical for radial in radial_rugs],
     }
     return _to_df(table, ids, quantities)
 
@@ -195,8 +194,7 @@ def _build_summary(
         summary_rows.append(
             {
                 spec.column("site_id").name: location_id,
-                spec.column("elevation").name: radial_rix.z[0],
-                spec.column("elevation_std").name: radial_rix.z[1],
+                spec.column("elevation").name: radial_rix.z,
                 spec.column("rix").name: radial_rix.rix,
                 spec.column("rix_std").name: description[spec.column("rix_std").name],
                 spec.column("rix_min").name: description[spec.column("rix_min").name],

@@ -170,11 +170,9 @@ class RadialRuggedness:
         )
 
     @property
-    def z(self) -> tuple[float, float]:
+    def z(self) -> float:
         """Elevation of the centre point."""
-        return float(np.mean([ray.profile.z[0] for ray in self.rays])), float(
-            np.std([ray.profile.z[0] for ray in self.rays])
-        )
+        return float(np.mean([ray.profile.z[0] for ray in self.rays]))
 
     @property
     def rix(self) -> float:

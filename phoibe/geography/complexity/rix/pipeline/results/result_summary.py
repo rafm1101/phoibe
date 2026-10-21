@@ -16,7 +16,7 @@ if typing.TYPE_CHECKING:
 
 @dataclasses.dataclass(frozen=True)
 class ResultSummary:
-    """Immutable container for a completed RIX analysis run.
+    """Container for a completed RIX analysis run.
 
     Kept in memory as it is returned by the use case. It can be published afterwards without recomputing.
     The tables are keyed by their name in the product specification, so a writer needs no hard-coded mapping.
