@@ -42,10 +42,22 @@ class Finding:
 
 
 def nan_findings(radial: RadialRuggedness, max_fraction: float = 0.0) -> tuple[Finding, ...]:
-    """Rays that encountered more than `max_nan_count` NaN values while sampling.
+    """Rays that encountered more than `max_fraction` NaN values while sampling.
 
     The count is the one recorded while sampling, so it is also reported for rays that were truncated afterwards.
     With the default, any NaN is reported (out-of-bounds or data gap).
+
+    Parameters
+    ----------
+    radial
+        Ruggedness result for a single site.
+    max_fraction
+        Threshold of an acceptable fraction of NaNs.
+
+    Returns
+    -------
+    tuple[Finding, ...]
+        Reported anomalies raywise.
     """
     findings = []
     for ray in radial.rays:
@@ -76,9 +88,14 @@ def centre_elevation_findings(radial: RadialRuggedness, atol: float = 1e-6) -> t
         Result of one location.
     atol
         Tolerated deviation [m]. The same point is sampled the same way, so this only guards against rounding.
+
+    Returns
+    -------
+    tuple[Finding, ...]
+        Reported anomalies raywise.
     """
     thetas = [ray.theta for ray in radial.rays]
-    z0 = np.array([ray.profile.z[0] if len(ray.profile.z) else np.nan for ray in radial.rays], dtype=float)
+    z0 = np.array([ray.profile.z if len(ray.profile.z) else np.nan for ray in radial.rays], dtype=float)
     finite = np.isfinite(z0)
     if not finite.any():
         return ()
@@ -86,7 +103,7 @@ def centre_elevation_findings(radial: RadialRuggedness, atol: float = 1e-6) -> t
     return tuple(
         Finding(
             CENTRE_ELEVATION,
-            f"Elevation at the centre {z:.3f} m differs from the median {reference:.3f} m of all rays.",
+            f"Elevation at the centre {z:.3f}m differs from the median {reference:.3f}m of all rays.",
             theta,
         )
         for theta, z, valid in zip(thetas, z0, finite, strict=True)

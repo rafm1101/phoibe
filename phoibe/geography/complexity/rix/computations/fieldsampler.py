@@ -43,6 +43,7 @@ class Field:
 
     @classmethod
     def from_array(cls, da: xarray.DataArray, dims: tuple[str, str] = ("x", "y")):
+        """Generate the field from a rioxarray dataarray."""
         if not set(dims).issubset(da.dims):
             raise ValueError(f"Field must have '{dims[0]}' and '{dims[1]}' coordinates. Found '{da.dims}'.")
         if hasattr(da, "rio"):
@@ -64,7 +65,7 @@ class FieldSampler(typing.Protocol):
 
     @property
     def crs(self) -> pyproj.CRS | None:
-        """Return the sampler's CRS in case it has one."""
+        """Return the sampler's CRS in case it has one, otherwise `None`."""
         raise NotImplementedError
 
     def sample(self, xs: NDArray[np.floating], ys: NDArray[np.floating]) -> tuple[NDArray[np.floating], int]:

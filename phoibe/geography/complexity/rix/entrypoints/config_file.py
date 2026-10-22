@@ -38,7 +38,7 @@ _TOP_LEVEL_KEYS = ("project_name", "parameters")
 class RunConfiguration:
     """Everything a caller configures for one run."""
 
-    parameters: pipeline.RunParametersRunParameters
+    parameters: pipeline.RunParameters
     sampler_parameters: pipeline.SampleParameters
     project_name: str = ""
 

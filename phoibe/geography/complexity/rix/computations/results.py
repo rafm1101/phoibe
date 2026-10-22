@@ -64,15 +64,6 @@ class RayRuggedness:
     @property
     def meta(self) -> RayProfileMeta:
         """Metadata relating to `RayProfile`. Includes CRS, (resolution), out-of-bound point count, messages."""
-        # dem_meta = _get_parameter(self.profile.meta, self.keys.dem, strict=False) or {}
-        # ray_profile_meta = RayProfileMeta(
-        #     crs_ray=_get_parameter(self.profile.meta, self.keys.rays, self.keys.crs_ray, strict=False),
-        #     crs_dem=_get_parameter(dem_meta, self.keys.crs_dem, strict=False),
-        #     resolution=_get_parameter(dem_meta, self.keys.resolution_dem, strict=False),
-        #     extent=(0, 0, 0, 0),
-        #     nan_count=_get_parameter(self.profile.meta, self.keys.rays, self.keys.nan_count, strict=False),
-        #     messages=str(_get_parameter(self.profile.meta, self.keys.alignment, self.keys.message, strict=False)),
-        # )
         ray_profile_meta = RayProfileMeta(
             crs_ray=self.profile.sampling_info.crs,
             crs_dem=self.profile.sampling_info.field_info.crs,
@@ -254,36 +245,3 @@ class RadialRuggedness:
     @property
     def stats(self) -> RayProfileMeta:
         return RayProfileMeta.from_runs({key: value.profile.sampling_info for key, value in self._ray_by_angle.items()})
-
-    # def plot_polar(self, ax=None):
-    #     """Create polar plot of ruggedness values.
-
-    #     Returns
-    #     -------
-    #     tuple[Figure, Axes]
-    #         Matplotlib figure and axes.
-
-    #     Raises
-    #     ------
-    #     ImportError
-    #         If matplotlib is not installed.
-    #     """
-    #     try:
-    #         import matplotlib.pyplot as plt
-    #     except ImportError as exception:
-    #         raise ImportError("RadialRixResult.plot_polar() requires matplotlib.") from exception
-
-    #     angles_radians = np.deg2rad(np.append(self.angles, self.angles[0]))
-    #     values = self.ruggednesses
-    #     values = np.append(values, values[0])
-
-    #     if ax is None:
-    #         figure, ax = plt.subplots(subplot_kw={"projection": "polar"})
-
-    #     ax.plot(angles_radians, values)
-    #     ax.set_theta_zero_location("N")
-    #     ax.set_theta_direction(-1)
-    #     ax.set_title(f"Directional RIX (threshold={self.slope_critical:.2f})")
-    #     ax.set_ylabel("RIX")
-
-    #     return figure, ax
