@@ -20,15 +20,7 @@ import argparse
 import pathlib
 from collections.abc import Sequence
 
-from ..pipeline.errors import (
-    CheckAborted,
-    ConfigurationError,
-    ContractViolation,
-    InputRequirementError,
-    PipelineError,
-    PortError,
-)
-from ..pipeline.ports import WrittenArtifacts
+from ..pipeline import errors, ports
 from ..pipeline.results.result_summary import ResultSummary
 
 EXIT_OK = 0
@@ -85,18 +77,18 @@ def parse_args(argv: Sequence[str] | None, profiles: Sequence[str]) -> argparse.
 
 def exit_code_for(error: BaseException) -> int:
     """Exit code for an error raised by a run."""
-    if isinstance(error, (InputRequirementError, ConfigurationError, CheckAborted)):
+    if isinstance(error, (errors.InputRequirementError, errors.ConfigurationError, errors.CheckAborted)):
         return EXIT_INPUT
-    if isinstance(error, PortError):
+    if isinstance(error, errors.PortError):
         return EXIT_PORT
-    if isinstance(error, ContractViolation):
+    if isinstance(error, errors.ContractViolation):
         return EXIT_CONTRACT
-    if isinstance(error, PipelineError):
+    if isinstance(error, errors.PipelineError):
         return EXIT_INTERNAL
     return EXIT_INTERNAL
 
 
-def format_summary(result: ResultSummary, written: WrittenArtifacts, output: pathlib.Path) -> str:
+def format_summary(result: ResultSummary, written: ports.WrittenArtifacts, output: pathlib.Path) -> str:
     """Short report of a finished run for the console."""
     record = result.record
     lines = [

@@ -11,14 +11,14 @@ import pyproj
 import scipy.spatial.distance
 import xarray
 
-from ..computations import trix
-from ..computations.fieldsampler import Field, RegularGridXYSampler
+from ..computations.fieldsampler import RegularGridXYSampler
 from ..computations.results import RadialRuggedness
 from ..computations.rix import compute_regular_rix
 from ..definitions.interface import Keys
 from .product.schema import PRODUCT_SPECIFICATION
 from .product.specification import ProductSpecification
-from .results.tables import _build_rix_rose, _build_summary, _compute_trix
+
+# from .results.tables import _build_rix_rose, _build_summary, _compute_trix
 
 LOGGER = logging.getLogger(__name__)
 
@@ -135,100 +135,100 @@ class TRIXAnalyzer:
     #     """
     #     return cls(config=_load_config(path))
 
-    def run(
-        self,
-        dem: xarray.DataArray,
-        locations_site: gpd.GeoDataFrame,
-        locations_reference: gpd.GeoDataFrame | None = None,
-        dem_metadata: dict | None = None,
-        keys: Keys = KEYS,
-    ) -> ResultSummary:
-        """Run the full RIX analysis.
+    # def run(
+    #     self,
+    #     dem: xarray.DataArray,
+    #     locations_site: gpd.GeoDataFrame,
+    #     locations_reference: gpd.GeoDataFrame | None = None,
+    #     dem_metadata: dict | None = None,
+    #     keys: Keys = KEYS,
+    # ) -> ResultSummary:
+    #     """Run the full RIX analysis.
 
-        Parameters
-        ----------
-        dem
-            Digital elevation model. Must have 'x' and 'y' coordinates in the
-            same projected CRS as the locations.
-        locations_site
-            Point locations. Must have a unique index used as location_id.
-        locations_reference
-            Optional second collection for pairwise TRIX computation.
-        dem_metadata
-            Metadata of the `dem`.
-        keys
-            Column keys for output.
+    #     Parameters
+    #     ----------
+    #     dem
+    #         Digital elevation model. Must have 'x' and 'y' coordinates in the
+    #         same projected CRS as the locations.
+    #     locations_site
+    #         Point locations. Must have a unique index used as location_id.
+    #     locations_reference
+    #         Optional second collection for pairwise TRIX computation.
+    #     dem_metadata
+    #         Metadata of the `dem`.
+    #     keys
+    #         Column keys for output.
 
-        Returns
-        -------
-        ResultSummary
-            Frozen result object.
+    #     Returns
+    #     -------
+    #     ResultSummary
+    #         Frozen result object.
 
-        Raises
-        ------
-        ValueError
-            On CRS mismatch or invalid geometries.
-        """
-        locations_site = locations_site.copy()
-        if keys.site_id in locations_site.columns:
-            locations_site = locations_site.set_index(keys.site_id)
-        if locations_reference is not None:
-            locations_reference = locations_reference.copy()
-            if keys.site_id in locations_reference.columns:
-                locations_reference = locations_reference.set_index(keys.site_id)
+    #     Raises
+    #     ------
+    #     ValueError
+    #         On CRS mismatch or invalid geometries.
+    #     """
+    #     locations_site = locations_site.copy()
+    #     if keys.site_id in locations_site.columns:
+    #         locations_site = locations_site.set_index(keys.site_id)
+    #     if locations_reference is not None:
+    #         locations_reference = locations_reference.copy()
+    #         if keys.site_id in locations_reference.columns:
+    #             locations_reference = locations_reference.set_index(keys.site_id)
 
-        self._validate_inputs(
-            dem=dem, locations_site=locations_site, locations_reference=locations_reference, keys=keys
-        )
-        field = Field.from_array(da=dem, dims=("x", "y"))
-        # interpolation_method = InterpolationMethods(self._config.parameter("sampler", "interpolation_method").value)
-        interpolation_method = self._config.parameter("sampler", "interpolation_method").value
-        sampler = RegularGridXYSampler(field=field, method=interpolation_method)
+    #     self._validate_inputs(
+    #         dem=dem, locations_site=locations_site, locations_reference=locations_reference, keys=keys
+    #     )
+    #     field = Field.from_array(da=dem, dims=("x", "y"))
+    #     # interpolation_method = InterpolationMethods(self._config.parameter("sampler", "interpolation_method").value)
+    #     interpolation_method = self._config.parameter("sampler", "interpolation_method").value
+    #     sampler = RegularGridXYSampler(field=field, method=interpolation_method)
 
-        radial_rix_site = self._compute_rix_results(sampler, locations_site)
-        # steep_segments_site = self._build_steep_segments(radial_rix_site, keys=keys)
-        steep_segments_site = None
-        rix_roses = _build_rix_rose(radial_rix_site)
-        summary_site = _build_summary(
-            radial_rix_site, spec=self._config.tables["rix_table"], index_name=locations_site.index.name
-        )
+    #     radial_rix_site = self._compute_rix_results(sampler, locations_site)
+    #     # steep_segments_site = self._build_steep_segments(radial_rix_site, keys=keys)
+    #     steep_segments_site = None
+    # rix_roses = _build_rix_rose(radial_rix_site)
+    # summary_site = _build_summary(
+    #     radial_rix_site, spec=self._config.tables["rix_table"], index_name=locations_site.index.name
+    # )
 
-        trix_values, transferability, A, B, trix_table = None, None, None, None, None
-        radial_rix_reference = None
-        if locations_reference is not None:
-            radial_rix_reference = self._compute_rix_results(sampler, locations_reference)
-            summary_reference = _build_summary(
-                radial_rix_reference, spec=self._config.tables["rix_table"], index_name=locations_reference.index.name
-            )
-            trix_values, A, B = _compute_trix(summary_site, summary_reference, spec=self._config.tables["trix_table"])
-            distances = self._compute_pairwise_distances_km(
-                locations_site.geometry, locations_reference.geometry, keys=keys
-            )
-            transferability_ = trix.evaluate_transferability_limits(distances=distances.values, A=A.values, B=B.values)
-            index = locations_site.index.rename(keys.site_id)
-            columns = locations_reference.index.rename(keys.reference_id)
-            transferability = pd.DataFrame(data=transferability_, index=index, columns=columns)
-            trix_table = self._build_trix_results(
-                trix=trix_values, A=A, B=B, distances=distances, transferability=transferability, keys=keys
-            )
+    # trix_values, transferability, A, B, trix_table = None, None, None, None, None
+    # radial_rix_reference = None
+    # if locations_reference is not None:
+    #     radial_rix_reference = self._compute_rix_results(sampler, locations_reference)
+    #     summary_reference = _build_summary(
+    #         radial_rix_reference, spec=self._config.tables["rix_table"], index_name=locations_reference.index.name
+    #     )
+    #     trix_values, A, B = _compute_trix(summary_site, summary_reference, spec=self._config.tables["trix_table"])
+    #     distances = self._compute_pairwise_distances_km(
+    #         locations_site.geometry, locations_reference.geometry, keys=keys
+    #     )
+    #     transferability_ = trix.evaluate_transferability_limits(distances=distances.values, A=A.values, B=B.values)
+    #     index = locations_site.index.rename(keys.site_id)
+    #     columns = locations_reference.index.rename(keys.reference_id)
+    #     transferability = pd.DataFrame(data=transferability_, index=index, columns=columns)
+    #     trix_table = self._build_trix_results(
+    #         trix=trix_values, A=A, B=B, distances=distances, transferability=transferability, keys=keys
+    #     )
 
-        meta = self._build_meta(
-            results_site=radial_rix_site,
-            results_reference=radial_rix_reference,
-            trix_table=trix_table,
-            dem_metadata=dem_metadata,
-            keys=keys,
-        )
+    # meta = self._build_meta(
+    #     results_site=radial_rix_site,
+    #     results_reference=radial_rix_reference,
+    #     trix_table=trix_table,
+    #     dem_metadata=dem_metadata,
+    #     keys=keys,
+    # )
 
-        return ResultSummary(
-            locations_site=locations_site,
-            locations_reference=locations_reference,
-            summary=summary_site,
-            ruggedness_roses=rix_roses,
-            trix_table=trix_table,
-            steep_segments=steep_segments_site,
-            meta=meta,
-        )
+    # return ResultSummary(
+    #     locations_site=locations_site,
+    #     locations_reference=locations_reference,
+    #     summary=summary_site,
+    #     ruggedness_roses=rix_roses,
+    #     trix_table=trix_table,
+    #     steep_segments=steep_segments_site,
+    #     meta=meta,
+    # )
 
     def _validate_inputs(
         self,

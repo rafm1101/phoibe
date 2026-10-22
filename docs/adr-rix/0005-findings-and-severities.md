@@ -20,7 +20,7 @@ Checks:
 - `centre_elevation`
 - `locked_parameter_changed`
 
-. Severities as defined in the product definition.
+Severities as defined in the product definition.
 
 NaN handling: `nan_policy` is fixed to `mask`. A transfer that cannot be established, because the distance or a limit is NaN, is classified 0 (no transfer), never "unconditional". The NaN stays visible in the columns `trix`, `A`, `B`.
 

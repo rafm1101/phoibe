@@ -11,14 +11,14 @@ The product is computation-heavy. Real boundaries exist only where data comes in
 Hexagonal architecture in proportion, layers:
 
 - `computations`
-- `pipelines` (use case)
+- `pipeline` (use case)
 - `adapters`
 - `entrypoints`
-- `main.py` as composition root. 
+- `main.py` as composition root.
 
 A port exists only at a real boundary; today that is the result writer. The field input has no port (ADR 0002).
 
-Inside `pipelines`, packages are cut by job: 
+Inside `pipelines`, packages are cut by job:
 
 - `product` (what the product is)
 - `checks` (findings and inputs)

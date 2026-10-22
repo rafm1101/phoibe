@@ -7,44 +7,34 @@ when the analyzer is created, and reports everything that is missing at the same
 
 from __future__ import annotations
 
-from ..computations.checks import (
-    CENTRE_ELEVATION,
-    CRS_SITE_VS_REFERENCE,
-    CRS_VS_CONFIG,
-    N_ANGLE,
-    NAN_COUNT,
-    UNIQUE_IDS,
-)
-from .checks.findings import LOCKED_PARAMETER_CHANGED
-from .checks.inputs import DEM, LOCATIONS_REFERENCE, LOCATIONS_SITE
-from .product.specification import ProductSpecification, SpecificationError
-from .results.tables import (
-    LOCATIONS_REFERENCE_TABLE,
-    LOCATIONS_SITE_TABLE,
-    RIX_TABLE,
-    RUGGEDNESS_TABLE,
-    TRIX_TABLE,
-)
+from .. import computations
+from . import checks, product, results
 
 REQUIRED_CHECKS = (
-    N_ANGLE,
-    NAN_COUNT,
-    CENTRE_ELEVATION,
-    CRS_SITE_VS_REFERENCE,
-    CRS_VS_CONFIG,
-    UNIQUE_IDS,
-    LOCKED_PARAMETER_CHANGED,
+    computations.checks.N_ANGLE,
+    computations.checks.NAN_COUNT,
+    computations.checks.CENTRE_ELEVATION,
+    computations.checks.CRS_SITE_VS_REFERENCE,
+    computations.checks.CRS_VS_CONFIG,
+    computations.checks.UNIQUE_IDS,
+    checks.LOCKED_PARAMETER_CHANGED,
 )
 """Checks whose findings the pipeline can raise. Each needs a severity in `checks`."""
 
 REQUIRED_FIXED_PARAMETERS = (("trix", "decimals"), ("sampler", "nan_policy"))
 """Parameters (group, name) the code takes from the specification instead of a literal. They must be locked."""
 
-REQUIRED_TABLES = (RIX_TABLE, TRIX_TABLE, LOCATIONS_SITE_TABLE, LOCATIONS_REFERENCE_TABLE, RUGGEDNESS_TABLE)
-REQUIRED_INPUTS = (DEM, LOCATIONS_SITE, LOCATIONS_REFERENCE)
+REQUIRED_TABLES = (
+    results.RIX_TABLE,
+    results.TRIX_TABLE,
+    results.LOCATIONS_SITE_TABLE,
+    results.LOCATIONS_REFERENCE_TABLE,
+    results.RUGGEDNESS_TABLE,
+)
+REQUIRED_INPUTS = (checks.DEM, checks.LOCATIONS_SITE, checks.LOCATIONS_REFERENCE)
 
 
-def specification_problems(spec: ProductSpecification) -> list[str]:
+def specification_problems(spec: product.ProductSpecification) -> list[str]:
     """Everything the pipeline needs but the specification does not define."""
     problems = [
         f"check {name!r} is raised by the pipeline but not defined in 'checks'."
@@ -71,8 +61,8 @@ def specification_problems(spec: ProductSpecification) -> list[str]:
     return problems
 
 
-def check_specification_complete(spec: ProductSpecification) -> None:
+def check_specification_complete(spec: product.ProductSpecification) -> None:
     """Raise `SpecificationError` listing everything the pipeline needs but the specification lacks."""
     problems = specification_problems(spec)
     if problems:
-        raise SpecificationError(problems)
+        raise product.SpecificationError(problems)

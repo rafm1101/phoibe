@@ -11,8 +11,7 @@ Some parameters define what the numbers mean (TR6), some are free choices of the
 Every parameter is defined in the product definition with default, type, optional range, optional source and `locked`.
 
 - Locked and settable (`n_angles`, `R_km`, `slope_critical`): a deviation is allowed, the run reports the finding `locked_parameter_changed` and records the values.
-- Fixed in the product, not settable (`trix.decimals`, `sampler.nan_policy`): code reads them with `fixed_parameter`, the configuration file rejects them. 
-  TODO: state the source of `nan_policy` as defined (a reference `implementation` where TR6 does not prescribe it).
+- Fixed in the product, not settable (`trix.decimals`, `sampler.nan_policy`): code reads them with `fixed_parameter`, the configuration file rejects them.
 - Free (`dr_km`, `crs`, `interpolation_method`): defaults from the definition, set in the configuration file.
 
 The contract lists the values of locked parameters. The run record lists every value used.

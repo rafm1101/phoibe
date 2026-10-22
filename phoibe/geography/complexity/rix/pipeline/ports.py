@@ -10,7 +10,7 @@ import os
 import typing
 from collections.abc import Mapping
 
-from .results.result_summary import ResultSummary
+from . import results
 
 Target = str | os.PathLike[str]
 """Where artifacts are written, e.g. a directory."""
@@ -49,7 +49,7 @@ class ResultWriter(typing.Protocol):
     - `write_manifest` is called last. It writes the given content and makes no decisions about it.
     """
 
-    def write_artifacts(self, result: ResultSummary, target: Target, profile: str) -> WrittenArtifacts:
+    def write_artifacts(self, result: results.ResultSummary, target: Target, profile: str) -> WrittenArtifacts:
         """Write all data files of `profile`. Return what was written."""
         ...
 

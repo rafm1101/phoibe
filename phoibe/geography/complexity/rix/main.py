@@ -28,11 +28,7 @@ from collections.abc import Sequence
 
 import yaml
 
-from .adapters.dem_reader import read_field
-from .adapters.locations_reader import read_locations
-from .adapters.writer import FileResultWriter
-from .entrypoints import cli
-from .entrypoints.config_file import RunConfiguration, default_configuration, load_configuration
+from . import adapters, entrypoints
 from .pipeline.analyzer import TRIXAnalyzer
 from .pipeline.errors import PipelineError
 from .pipeline.ports import ResultWriter
@@ -40,13 +36,13 @@ from .pipeline.product.schema import PRODUCT_SPECIFICATION
 from .pipeline.product.specification import ProductSpecification
 from .pipeline.publishing.contract import render_contract
 
-__all__ = ["build_analyzer", "main", "read_field", "read_locations"]
+# __all__ = ["build_analyzer", "main", "read_field", "read_locations"]
 
 LOGGER = logging.getLogger(__name__)
 
 
 def build_analyzer(
-    configuration: RunConfiguration | None = None,
+    configuration: entrypoints.RunConfiguration | None = None,
     *,
     spec: ProductSpecification = PRODUCT_SPECIFICATION,
     writer: ResultWriter | None = None,
@@ -62,19 +58,19 @@ def build_analyzer(
     writer
         Where results are published. Defaults to writing files into a local directory.
     """
-    configuration = configuration or default_configuration(spec)
+    configuration = configuration or entrypoints.default_configuration(spec)
     return TRIXAnalyzer(
         spec=spec,
         parameters=configuration.parameters,
         sampler_parameters=configuration.sampler_parameters,
-        writer=writer or FileResultWriter(spec),
+        writer=writer or adapters.FileResultWriter(spec),
     )
 
 
 def main(argv: Sequence[str] | None = None, *, spec: ProductSpecification = PRODUCT_SPECIFICATION) -> int:
     """Run the command line and return the exit code."""
     try:
-        arguments = cli.parse_args(argv, profiles=list(spec.profiles))
+        arguments = entrypoints.cli.parse_args(argv, profiles=list(spec.profiles))
     except SystemExit as stop:  # argparse: invalid usage (2) or --help (0)
         return int(stop.code or 0)
 
@@ -88,22 +84,28 @@ def main(argv: Sequence[str] | None = None, *, spec: ProductSpecification = PROD
         return _run(arguments, spec)
     except PipelineError as error:
         LOGGER.error("%s", error)
-        return cli.exit_code_for(error)
+        return entrypoints.cli.exit_code_for(error)
     except Exception:
         LOGGER.exception("Unexpected error")
-        return cli.EXIT_INTERNAL
+        return entrypoints.cli.EXIT_INTERNAL
 
 
 def _run(arguments, spec: ProductSpecification) -> int:
-    configuration = load_configuration(arguments.config, spec) if arguments.config else default_configuration(spec)
+    configuration = (
+        entrypoints.load_configuration(arguments.config, spec)
+        if arguments.config
+        else entrypoints.default_configuration(spec)
+    )
     if arguments.project_name is not None:
         configuration = dataclasses.replace(configuration, project_name=arguments.project_name)
 
     analyzer = build_analyzer(configuration, spec=spec)
-    field = read_field(arguments.dem)
-    sites = read_locations(arguments.sites, layer=arguments.sites_layer)
+    field = adapters.read_field(arguments.dem)
+    sites = adapters.read_locations(arguments.sites, layer=arguments.sites_layer)
     references = (
-        None if arguments.references is None else read_locations(arguments.references, layer=arguments.references_layer)
+        None
+        if arguments.references is None
+        else adapters.read_locations(arguments.references, layer=arguments.references_layer)
     )
     result = analyzer.run(
         field,
@@ -114,8 +116,8 @@ def _run(arguments, spec: ProductSpecification) -> int:
         include_steep_segments=arguments.profile == "full",
     )
     written = analyzer.publish(result, arguments.output, arguments.profile)
-    print(cli.format_summary(result, written, arguments.output))
-    return cli.EXIT_OK
+    print(entrypoints.cli.format_summary(result, written, arguments.output))
+    return entrypoints.cli.EXIT_OK
 
 
 def _contract(arguments, spec: ProductSpecification) -> int:
@@ -124,7 +126,7 @@ def _contract(arguments, spec: ProductSpecification) -> int:
         sys.stdout.write(text)
     else:
         arguments.output.write_text(text, encoding="utf-8")
-    return cli.EXIT_OK
+    return entrypoints.cli.EXIT_OK
 
 
 if __name__ == "__main__":

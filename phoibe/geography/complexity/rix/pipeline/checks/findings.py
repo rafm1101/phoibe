@@ -10,7 +10,6 @@ import dataclasses
 import logging
 import math
 import typing
-import warnings
 from collections.abc import Hashable, Iterable, Mapping, Sequence
 
 from ...computations.checks import (
@@ -22,7 +21,7 @@ from ...computations.checks import (
     n_angle_findings,
     nan_findings,
 )
-from ..errors import CheckAborted
+from .. import errors
 from ..product.specification import ProductSpecification, Severity
 
 if typing.TYPE_CHECKING:
@@ -85,7 +84,6 @@ def location_findings(
     return tuple(located)
 
 
-@warnings.deprecated("Formerly known as `parameter_findings`.")
 def locked_parameter_findings(
     spec: ProductSpecification, values: Mapping[str, typing.Any]
 ) -> tuple[LocatedFinding, ...]:
@@ -119,7 +117,7 @@ def raise_on_abort(findings: Sequence[LocatedFinding]) -> None:
     """Stop the run if any finding has severity "abort"."""
     aborting = [item for item in findings if item.severity == "abort"]
     if aborting:
-        raise CheckAborted(aborting)
+        raise errors.CheckAborted(aborting)
 
 
 def log_findings(findings: Iterable[LocatedFinding], logger: logging.Logger = LOGGER) -> None:
