@@ -22,12 +22,12 @@ from collections.abc import Callable, Hashable
 
 import numpy as np
 import pandas as pd
+import pipeline
 
 from ..computations.fieldsampler import Field, RegularGridXYSampler
 from ..computations.results import RadialRuggedness
 from ..computations.rix import compute_regular_rix
 from ..computations.trix import assess_transferability
-from ..definitions.config import RunParameters, SampleParameters
 from .checks.findings import (
     location_findings,
     locked_parameter_findings,
@@ -87,8 +87,8 @@ class TRIXAnalyzer:
     def __init__(
         self,
         spec: ProductSpecification,
-        parameters: RunParameters,
-        sampler_parameters: SampleParameters,
+        parameters: pipeline.RunParameters,
+        sampler_parameters: pipeline.SampleParameters,
         writer: ResultWriter | None = None,
         clock: Callable[[], datetime.datetime] = _utc_now,
     ) -> None:

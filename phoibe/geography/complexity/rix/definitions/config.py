@@ -13,10 +13,15 @@ class RunParameters:
     """Run parameters for the analyzer."""
 
     n_angles: int
+    """Number of angles for which rays are assessed."""
     R_km: float
+    """Radius of the circle where RIX is computed."""
     dr_km: float
+    """Stepsize along each ray."""
     slope_critical: float
+    """Slope threshold for a step to be considered steep."""
     crs: str | None
+    """CRS of the given sites."""
 
     def __post_init__(self):
         if not 0 < self.dr_km < self.R_km:

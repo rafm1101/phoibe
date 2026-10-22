@@ -1,9 +1,10 @@
+from .manifest_definition import MANIFEST_DEFINITION
 from .specification import ProductSpecification
 
 PRODUCT_DEFINITION_TRIX = {
     "name": "T-RIX assessment",
     "description": "TRIX, TR6 Rev.12",
-    "version": "1.1",
+    "version": "2.0.0",
     "references": {
         "TR6": {
             "title": "Technische Richtlinien für Windenergieanlagen, "
@@ -217,47 +218,48 @@ PRODUCT_DEFINITION_TRIX = {
             },
         },
     },
-    "manifest": {
-        "description": "Run manifest: metadata, config, artifact references, field definitions",
-        "keys": {
-            "project_name": {"name": "project_name", "description": "Project name if provided."},
-            "meta": {"name": "meta", "description": "What is processed."},
-            "parameters": {"name": "parameters", "description": "Configuration of the analysis."},
-            "spatial_context": {"name": "spatial_context", "description": "Context about data sources."},
-            "run": {
-                "name": "run",
-                "description": "Context about the run: What has been evaluated and computed, summary statistics.",
-                "keys": {
-                    "n_sites": {"name": "n_sites", "description": "Number of assessed sites."},
-                    "n_references": {"name": "n_references", "description": "Number of reference sites."},
-                    "computed": {
-                        "name": "computed",
-                        "description": "What has been computed.",
-                        "values": {
-                            "rix_site": "RIX at assessed sites",
-                            "rix_reference": "RIX at reference sites",
-                            "trix": "T-RIX and distances",
-                        },
-                    },
-                    "diagnostics": {
-                        "name": "diagnostics",
-                        "description": "Summary statistics about the results.",
-                        "keys": {
-                            "n_sites_with_nans": {
-                                "name": "n_sites_with_nans",
-                                "description": "Number of assessed sites that experienced NaN in their rays.",
-                            },
-                            "transferability_counts": {
-                                "name": "transferability_counts",
-                                "description": "Number of pairs for each transferability state.",
-                            },
-                        },
-                    },
-                },
-            },
-            "artifacts": {"name": "artifacts", "description": "Output files."},
-        },
-    },
+    "manifest": MANIFEST_DEFINITION,
+    # {
+    #     "description": "Run manifest: metadata, config, artifact references, field definitions",
+    #     "keys": {
+    #         "project_name": {"name": "project_name", "description": "Project name if provided."},
+    #         "meta": {"name": "meta", "description": "What is processed."},
+    #         "parameters": {"name": "parameters", "description": "Configuration of the analysis."},
+    #         "spatial_context": {"name": "spatial_context", "description": "Context about data sources."},
+    #         "run": {
+    #             "name": "run",
+    #             "description": "Context about the run: What has been evaluated and computed, summary statistics.",
+    #             "keys": {
+    #                 "n_sites": {"name": "n_sites", "description": "Number of assessed sites."},
+    #                 "n_references": {"name": "n_references", "description": "Number of reference sites."},
+    #                 "computed": {
+    #                     "name": "computed",
+    #                     "description": "What has been computed.",
+    #                     "values": {
+    #                         "rix_site": "RIX at assessed sites",
+    #                         "rix_reference": "RIX at reference sites",
+    #                         "trix": "T-RIX and distances",
+    #                     },
+    #                 },
+    #                 "diagnostics": {
+    #                     "name": "diagnostics",
+    #                     "description": "Summary statistics about the results.",
+    #                     "keys": {
+    #                         "n_sites_with_nans": {
+    #                             "name": "n_sites_with_nans",
+    #                             "description": "Number of assessed sites that experienced NaN in their rays.",
+    #                         },
+    #                         "transferability_counts": {
+    #                             "name": "transferability_counts",
+    #                             "description": "Number of pairs for each transferability state.",
+    #                         },
+    #                     },
+    #                 },
+    #             },
+    #         },
+    #         "artifacts": {"name": "artifacts", "description": "Output files."},
+    #     },
+    # },
     "tables": {
         "rix_table": {
             "description": "Table of the RIX and elevation values, and summary statistics thereof.",

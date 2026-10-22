@@ -467,7 +467,7 @@ class TRIXAnalyzer:
     #         rix_site=np.array(summary_site[keys.rix]),
     #         elevation_site=np.array(summary_site[keys.elevation]),
     #         rix_reference=np.array(summary_reference[keys.rix]),
-    #         elevation_wind=np.array(summary_reference[keys.elevation]),
+    #         elevation_reference=np.array(summary_reference[keys.elevation]),
     #     )
     #     index = summary_site.index.rename(keys.site_id)
     #     columns = summary_reference.index.rename(keys.reference_id)

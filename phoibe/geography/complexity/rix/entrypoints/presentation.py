@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 from ..computations.results import RadialRuggedness
@@ -26,6 +28,7 @@ def to_dataframe(radial_ruggedness: RadialRuggedness):
     return pd.DataFrame(records)
 
 
+@warnings.deprecated("`presentation.steep_segments_geodataframe` possibly outdated.")
 def steep_segments_geodataframe(radial_ruggedness: RadialRuggedness):
     """Generate a GeoDataFrame holding all steep segments.
 

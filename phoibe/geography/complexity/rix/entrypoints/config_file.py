@@ -26,7 +26,8 @@ from collections.abc import Mapping
 
 import yaml
 
-from ..definitions.config import ANALYZER_DEFAULTS, AnalyzerConfig, RunParameters, SampleParameters
+from .. import pipeline
+from ..definitions.config import ANALYZER_DEFAULTS, AnalyzerConfig
 from ..pipeline.errors import ConfigurationError
 from ..pipeline.product.specification import ParameterSpecification, ProductSpecification
 
@@ -37,8 +38,8 @@ _TOP_LEVEL_KEYS = ("project_name", "parameters")
 class RunConfiguration:
     """Everything a caller configures for one run."""
 
-    parameters: RunParameters
-    sampler_parameters: SampleParameters
+    parameters: pipeline.RunParametersRunParameters
+    sampler_parameters: pipeline.SampleParameters
     project_name: str = ""
 
 
@@ -78,7 +79,9 @@ def load_configuration(
         raise ConfigurationError("parameters must be a mapping of parameter name to value.")
 
     by_name = {parameter.name: parameter for parameter in spec.parameters}
-    settable = [field.name for cls in (RunParameters, SampleParameters) for field in dataclasses.fields(cls)]
+    settable = [
+        field.name for cls in (pipeline.RunParameters, pipeline.SampleParameters) for field in dataclasses.fields(cls)
+    ]
 
     problems = []
     for name in supplied:
@@ -93,8 +96,12 @@ def load_configuration(
         name: _checked(by_name[name], supplied[name] if name in supplied else by_name[name].value) for name in settable
     }
     try:
-        parameters = RunParameters(**{field.name: values[field.name] for field in dataclasses.fields(RunParameters)})
-        sampler = SampleParameters(**{field.name: values[field.name] for field in dataclasses.fields(SampleParameters)})
+        parameters = pipeline.RunParameters(
+            **{field.name: values[field.name] for field in dataclasses.fields(pipeline.RunParameters)}
+        )
+        sampler = pipeline.SampleParameters(
+            **{field.name: values[field.name] for field in dataclasses.fields(pipeline.SampleParameters)}
+        )
     except ValueError as error:
         raise ConfigurationError(str(error)) from error
     return RunConfiguration(parameters=parameters, sampler_parameters=sampler, project_name=project_name)
@@ -179,7 +186,7 @@ def load_config(path: str | pathlib.Path) -> AnalyzerConfig:
         name=ANALYZER_DEFAULTS.name,
         version=ANALYZER_DEFAULTS.version,
         description=ANALYZER_DEFAULTS.description,
-        parameters=RunParameters(**merged_parameters),
+        parameters=pipeline.RunParameters(**merged_parameters),
         sampler=ANALYZER_DEFAULTS.sampler,
     )
     _validate_config(config)

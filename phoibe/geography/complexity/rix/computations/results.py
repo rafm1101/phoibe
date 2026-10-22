@@ -22,6 +22,7 @@ class RayProfileMeta:
     resolution: tuple[float, float] | None
     """Resolution of the DEM (dx, dy), if known."""
     extent: tuple[float, float, float, float] | None
+    """Extent of the field's slice."""
     nan_count: int | None
     """Number of ray points that are NaN after sampling (out-of-bounds or data gaps)."""
     messages: str | list[str]

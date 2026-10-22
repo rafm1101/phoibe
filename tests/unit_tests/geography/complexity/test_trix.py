@@ -16,9 +16,9 @@ class TestComputeTrix:
         rix_site = [0.0, 1.0]
         elevation_site = [100.0, 200.0]
         rix_reference = [0.5]
-        elevation_wind = [150.0]
+        elevation_reference = [150.0]
 
-        result = compute_trix(rix_site, elevation_site, rix_reference, elevation_wind)
+        result = compute_trix(rix_site, elevation_site, rix_reference, elevation_reference)
 
         expected_table = np.array([[27.5], [72.5]])
         assert result.shape == (2, 1)
@@ -41,9 +41,9 @@ class TestComputeTrix:
         rix_site = [0.1, 0.2, 0.3]
         elevation_site = [10.0, 20.0, 30.0]
         rix_reference = [0.4, 0.5]
-        elevation_wind = [40.0, 50.0]
+        elevation_reference = [40.0, 50.0]
 
-        result = compute_trix(rix_site, elevation_site, rix_reference, elevation_wind)
+        result = compute_trix(rix_site, elevation_site, rix_reference, elevation_reference)
         assert result.shape == (3, 2)
 
 

@@ -1,9 +1,9 @@
 import typing
 
+from phoibe.geography.complexity.rix.computations import INTERPOLATION_METHODS
 from phoibe.geography.complexity.rix.definitions.config import (
     ANALYZER_DEFAULTS,
     COPDEM_METADATA,
-    INTERPOLATION_METHODS,
     WRITER_DEFAULTS,
 )
 from phoibe.geography.complexity.rix.pipeline.product.schema import PRODUCT_DEFINITION_TRIX

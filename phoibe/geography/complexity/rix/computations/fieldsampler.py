@@ -8,9 +8,9 @@ import scipy.interpolate
 import xarray
 from numpy.typing import NDArray
 
-from ..definitions.config import INTERPOLATION_METHODS
-
 LOGGER = logging.getLogger(__name__)
+
+INTERPOLATION_METHODS = typing.Literal["linear", "nearest"]
 
 
 @dataclasses.dataclass(frozen=True)

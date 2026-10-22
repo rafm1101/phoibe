@@ -34,7 +34,7 @@ def rix_table(spec: ProductSpecification, results: Mapping[Hashable, RadialRugge
     ruggedness = [radial_rug.ruggednesses for radial_rug in radial_rugs]
     quantities = {
         "elevation": [z_mean for z_mean in zs],
-        "rix": [radial.rix for radial in radial_rugs],
+        "rix": [radial_rug.rix for radial_rug in radial_rugs],
         "rix_std": [float(np.std(values)) for values in ruggedness],
         "rix_min": [float(np.min(values)) for values in ruggedness],
         "rix_max": [float(np.max(values)) for values in ruggedness],
@@ -196,7 +196,7 @@ def _build_summary(
                 spec.column("site_id").name: location_id,
                 spec.column("elevation").name: radial_rix.z,
                 spec.column("rix").name: radial_rix.rix,
-                spec.column("rix_std").name: description[spec.column("rix_std").name],
+                # spec.column("rix_std").name: description[spec.column("rix_std").name],
                 spec.column("rix_min").name: description[spec.column("rix_min").name],
                 spec.column("rix_max").name: description[spec.column("rix_max").name],
                 spec.column("n_rays").name: radial_rix.n_rays,
@@ -224,7 +224,7 @@ def _compute_trix(
         rix_site=np.array(summary_site[spec.column("rix").name]),
         elevation_site=np.array(summary_site[spec.column("elevation").name]),
         rix_reference=np.array(summary_reference[spec.column("rix").name]),
-        elevation_wind=np.array(summary_reference[spec.column("elevation").name]),
+        elevation_reference=np.array(summary_reference[spec.column("elevation").name]),
     )
     index = summary_site.index.rename(spec.column("site_id").name)
     columns = summary_reference.index.rename(spec.column("reference_id").name)
