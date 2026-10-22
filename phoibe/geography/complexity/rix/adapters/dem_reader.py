@@ -1,7 +1,9 @@
-"""Inbound adapter: read a digital elevation model from a GeoTIFF into a `Field`.
+"""Inbound adapter: Read a digital elevation model from a GeoTIFF into a `Field`.
 
-The DEM is loaded completely: the domain must not hold lazy arrays (DP4). Cutting a window out of the partitioned
-source data (1° x 1° patches) is a different project; this adapter takes what it is given.
+The DEM is loaded completely: The domain must not hold lazy arrays (DP4).
+
+Upcoming: Cutting a window out of the partitioned source data (1° x 1° patches) is a follow-up.
+This adapter takes what it is given.
 
 `rioxarray` is an optional dependency and imported on use (C4).
 """
@@ -52,7 +54,8 @@ def read_field(path: str | os.PathLike[str], *, band: int = 1) -> Field:
         raise
     except (OSError, KeyError, ValueError) as error:
         raise PortError(f"Could not read a DEM from {path}: {error}") from error
-    except Exception as error:  # rasterio raises its own hierarchy (RasterioIOError, CRSError, ...)
+    except Exception as error:
+        # rasterio raises its own hierarchy (RasterioIOError, CRSError, ...)
         if type(error).__module__.startswith("rasterio"):
             raise PortError(f"Could not read a DEM from {path}: {error}") from error
         raise

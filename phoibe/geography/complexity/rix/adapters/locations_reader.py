@@ -1,6 +1,6 @@
-"""Inbound adapter: read point locations (sites or reference locations) from a vector file.
+"""Inbound adapter: Read point locations (sites or reference locations) from a vector file.
 
-Simple version: whatever geopandas reads (GeoPackage, GeoJSON, Shapefile, ...). The identifier column and the CRS are
+Simple version: Whatever geopandas reads (GeoPackage, GeoJSON, Shapefile, ...). The identifier column and the CRS are
 taken as they are; the use case normalises the identifier and reports CRS problems as findings.
 """
 
