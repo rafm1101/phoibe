@@ -95,7 +95,7 @@ def centre_elevation_findings(radial: RadialRuggedness, atol: float = 1e-6) -> t
         Reported anomalies raywise.
     """
     thetas = [ray.theta for ray in radial.rays]
-    z0 = np.array([ray.profile.z if len(ray.profile.z) else np.nan for ray in radial.rays], dtype=float)
+    z0 = np.array([ray.profile.z[0] if len(ray.profile.z) else np.nan for ray in radial.rays], dtype=float)
     finite = np.isfinite(z0)
     if not finite.any():
         return ()

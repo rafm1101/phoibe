@@ -44,7 +44,7 @@ def steep_segments_geodataframe(
     return tables.steep_segments(spec, {location_id: radial})
 
 
-def plot_polar(radial: RadialRuggedness, ax=None):
+def plot_polar(radial: pd.Series, label=None, slope_critical=None, ax=None):
     """Polar plot of the ruggedness over the ray directions.
 
     Returns
@@ -62,15 +62,15 @@ def plot_polar(radial: RadialRuggedness, ax=None):
     except ImportError as error:
         raise ImportError("plot_polar() requires matplotlib.") from error
 
-    angles = np.deg2rad(np.append(radial.angles, radial.angles[0]))
-    values = np.append(radial.ruggednesses, radial.ruggednesses[0])
+    angles = np.deg2rad(np.append(radial.index, radial.index[0]))
+    values = np.append(radial, radial[0])
     if ax is None:
         figure, ax = plt.subplots(subplot_kw={"projection": "polar"})
     else:
         figure = ax.figure
-    ax.plot(angles, values)
+    ax.plot(angles, values, label=label, linewidth=0.7)
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
-    ax.set_title(f"Directional RIX (threshold={radial.slope_critical:.3f})")
+    ax.set_title(f"Directional RIX (threshold={slope_critical:.3f})")
     ax.set_ylabel("RIX")
     return figure, ax

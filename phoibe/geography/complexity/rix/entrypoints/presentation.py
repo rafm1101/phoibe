@@ -101,7 +101,7 @@ def steep_segments_geodataframe(radial_ruggedness: RadialRuggedness):
 #     return steep_segments
 
 
-def plot_polar(radial_ruggedness: RadialRuggedness, ax=None):
+def plot_polar(radial_ruggedness: RadialRuggedness, label=None, ax=None):
     """Create polar plot of ruggedness values.
 
     Returns
@@ -126,7 +126,7 @@ def plot_polar(radial_ruggedness: RadialRuggedness, ax=None):
     if ax is None:
         figure, ax = plt.subplots(subplot_kw={"projection": "polar"})
 
-    ax.plot(angles_radians, values)
+    ax.plot(angles_radians, values, label=label)
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
     ax.set_title(f"Directional RIX (threshold={radial_ruggedness.slope_critical:.2f})")

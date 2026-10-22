@@ -55,7 +55,7 @@ PRODUCT_DEFINITION_TRIX = {
                 "description": "Sampling step size along a ray.",
                 "unit": "km",
                 "value": 0.05,
-                "range": [0.001, 3.5],
+                "range": [0.00001, 3.5],
             },
             "crs": {
                 "description": "CRS for validation against data source CRS. To be set by the user.",
@@ -274,11 +274,11 @@ PRODUCT_DEFINITION_TRIX = {
                     "description": "Site elevation as determined from the DEM. Mean of the origins of all rays.",
                     "unit": "m",
                 },
-                "elevation_std": {
-                    "name": "elevation_std",
-                    "description": "Standard deviation of `elevation`.",
-                    "unit": "m",
-                },
+                # "elevation_std": {
+                #     "name": "elevation_std",
+                #     "description": "Standard deviation of `elevation`.",
+                #     "unit": "m",
+                # },
                 "rix": {
                     "name": "rix",
                     "description": "Mean ruggedness index across all ray directions. "

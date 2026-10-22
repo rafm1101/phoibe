@@ -32,8 +32,7 @@ from . import adapters, entrypoints
 from .pipeline.analyzer import TRIXAnalyzer
 from .pipeline.errors import PipelineError
 from .pipeline.ports import ResultWriter
-from .pipeline.product.schema import PRODUCT_SPECIFICATION
-from .pipeline.product.specification import ProductSpecification
+from .pipeline.product import PRODUCT_SPECIFICATION, ProductSpecification
 from .pipeline.publishing.contract import render_contract
 
 # __all__ = ["build_analyzer", "main", "read_field", "read_locations"]
