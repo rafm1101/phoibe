@@ -23,6 +23,7 @@ if typing.TYPE_CHECKING:
 
 N_ANGLE = "n_angle"
 NAN_COUNT = "nan_count"
+RIX_NAN = "rix_nan"
 CENTRE_ELEVATION = "centre_elevation"
 CRS_SITE_VS_REFERENCE = "crs_site_vs_reference"
 CRS_VS_CONFIG = "crs_vs_config"
@@ -108,6 +109,26 @@ def centre_elevation_findings(radial: RadialRuggedness, atol: float = 1e-6) -> t
         )
         for theta, z, valid in zip(thetas, z0, finite, strict=True)
         if valid and abs(z - reference) > atol
+    )
+
+
+def rix_findings(radial: RadialRuggedness) -> tuple[Finding, ...]:
+    """The RIX of a location is NaN, once per location.
+
+    A ray without a segment (a profile of fewer than two points) has no ruggedness. One such ray makes the RIX of the
+    location NaN, and with it TRIX; a transfer is then classified as not possible. The directions of the affected
+    rays are listed in the detail.
+    """
+    thetas = [ray.theta for ray in radial.rays if np.isnan(ray.ruggedness)]
+    if not thetas:
+        return ()
+    shown = ", ".join(f"{theta:g}°" for theta in thetas[:5]) + (", ..." if len(thetas) > 5 else "")
+    return (
+        Finding(
+            RIX_NAN,
+            f"RIX is NaN: {len(thetas)} of {len(radial.rays)} rays have no segment (theta: {shown}). "
+            "TRIX and the transferability cannot be established.",
+        ),
     )
 
 

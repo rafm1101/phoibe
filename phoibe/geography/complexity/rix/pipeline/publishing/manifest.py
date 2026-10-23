@@ -119,7 +119,8 @@ def build_manifest(spec: ProductSpecification, record: RunRecord, written: Writt
             "layer_records": dict(written.layer_records),
         },
     }
-    return _plain(manifest)
+    plain: dict[str, typing.Any] = _plain(manifest)
+    return plain
 
 
 def _parameters_used(spec: ProductSpecification, values: Mapping[str, typing.Any]) -> dict[str, dict[str, typing.Any]]:

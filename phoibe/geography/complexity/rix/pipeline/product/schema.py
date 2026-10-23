@@ -170,6 +170,10 @@ PRODUCT_DEFINITION_TRIX = {
             "severity": "warn",
             "parameters": {"max_fraction": 0.05},
         },
+        "rix_nan": {
+            "description": "The RIX of a site is NaN, so TRIX cannot be established.",
+            "severity": "warn",
+        },
         "n_angle": {
             "description": "Number of angles for the assessment.",
             "severity": "abort",

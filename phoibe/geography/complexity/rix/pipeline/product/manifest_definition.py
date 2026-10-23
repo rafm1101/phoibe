@@ -33,7 +33,8 @@ MANIFEST_DEFINITION = {
                     "keys": {
                         "crs": {"description": "CRS of the DEM. Null if the DEM carries none."},
                         "extent": {
-                            "description": "Extent of the DEM. Null if the DEM carries no georeferencing.",
+                            "description": "Extent of the DEM. Null if the DEM carries no georeferencing."
+                            "(no `rio` accessor)",
                             "keys": {
                                 "west": {"description": "Left edge."},
                                 "south": {"description": "Bottom edge."},
@@ -42,7 +43,8 @@ MANIFEST_DEFINITION = {
                             },
                         },
                         "resolution": {
-                            "description": "Cell size of the DEM. Null if the DEM carries no georeferencing.",
+                            "description": "Cell size of the DEM. Null if the DEM carries no georeferencing."
+                            "(no `rio` accessor)",
                             "keys": {
                                 "dx": {"description": "Cell size in x direction."},
                                 "dy": {"description": "Cell size in y direction. Negative if y decreases with row."},

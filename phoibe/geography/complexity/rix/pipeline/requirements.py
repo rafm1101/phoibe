@@ -13,6 +13,7 @@ from . import checks, product, results
 REQUIRED_CHECKS = (
     computations.checks.N_ANGLE,
     computations.checks.NAN_COUNT,
+    computations.checks.RIX_NAN,
     computations.checks.CENTRE_ELEVATION,
     computations.checks.CRS_SITE_VS_REFERENCE,
     computations.checks.CRS_VS_CONFIG,

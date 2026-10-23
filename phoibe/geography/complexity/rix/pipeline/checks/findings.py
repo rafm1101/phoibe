@@ -20,6 +20,7 @@ from ...computations.checks import (
     centre_elevation_findings,
     n_angle_findings,
     nan_findings,
+    rix_findings,
 )
 from .. import errors
 from ..product.specification import ProductSpecification, Severity
@@ -79,7 +80,11 @@ def location_findings(
     atol = check_parameter(spec, CENTRE_ELEVATION, "atol", 1e-6)
     located: list[LocatedFinding] = []
     for location_id, radial in results.items():
-        found = (*nan_findings(radial, max_fraction=max_fraction), *centre_elevation_findings(radial, atol=atol))
+        found = (
+            *nan_findings(radial, max_fraction=max_fraction),
+            *rix_findings(radial),
+            *centre_elevation_findings(radial, atol=atol),
+        )
         located.extend(locate(spec, found, collection=collection, location_id=location_id))
     return tuple(located)
 
