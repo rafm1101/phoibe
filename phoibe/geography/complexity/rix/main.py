@@ -21,6 +21,7 @@ Entry point for installation: ``trix = ".main:main"`` in ``[project.scripts]``.
 
 from __future__ import annotations
 
+import argparse
 import dataclasses
 import logging
 import sys
@@ -89,7 +90,7 @@ def main(argv: Sequence[str] | None = None, *, spec: ProductSpecification = PROD
         return entrypoints.cli.EXIT_INTERNAL
 
 
-def _run(arguments, spec: ProductSpecification) -> int:
+def _run(arguments: argparse.Namespace, spec: ProductSpecification) -> int:
     configuration = (
         entrypoints.load_configuration(arguments.config, spec)
         if arguments.config
@@ -119,7 +120,7 @@ def _run(arguments, spec: ProductSpecification) -> int:
     return entrypoints.cli.EXIT_OK
 
 
-def _contract(arguments, spec: ProductSpecification) -> int:
+def _contract(arguments: argparse.Namespace, spec: ProductSpecification) -> int:
     text = yaml.safe_dump(render_contract(spec), sort_keys=False, allow_unicode=True)
     if arguments.output is None:
         sys.stdout.write(text)

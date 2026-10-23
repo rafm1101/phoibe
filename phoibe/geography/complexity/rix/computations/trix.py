@@ -92,7 +92,7 @@ def evaluate_transferability_limits(distances: NDArray, A: NDArray, B: NDArray) 
     2. Transfers are not established if not granted, e.g. in case of distance or threshold is NaN.
        Catch comparisons with NaN as they yield `False` and thus an unconditional 2.
     """
-    result = 2 * np.ones_like(distances, dtype=int)
+    result: NDArray = 2 * np.ones_like(distances, dtype=int)
 
     result = np.where(distances > A, 1, result)
     result = np.where(distances > B, 0, result)

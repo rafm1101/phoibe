@@ -16,6 +16,8 @@ from ..pipeline.results import tables
 
 if typing.TYPE_CHECKING:
     import geopandas as gpd
+    import matplotlib.figure
+    import matplotlib.projections.polar
 
     from ..computations.results import RadialRuggedness
 
@@ -44,7 +46,12 @@ def steep_segments_geodataframe(
     return tables.steep_segments(spec, {location_id: radial})
 
 
-def plot_polar(radial: pd.Series, label=None, slope_critical=None, ax=None):
+def plot_polar(
+    radial: pd.Series | RadialRuggedness,
+    label: typing.Any = None,
+    slope_critical: float | None = None,
+    ax: matplotlib.projections.PolarAxes | None = None,
+) -> tuple[matplotlib.figure.Figure | matplotlib.figure.SubFigure, matplotlib.projections.PolarAxes]:
     """Polar plot of the ruggedness over the ray directions.
 
     Returns
@@ -62,8 +69,17 @@ def plot_polar(radial: pd.Series, label=None, slope_critical=None, ax=None):
     except ImportError as error:
         raise ImportError("plot_polar() requires matplotlib.") from error
 
-    angles = np.deg2rad(np.append(radial.index, radial.index[0]))
-    values = np.append(radial, radial[0])
+    if isinstance(radial, RadialRuggedness):
+        angles = np.deg2rad(np.append(radial.angles, radial.angles[0]))
+        values = np.append(radial.ruggednesses, radial.ruggednesses[0])
+    elif isinstance(radial, (pd.Series, pd.DataFrame)):
+        angles = np.deg2rad(np.append(radial.index, radial.index[0]))
+        values = np.append(radial, radial[0])
+    else:
+        raise ValueError(
+            f"`plot_polar` requires `radial` to be either `RadialRuggedness` or `pd.Series`. Found {type(radial)}."
+        )
+
     if ax is None:
         figure, ax = plt.subplots(subplot_kw={"projection": "polar"})
     else:

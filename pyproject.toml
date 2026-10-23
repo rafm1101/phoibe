@@ -98,13 +98,68 @@ target-version = "py313"
 exclude = [".venv/*", "__pycache__", "build/*", "dist/*"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP"]
+#select = ["E", "F", "I", "B", "UP"]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "NPY", "RUF"]
 ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["trix"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*.py" = ["ANN", "B905"]
+"tests/**/*.py" = ["ANN", "B905", "B011"]
 "*.ipynb" = ["B006", "B008", "B018", "B905", "E402", "F821"]
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.importlinter]
+root_package = "trix"
+include_external_packages = true          # needed for the contracts on third-party libraries
+exclude_type_checking_imports = true      # imports only for type checking do not count
+ 
+[[tool.importlinter.contracts]]
+name = "Layers: entrypoints and adapters above pipelines above computations"
+type = "layers"
+layers = ["trix.entrypoints | trix.adapters", "trix.pipelines", "trix.computations"]
+ 
+[[tool.importlinter.contracts]]
+name = "Layers inside pipelines"
+type = "layers"
+layers = [
+    "trix.pipelines.analyzer",
+    "trix.pipelines.publishing | trix.pipelines.requirements",
+    "trix.pipelines.ports",
+    "trix.pipelines.results",
+    "trix.pipelines.checks",
+    "trix.pipelines.product | trix.pipelines.errors",
+]
+ 
+[[tool.importlinter.contracts]]
+name = "Domain uses no I/O, file format or presentation libraries"
+type = "forbidden"
+source_modules = ["trix.computations"]
+forbidden_modules = ["pandas", "geopandas", "yaml", "matplotlib", "rioxarray", "rasterio", "pyogrio", "requests"]
+ 
+[[tool.importlinter.contracts]]
+name = "Pipelines use no I/O, file format or presentation libraries"
+type = "forbidden"
+source_modules = ["trix.pipelines"]
+forbidden_modules = ["yaml", "matplotlib", "rioxarray", "rasterio", "pyogrio", "requests"]
+ 
+[[tool.importlinter.contracts]]
+name = "Only the composition root connects adapters"
+type = "forbidden"
+source_modules = ["trix.computations", "trix.pipelines", "trix.entrypoints"]
+forbidden_modules = ["trix.adapters"]
+ 
+[[tool.importlinter.contracts]]
+name = "Nothing imports the composition root"
+type = "forbidden"
+source_modules = ["trix.computations", "trix.pipelines", "trix.entrypoints", "trix.adapters"]
+forbidden_modules = ["trix.main"]
+ 
+[[tool.importlinter.contracts]]
+name = "Adapters are independent of each other"
+type = "independence"
+modules = ["trix.adapters.dem_reader", "trix.adapters.locations_reader", "trix.adapters.writer"]

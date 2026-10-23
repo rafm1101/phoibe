@@ -17,10 +17,13 @@ Checks:
 - `unique_ids`
 - `n_angle`
 - `nan_count` (threshold `max_fraction`)
+- `rix_nan`
 - `centre_elevation`
 - `locked_parameter_changed`
 
 Severities as defined in the product definition.
+
+`rix_nan` reports a location whose RIX is `NaN` (a ray without a segment), once per location. `centre_elevation` reports rays whose origin lies at a different elevation, which indicates an error, and a missing elevation at the origin. Both make TRIX `NaN`; neither is necessarily covered by `nan_count`, whose threshold tolerates single NaN value.
 
 NaN handling: `nan_policy` is fixed to `mask`. A transfer that cannot be established, because the distance or a limit is NaN, is classified 0 (no transfer), never "unconditional". The NaN stays visible in the columns `trix`, `A`, `B`.
 

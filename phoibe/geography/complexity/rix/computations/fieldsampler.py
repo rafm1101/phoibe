@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import logging
 import typing
@@ -42,7 +44,7 @@ class Field:
     """Name of the `da`'s meridional coordinate."""
 
     @classmethod
-    def from_array(cls, da: xarray.DataArray, dims: tuple[str, str] = ("x", "y")):
+    def from_array(cls, da: xarray.DataArray, dims: tuple[str, str] = ("x", "y")) -> Field:
         """Generate the field from a rioxarray dataarray."""
         if not set(dims).issubset(da.dims):
             raise ValueError(f"Field must have '{dims[0]}' and '{dims[1]}' coordinates. Found '{da.dims}'.")
@@ -141,7 +143,7 @@ class RegularGridXYSampler:
 
 
 # TODO: tididi candidate.
-def _validate_shape_same(*args, prefix: str):
+def _validate_shape_same(*args, prefix: str) -> None:
     shapes = [array.shape for array in args]
     reference = shapes[0]
     for other in shapes[1:]:
@@ -150,7 +152,7 @@ def _validate_shape_same(*args, prefix: str):
 
 
 # TODO: tididi candidate.
-def _validate_1D(*args, prefix: str):
+def _validate_1D(*args, prefix: str) -> None:
     ndims = [array.ndim for array in args]
     for ndim in ndims:
         if ndim != 1:
