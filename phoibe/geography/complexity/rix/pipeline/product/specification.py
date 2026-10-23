@@ -9,12 +9,17 @@ from collections.abc import Collection, Iterator, Mapping, Sequence
 Severity = typing.Literal["abort", "warn"]
 
 _SEVERITIES = ("abort", "warn")
+"""Acceptable severities."""
 _DTYPES = ("int", "float", "str", "bool")
+"""Acceptable dtypes."""
 _GEOMETRY_TYPES = ("Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon")
+"""Acceptable geometry types."""
 _VERSION_PATTERN = re.compile(r"\d+(\.\d+)*")
+"""Acceptable version pattern."""
 _MANIFEST_ARTIFACT = "manifest"
-"""Key of the artifact that documents a run. Convention: it is part of every profile."""
+"""Key of the artifact that documents a run. Convention: it is part of every writing profile."""
 _TYPE_NAMES = {int: "int", float: "float", str: "str", bool: "bool"}
+"""Names of dtypes."""
 
 
 class SpecificationError(ValueError):
@@ -30,13 +35,19 @@ class ParameterSpecification:
     """A parameter of the assessment w/ `name` and given `group`."""
 
     group: str
+    """Parameter group, e.g. `ray`, `sampler`."""
     name: str
+    """Parameter name."""
     description: str
+    """Description of the parameter."""
     value: typing.Any
     """Fixed value if `locked`, otherwise the default. None means: to be set by the user."""
     dtype: str
+    """Dtype as interpretable as `str`."""
     unit: str | None = None
+    """Unit of the value."""
     valid_range: tuple[float, float] | None = None
+    """Allowed range, outside values are rejected."""
     source: str | None = None
     """Key into the references."""
     locked: bool = False
@@ -48,11 +59,15 @@ class InputSpecification:
     """An input of the assessment. Conditions are documentation, not yet enforced."""
 
     name: str
+    """Name of the input data."""
     description: str
+    """Description of the input."""
     required: bool
+    """Whether this data is required."""
     type: str | None = None
     notes: tuple[str, ...] = ()
     conditions: tuple[str, ...] = ()
+    """Conditions the input data shall fulfill. Not enforced in code yet."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -60,9 +75,13 @@ class CheckSpecification:
     """A check whose findings are reported and, depending on the severity, stop the run."""
 
     name: str
+    """Name of the check, relates to a function."""
     description: str
+    """Description of the aim of this check."""
     severity: Severity
+    """Which action to take in case of a failure."""
     parameters: Mapping[str, typing.Any] = dataclasses.field(default_factory=lambda: types.MappingProxyType({}))
+    """Parameters passed to the check."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -83,8 +102,11 @@ class TableSpecification:
     """A table, defined once and used by every artifact or layer that carries it."""
 
     name: str
+    """Name of the table."""
     description: str
+    """Description of the aim and the content of the table."""
     columns: tuple[ColumnSpecification, ...]
+    """Columns present in the table in the order of their appearance."""
 
     @property
     def column_names(self) -> tuple[str, ...]:
@@ -132,8 +154,11 @@ class ManifestKeySpecification:
     """A key of the run manifest, with nested keys."""
 
     name: str
+    """Key."""
     description: str
+    """Description of the contents."""
     keys: tuple[ManifestKeySpecification, ...] = ()
+    """Nested keys."""
     values: Mapping[str, str] | None = None
     """Meaning of enumerated values."""
     free_form: bool = False
@@ -152,8 +177,11 @@ class ManifestKeySpecification:
 class ProductSpecification:
     """Complete specification of the data product, from inputs to outputs.
 
-    Build it with `from_dict`, which validates. Look things up by id; an unknown id raises a KeyError
-    that lists the available ones.
+    Notes
+    -----
+    1. Build with `from_dict` that parses the shape.
+    2. Invariants are checked on construction.
+    3. Look things up by id; an unknown id raises a KeyError that lists the available ones.
     """
 
     name: str
@@ -196,8 +224,81 @@ class ProductSpecification:
             raise SpecificationError(problems.items)
         return specification
 
-    def __repr__(self):
+    def __post_init__(self) -> None:
+        """Invariantes that hold however the specification is build."""
+        object.__setattr__(self, "references", _frozen({key: _frozen(item) for key, item in self.references.items()}))
+        object.__setattr__(self, "parameters", tuple(self.parameters))
+        object.__setattr__(self, "profiles", _frozen({key: tuple(keys) for key, keys in self.profiles.items()}))
+
+        for attribute in ("inputs", "checks", "tables", "artifacts", "layers"):
+            object.__setattr__(self, attribute, _frozen(getattr(self, attribute)))
+        problems = self._problems()
+        if problems:
+            raise SpecificationError(problems=problems)
+
+    def __repr__(self) -> str:
         return " ".join([self.name, self.version, "\n", self.description])
+
+    def _problems(self) -> list[str]:
+        """References between sections and uniqueness. Every id used must be defined."""
+        problems: list[str] = []
+        if not _VERSION_PATTERN.fullmatch(self.version):
+            problems.append(f"version: expected dottet numbers like '1.1.1'', got {self.version!r}")
+        for attribute, identifier in (
+            ("inputs", "name"),
+            ("checks", "name"),
+            ("tables", "name"),
+            ("artifacts", "key"),
+            ("layers", "nakeye"),
+        ):
+            for key, element in getattr(self, attribute).items():
+                actual = getattr(element, identifier)
+                if key != actual:
+                    problems.append(f"{attribute}.{key}: key differs from {identifier} {actual!r}")
+        names = [parameter.name for parameter in self.parameters]
+        for name in sorted({name for name in names if names.count(name) > 1}):
+            problems.append(f"parameters: name {name!r} is used more that once, but must be unique across groups.")
+        for parameter in self.parameters:
+            if parameter.source is not None and parameter.source not in self.references:
+                problems.append(
+                    f"parameters.{parameter.group}.{parameter.name}.source: unknown reference {parameter.source!r}"
+                )
+
+        seen_filenames: dict[str, str] = {}
+        for key, artifact in self.artifacts.items():
+            path = f"artifacts.files.{key}"
+            if artifact.table is not None and artifact.table not in self.tables:
+                problems.append(f"{path}.table: unknown table {artifact.table!r}")
+            if artifact.requires_input is not None and artifact.requires_input not in self.inputs:
+                problems.append(f"{path}.requires_input: unknown input {artifact.requires_input!r}")
+            if artifact.filename in seen_filenames:
+                problems.append(
+                    f"{path}.filename: {artifact.filename!r} is already used by {seen_filenames[artifact.filename]!r}"
+                )
+                seen_filenames[artifact.filename] = key
+
+        seen_layers: set[tuple[str, str]] = set()
+        for key, layer in self.layers.items():
+            path = f"artifacts.layers.{key}"
+            if layer.artifact not in self.artifacts:
+                problems.append(f"{path}.artifact: unknown artifact {layer.artifact!r}")
+            if layer.table not in self.tables:
+                problems.append(f"{path}.table: unknown table {layer.table!r}")
+            if layer.requires_input is not None and layer.requires_input not in self.inputs:
+                problems.append(f"{path}.requires_input: unknown input {layer.requires_input!r}")
+            if (layer.artifact, layer.name) in seen_layers:
+                problems.append(f"{path}.name: layer name {layer.name!r} is used twice in artifact {layer.artifact!r}")
+            seen_layers.add((layer.artifact, layer.name))
+
+        if self.artifacts and _MANIFEST_ARTIFACT not in self.artifacts:
+            problems.append(f"artifacts.files: missing the {_MANIFEST_ARTIFACT!r} artifact")
+        for profile, keys in self.profiles.items():
+            for key in keys:
+                if key not in self.artifacts:
+                    problems.append(f"artifacts.profiles.{profile}: unknown artifact {key!r}")
+            if _MANIFEST_ARTIFACT in self.artifacts and _MANIFEST_ARTIFACT not in keys:
+                problems.append(f"artifacts.profiles.{profile}: every profile must contain {_MANIFEST_ARTIFACT!r}")
+        return problems
 
     def parameter(self, group: str, name: str) -> ParameterSpecification:
         """Parameter by group and name."""
@@ -238,7 +339,7 @@ class ProductSpecification:
         )
 
 
-def _lookup(mapping: Mapping, key: typing.Any, kind: str):
+def _lookup(mapping: Mapping, key: typing.Any, kind: str) -> typing.Any:
     try:
         return mapping[key]
     except KeyError:
