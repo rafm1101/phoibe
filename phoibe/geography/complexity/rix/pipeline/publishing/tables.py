@@ -8,11 +8,8 @@ import pandas as pd
 
 from ...computations import trix
 from ...computations.results import RadialRuggedness
-from ...definitions.interface import Keys
 from ..product.schema import PRODUCT_SPECIFICATION
 from ..product.specification import ProductSpecification, TableSpecification
-
-KEYS = Keys()
 
 RIX_TABLE = "rix_table"
 TRIX_TABLE = "trix_table"
@@ -33,7 +30,7 @@ def rix_table(spec: ProductSpecification, results: Mapping[Hashable, RadialRugge
     zs = [radial_rug.z for radial_rug in radial_rugs]
     ruggedness = [radial_rug.ruggednesses for radial_rug in radial_rugs]
     quantities = {
-        "elevation": [z for z in zs],
+        "elevation": zs,
         "rix": [radial_rug.rix for radial_rug in radial_rugs],
         "rix_std": [float(np.std(values)) for values in ruggedness],
         "rix_min": [float(np.min(values)) for values in ruggedness],

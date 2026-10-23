@@ -1,5 +1,4 @@
 import dataclasses
-import enum
 
 from ...computations import INTERPOLATION_METHODS
 
@@ -24,11 +23,6 @@ class RunParameters:
             raise ValueError(f"dr_km must lie within (0, R_km), got {self.dr_km}.")
         if self.slope_critical <= 0:
             raise ValueError("slope_critical must be positive.")
-
-
-class InterpolationMethods(enum.StrEnum):
-    LINEAR = "linear"
-    NEAREST = "nearest"
 
 
 @dataclasses.dataclass(frozen=True)

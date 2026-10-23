@@ -27,9 +27,7 @@ from ..computations.fieldsampler import Field, RegularGridXYSampler
 from ..computations.results import RadialRuggedness
 from ..computations.rix import compute_regular_rix
 from ..computations.trix import assess_transferability
-from . import checks, errors, ports, product, results
-from .publishing.contract_check import check_written_artifacts, tables_missing_for
-from .publishing.manifest import build_manifest
+from . import checks, errors, ports, product, publishing, results
 from .results import tables
 
 if typing.TYPE_CHECKING:
@@ -197,14 +195,14 @@ class TRIXAnalyzer:
         if self._writer is None:
             raise RuntimeError("TRIXAnalyzer was created without a writer.")
         present = result.record.present_inputs
-        missing = tables_missing_for(self._spec, result.tables.keys(), profile, present)
+        missing = publishing.tables_missing_for(self._spec, result.tables.keys(), profile, present)
         if missing:
             raise errors.ContractViolation(
                 [f"the result has no table {name!r}, which profile {profile!r} requires." for name in missing]
             )
         written = self._writer.write_artifacts(result, target, profile)
-        check_written_artifacts(self._spec, written, present)
-        self._writer.write_manifest(build_manifest(self._spec, result.record, written), target)
+        publishing.check_written_artifacts(self._spec, written, present)
+        self._writer.write_manifest(publishing.build_manifest(self._spec, result.record, written), target)
         return written
 
     def _compute_rix(

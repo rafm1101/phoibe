@@ -101,6 +101,7 @@ exclude = [".venv/*", "__pycache__", "build/*", "dist/*"]
 #select = ["E", "F", "I", "B", "UP"]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "NPY", "RUF"]
 ignore = []
+allowed-confusables = ["×"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["trix"]
