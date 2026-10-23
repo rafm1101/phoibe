@@ -1,6 +1,13 @@
 # 0001 Architecture and package structure
 
-Status: Accepted
+---
+type: ADR
+id: "0001"
+title: "Architecture and package structure"
+status: active
+date: 2026-10-23
+superseded_by: null
+---
 
 ## Context
 
@@ -11,7 +18,7 @@ The product is computation-heavy. Real boundaries exist only where data comes in
 Hexagonal architecture in proportion, layers:
 
 - `computations`
-- `pipeline` (use case)
+- `pipelines` (use case)
 - `adapters`
 - `entrypoints`
 - `main.py` as composition root.

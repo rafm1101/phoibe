@@ -1,6 +1,13 @@
 # 0006 Publishing
 
-Status: Accepted
+---
+type: ADR
+id: "0006"
+title: "Publishing"
+status: active
+date: 2026-10-23
+superseded_by: null
+---
 
 ## Context
 

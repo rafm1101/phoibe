@@ -2,7 +2,9 @@
 
 ## Overview
 
-**Quantify terrain complexity at any location and wind transferability.** This toolkit computes the Ruggedness Index (RIX) and wind representability (TRIX) -- metrics that measure how steep and broken terrain is based on slope analysis along radial rays and how applicable a transfer of wind measurements between sites is. Use it for **site suitability assessment for wind parks**.
+**Quantify terrain complexity at any location and wind transferability.** This toolkit computes the Ruggedness Index (RIX) and wind representability (TRIX) -- metrics that measure how steep and broken terrain is based on slope analysis along radial rays, and how applicable a transfer of wind measurements between sites is. Use it for **site suitability assessment for wind parks**.
+
+In addition to the final results, checks on the computations and intermediate results are provided.
 
 Key insights:
 
@@ -15,7 +17,7 @@ Key insights:
 - **Assess terrain complexity** with RIX: a single 0-1 score indicating proportion of steep slopes.
 - **Assess wind data base representativity** with T-RIX: a single score translating directly into distance thresholds.
 - **Drill into results** with per-ray statistics, elevation profiles, and steep-segment geometry.
-- **Work across coordinate systems**: your site and elevation model can use different CRS; the toolkit handles conversion.
+- **Work across coordinate systems**: your site and digital elevation model can use different CRS; the toolkit handles conversion.
 - **Visualize findings**: Plot polar diagrams, overlay steep segments on maps, export results as GeoDataFrames.
 - **Customize analysis**: Adjust ray count, search radius, grid spacing, and slope thresholds to your use case.
 
@@ -24,7 +26,7 @@ Key insights:
 1. **Quick access:**
 
 Analyzer:
-
+<!--
 ```python
 import geopandas as gpd
 import shapely
@@ -72,10 +74,12 @@ result.to_dataframe()
 
 result.steep_segments_geodataframe()
 ```
+-->
 
 3. **Plots:**
 _Note: `geopandas` and `matplotlib` are not default dependencies in this package._
 
+<!--
 ```python
 from phoibe.geography.plot import plot_raster
 result.plot_polar()
@@ -83,9 +87,11 @@ result.plot_polar()
 _, ax = plot_raster(da=elevation_map)
 result.steep_segments_geodataframe().plot(ax=ax, color="r", linewidth=1, label="ray's steep parts")
 ```
+-->
 
 4. **Store your results:**
 
+<!--
 ```python
 from phoibe.geography.complexity.rix import writer
 
@@ -93,6 +99,36 @@ writer.RIXWriter(result=results, profile=writer.WriterProfile.FULL).write(
    directory="trix_assessment", project_name="WP Planar I"
 )
 ```
+-->
+
+## CLI (experimental)
+
+```bash
+ run --dem dem.tif --sites sites.gpkg --references refs.gpkg --output out/ --profile full
+ run ... --config run.yaml --project-name demo --dem-meta name=COPDEM -v
+ contract --output contract.yaml        # contract of this product version
+```
+
+| Exit code | Meaning |
+|---|---|
+| 0 | Success, also with warnings |
+| 1 | Problem with inputs or configuration, or a check with severity "abort" |
+| 2 | Invalid command line |
+| 3 | Technical failure, e.g. a file cannot be read or written |
+| 4 | Written artifacts violate the contract, nothing is published |
+| 70 | Unexpected error (a defect) |
+
+Configuration file (all keys optional, defaults come from the product definition):
+
+```yaml
+project_name: demo
+parameters:
+  dr_km: 0.1
+  crs: EPSG:2056
+```
+
+Parameters the product fixes (e.g. `decimals`) cannot be configured. Locked parameters that can be set (e.g. `n_angles`)
+may be changed; the run then reports a finding and the manifest records it.
 
 ## Architecture
 
@@ -147,11 +183,13 @@ Within `plot`:
 
 ### Best practices and considerations
 
+Find decisions in [`docs/adr-rix/`](../../docs/adr-rix/).
+
 1. Central anchor for configuration, version, parameters, artifact schema, and field definitions and descriptions are contained in `schema.py`.
    - A rule or computation on values goes into `computations`, as a function if it needs nothing else.
-   - Something that needs a resource (file, clock) is a service: the contract goes into `pipeline`, the implementation into `adapters`.
+   - Something that needs a resource (file, clock) is a service: the contract goes into `pipelines`, the implementation into `adapters`.
    - A name, filename, severity, threshold or fixed parameter goes into the product definition, never into code.
-   - A view for people (DataFrame, plot, manifest) goes into `pipeline` or `entrypoints`, never onto a domain value.
+   - A view for people (DataFrame, plot, manifest) goes into `pipelines` or `entrypoints`, never onto a domain value.
    - An anomaly that should be visible but not stop the run is a `Finding` from the domain, with its severity in the
    definition.
 1. DEM metadata remains to be refined.
@@ -164,6 +202,8 @@ Within `plot`:
 1. Along the individual rays, two basic philosophies lead to different kinds of grids:
    - Regular: Equidistant discretisation along the ray.
    - Level crossing: A vertical discretisation pinning available elevations to a given discrete set of values. This seems to be more prone to loosing details.
+1. Findings and errors:
+   - Data anomalies are findings: the run completes and reports them (log, manifest). A finding aborts the run only if the severity of its check in the definition is `abort`. Errors are for violated input requirements, technical failures and contract violations (ADR 0005, 0006).
 1. Pitfalls:
    1. The assessment permits computing RIX in GCS coordinates. However, expect serious distortions in the computations. _Avoid unless you have a specific reason._
    1. Coarse level-crossing grids + nearest-neighbor: Extreme loss of slope detail. Use linear interpolation and finer grids instead.

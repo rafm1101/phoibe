@@ -1,6 +1,13 @@
 # 0003 The product specification is the single source
 
-Status: Accepted
+---
+type: ADR
+id: "0003"
+title: "The product specification is the single source"
+status: active
+date: 2026-10-23
+superseded_by: null
+---
 
 ## Context
 

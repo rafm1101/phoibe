@@ -1,6 +1,13 @@
 # 0004 Parameters: contract and run
 
-Status: Accepted
+---
+type: ADR
+id: "0004"
+title: "Parameters: contract and run"
+status: active
+date: 2026-10-23
+superseded_by: null
+---
 
 ## Context
 

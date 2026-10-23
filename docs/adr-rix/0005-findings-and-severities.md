@@ -1,5 +1,13 @@
 # 0005 Findings and severities
 
+---
+type: ADR
+id: "0005"
+title: "Findings and severities"
+status: active
+date: 2026-10-23
+superseded_by: null
+---
 Status: Accepted
 
 ## Context
