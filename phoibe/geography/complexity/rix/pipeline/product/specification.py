@@ -249,7 +249,7 @@ class ProductSpecification:
             ("checks", "name"),
             ("tables", "name"),
             ("artifacts", "key"),
-            ("layers", "nakeye"),
+            ("layers", "key"),
         ):
             for key, element in getattr(self, attribute).items():
                 actual = getattr(element, identifier)
