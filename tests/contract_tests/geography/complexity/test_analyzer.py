@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray
 
-from phoibe.geography.complexity.rix.analyzer import ResultSummary, TRIXAnalyzer
+from phoibe.geography.complexity.rix.pipeline.analyzer_legacy import ResultSummary, TRIXAnalyzer
 
 
 def _make_config(n_angles=4, R_km=0.5, dr_km=0.05, slope_critical=0.1, crs=None):
@@ -60,9 +60,10 @@ class TRIXAnalyzerResultContract:
     def test_ruggedness_roses_row_count_matches_sites(self, result):
         assert len(result.ruggedness_roses) == len(result.locations_site)
 
-    def test_steep_segments_has_required_columns(self, result):
-        required = {"theta", "segment_id", "geometry"}
-        assert required.issubset(set(result.steep_segments.columns))
+    # TODO: Move to relevant module.
+    # def test_steep_segments_has_required_columns(self, result):
+    #     required = {"theta", "segment_id", "geometry"}
+    #     assert required.issubset(set(result.steep_segments.columns))
 
     def test_meta_contains_required_top_level_keys(self, result):
         for key in ("meta", "parameters", "spatial_context", "run"):

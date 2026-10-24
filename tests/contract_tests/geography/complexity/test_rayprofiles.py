@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import shapely
 
-from phoibe.geography.complexity.rix import evaluate
-from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayProfile
+from phoibe.geography.complexity.rix.computations import evaluate
+from phoibe.geography.complexity.rix.computations.profiles import NaNPolicy, RayProfile
 
 
 @pytest.fixture

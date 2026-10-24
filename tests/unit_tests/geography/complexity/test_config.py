@@ -1,18 +1,18 @@
 import typing
 
-from phoibe.geography.complexity.rix.config import (
+from phoibe.geography.complexity.rix.computations import INTERPOLATION_METHODS
+from phoibe.geography.complexity.rix.definitions.config import (
     ANALYZER_DEFAULTS,
     COPDEM_METADATA,
-    INTERPOLATION_METHODS,
     WRITER_DEFAULTS,
 )
-from phoibe.geography.complexity.rix.schema import PRODUCT_DEFINITION_TRIX
+from phoibe.geography.complexity.rix.pipeline.product.schema import PRODUCT_DEFINITION_TRIX
 
 
 def test_analyzer_defaults_match_expected_snapshot():
     expected = {
         "name": "T-RIX assessment",
-        "version": "1.0",
+        "version": "1.1",
         "description": "TRIX, TR6 Rev.12",
         "parameters": {"n_angles": 72, "R_km": 3.5, "dr_km": 0.05, "slope_critical": 0.033, "crs": None},
         "sampler": {"interpolation_method": "linear"},

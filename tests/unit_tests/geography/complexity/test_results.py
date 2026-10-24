@@ -2,8 +2,9 @@ import numpy as np
 import pytest
 import shapely.geometry
 
-from phoibe.geography.complexity.rix.profiles import NaNPolicy, RayGeometry, RayProfile
-from phoibe.geography.complexity.rix.results import RadialRuggedness, RayRuggedness
+from phoibe.geography.complexity.rix.computations.fieldsampler import FieldInfo
+from phoibe.geography.complexity.rix.computations.profiles import NaNPolicy, RayGeometry, RayProfile
+from phoibe.geography.complexity.rix.computations.results import RadialRuggedness, RayRuggedness
 
 
 class DummySampler:
@@ -11,6 +12,7 @@ class DummySampler:
         self._z = np.asarray(z, dtype=float)
         self.crs = None
         self.meta = meta if meta is not None else {}
+        self.field_info = FieldInfo(crs=None, extent=None, resolution=None)
 
     def sample(self, xs, ys):
         return self._z.copy(), np.isnan(self._z).sum()

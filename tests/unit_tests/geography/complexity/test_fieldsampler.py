@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray
 
-from phoibe.geography.complexity.rix.fieldsampler import FieldSampler, RegularGridXYSampler
+from phoibe.geography.complexity.rix.computations.fieldsampler import FieldSampler, RegularGridXYSampler
 
 
 def test_field_sampler_is_abstract():
@@ -114,6 +114,9 @@ class TestRegularGridXYSamplerCrsAndMeta:
         # already has this attribute. Meanwhile, rioxarray is unkown when trying to access.
         sampler = RegularGridXYSampler(da=planar_field, method="linear")
         assert sampler.meta == {sampler.keys.dem: {}}
+        assert sampler.field_info.crs is None
+        assert sampler.field_info.extent is None
+        assert sampler.field_info.resolution is None
 
     def test_sample_returns_full_length_array_not_truncated_on_nan(self, planar_field):
         sampler = RegularGridXYSampler(da=planar_field, method="linear")

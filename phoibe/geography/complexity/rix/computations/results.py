@@ -1,0 +1,247 @@
+from __future__ import annotations
+
+import dataclasses
+import functools
+
+import numpy as np
+import shapely
+
+from . import evaluate
+from .fieldsampler import FieldInfo
+from .profiles import RayProfile, SamplingInfo
+
+
+@dataclasses.dataclass(frozen=True)
+class RayProfileMeta:
+    """Information about a RayProfile."""
+
+    crs_ray: str | list[str | None] | None
+    """CRS for the ray coordinates."""
+    crs_dem: str | None
+    """CRS for the DEM coordinates."""
+    resolution: tuple[float, float] | None
+    """Resolution of the DEM (dx, dy), if known."""
+    extent: tuple[float, float, float, float] | None
+    """Extent of the field's slice."""
+    nan_count: int | None
+    """Number of ray points that are NaN after sampling (out-of-bounds or data gaps)."""
+    messages: str | list[str]
+    """Messages related to the ray."""
+
+    @classmethod
+    def from_runs(cls, runs: dict[float, SamplingInfo]) -> RayProfileMeta:
+        crs_dem_by_field: dict[FieldInfo, list[float]] = {}
+        for theta, ray in runs.items():
+            crs_dem_by_field.setdefault(ray.field_info, []).append(theta)
+        if len(crs_dem_by_field) == 0:
+            crs_dem, resolution = None, None
+        elif len(crs_dem_by_field) == 1:
+            field_info = next(iter(crs_dem_by_field))
+            crs_dem, resolution, extent = field_info.crs, field_info.resolution, field_info.extent
+
+        crs_ray = list(set(info.crs for info in runs.values()))
+        message = list(info.message for info in runs.values())
+        nan_count = int(np.sum([info.nan_count for info in runs.values()], dtype=float))
+        return RayProfileMeta(crs_ray, crs_dem, resolution, extent, nan_count, message)
+
+
+@dataclasses.dataclass(frozen=True)
+class RayRuggedness:
+    """Analysis result for a single ray direction.
+
+    Combines the profile with computed metrics for inspection and debugging.
+
+    Notes
+    -----
+    `.meta`: W/o rioxarray some DEM CRS metadata are missing. This need an additional graceful treatment.
+    """
+
+    profile: RayProfile
+    """Ray profile of some field."""
+    slope_critical: float
+    """Slope [m/m] above which a segment is consideres as steep."""
+
+    @property
+    def meta(self) -> RayProfileMeta:
+        """Metadata relating to `RayProfile`. Includes CRS, (resolution), out-of-bound point count, messages."""
+        ray_profile_meta = RayProfileMeta(
+            crs_ray=self.profile.sampling_info.crs,
+            crs_dem=self.profile.sampling_info.field_info.crs,
+            resolution=self.profile.sampling_info.field_info.resolution,
+            extent=self.profile.sampling_info.field_info.extent,
+            nan_count=self.profile.sampling_info.nan_count,
+            messages=str(self.profile.sampling_info.message),
+        )
+        return ray_profile_meta
+
+    @property
+    def theta(self) -> float:
+        """Ray direction [°]."""
+        return self.profile.ray.theta
+
+    @functools.cached_property
+    def total_length_m(self) -> float:
+        """Total physical length of the ray [m]."""
+        return evaluate.total_length_m(self.profile)
+
+    @functools.cached_property
+    def steep_length_m(self) -> float:
+        """Total length of steep segments [m]."""
+        seg_lengths = evaluate.segment_lengths(self.profile)
+        mask = evaluate.steep_mask(self.profile, self.slope_critical)
+        return float(np.sum(seg_lengths[mask]))
+
+    @functools.cached_property
+    def steep_segments(self) -> tuple[shapely.geometry.LineString, ...]:
+        """Geometric LineStrings of steep segments."""
+        return tuple(evaluate.steep_ray_segments(self.profile, self.slope_critical))
+
+    @functools.cached_property
+    def max_abs_slope(self) -> float:
+        """Maximum absolute slope along the ray."""
+        slope_arr = evaluate.slopes(self.profile)
+        if slope_arr.size == 0 or np.isnan(slope_arr).all():
+            return np.nan
+        return float(np.nanmax(np.abs(slope_arr)))
+
+    @property
+    def n_steep_segments(self) -> int:
+        """Number of contiguous steep segments."""
+        return len(self.steep_segments)
+
+    @property
+    def ruggedness(self) -> float:
+        """Fraction of ray length that is steep (= RIX for this ray)."""
+        return evaluate.ruggedness(self.profile, self.slope_critical)
+
+    def describe(self) -> dict[str, float]:
+        # TODO: Shall be typed, and no keys here.
+        """Summary statistics for this ray."""
+        return {
+            "theta": self.theta,
+            "ruggedness": self.ruggedness,
+            "total_length_m": self.total_length_m,
+            "steep_length_m": self.steep_length_m,
+            "max_abs_slope": self.max_abs_slope,
+            "n_steep_segments": self.n_steep_segments,
+        }
+
+
+@dataclasses.dataclass(frozen=True)
+class RadialRuggedness:
+    """Radial RIX analysis aggregating multiple ray directions.
+
+    Provides access to individual rays, aggregate metrics, messages, and various views
+    of the data for inspection and validation.
+    """
+
+    rays: tuple[RayRuggedness, ...] = dataclasses.field(repr=False)
+    """Collection of rays being evaluated."""
+    _ray_by_angle: dict[float, RayRuggedness] = dataclasses.field(init=False, repr=False, compare=False)
+    """Access ray results by their angle."""
+    runs: RayProfileMeta = dataclasses.field(init=False, repr=False)
+    """Run summary statistics."""
+
+    def __post_init__(self):
+        """Build internal index for fast theta lookups."""
+        if len(self.rays) == 0:
+            raise ValueError("RadialRixResult requires at least one ray")
+
+        slope_criticals = {ray.slope_critical for ray in self.rays}
+        if len(slope_criticals) > 1:
+            raise ValueError(f"All rays must use same slope_critical, got: {slope_criticals}")
+
+        crss = {None if ray.profile.ray.crs is None else ray.profile.ray.crs.to_string() for ray in self.rays}
+        if len(crss) > 1:
+            raise ValueError(f"All rays must have the same crs, got: {crss}")
+
+        rays_sorted = tuple(sorted(self.rays, key=lambda ray: ray.theta))
+        object.__setattr__(self, "rays", rays_sorted)
+        object.__setattr__(
+            self, "runs", RayProfileMeta.from_runs({ray.theta: ray.profile.sampling_info for ray in self.rays})
+        )
+
+    @property
+    def z(self) -> float:
+        """Elevation of the centre point."""
+        return float(np.mean([ray.profile.z[0] for ray in self.rays]))
+
+    @property
+    def rix(self) -> float:
+        """RIX/mean ruggedness across all ray directions."""
+        return float(np.mean([ray.ruggedness for ray in self.rays]))
+
+    @property
+    def slope_critical(self) -> float:
+        """Slope [m/m] above which a segment is consideres as steep used for all rays."""
+        return self.rays[0].slope_critical
+
+    @property
+    def n_rays(self) -> int:
+        """Number of ray directions analyzed."""
+        return len(self.rays)
+
+    @property
+    def angles(self) -> np.ndarray:
+        """Array of ray angles [°] in sorted order."""
+        return np.array([ray.theta for ray in self.rays], dtype=float)
+
+    @property
+    def ruggednesses(self) -> np.ndarray:
+        """Array of ruggedness values aligned with angles.
+
+        Returns
+        -------
+        np.ndarray
+            Ruggedness for each angle in `self.angles`.
+        """
+        return np.array([ray.ruggedness for ray in self.rays], dtype=float)
+
+    def ray(self, theta: float, atol: float = 1e-5) -> RayRuggedness:
+        """Get RayResult for a specific angle.
+
+        Parameters
+        ----------
+        theta
+            Ray direction [°].
+        atol
+            Tolerance for float comparison.
+
+        Returns
+        -------
+        RayResult
+            Analysis result for this direction.
+
+        Raises
+        ------
+        KeyError
+            If no ray exists for this angle.
+        """
+        idx = np.searchsorted(self.angles, theta)
+        if idx < len(self.rays) and np.isclose(self.angles[idx], theta, atol=atol):
+            return self.rays[idx]
+        else:
+            raise KeyError(f"No ray found for theta={theta:.1f}°. Available angles: {self.angles}")
+
+    def describe(self) -> dict[str, float]:
+        """Summary statistics across all rays.
+
+        Returns
+        -------
+        dict
+            Summary statistics.
+        """
+        rix_values = [ray.ruggedness for ray in self.rays]
+
+        return {
+            "rix": float(np.mean(rix_values)),
+            "rix_std": float(np.std(rix_values)),
+            "rix_min": float(np.min(rix_values)),
+            "rix_max": float(np.max(rix_values)),
+            "n_rays": self.n_rays,
+            "slope_critical": self.slope_critical,
+        }
+
+    @property
+    def stats(self) -> RayProfileMeta:
+        return RayProfileMeta.from_runs({key: value.profile.sampling_info for key, value in self._ray_by_angle.items()})

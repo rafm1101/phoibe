@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix.results import RayRuggedness
+from phoibe.geography.complexity.rix.computations.results import RayRuggedness
 
 
 class RayResultContract:

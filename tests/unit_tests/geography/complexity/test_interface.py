@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from phoibe.geography.complexity.rix.interface import Keys, _get_parameter
+from phoibe.geography.complexity.rix.definitions.interface import Keys, _get_parameter
 
 
 class TestGetParameter:

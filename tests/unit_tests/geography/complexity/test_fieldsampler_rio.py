@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray
 
-from phoibe.geography.complexity.rix.fieldsampler import RegularGridXYSampler
+from phoibe.geography.complexity.rix.computations.fieldsampler import RegularGridXYSampler
 
 pytestmark = pytest.mark.rio
 
@@ -31,11 +31,16 @@ def test_meta_populates_dem_record_with_crs_extent_and_resolution(planar_field_w
 
     dem_record = meta[sampler.keys.dem]
     assert "32633" in dem_record[sampler.keys.crs_dem]
+    assert "32633" in sampler.field_info.crs
 
     extent = dem_record[sampler.keys.extent_dem]
     assert len(extent) == 4
+    assert len(sampler.field_info.extent) == 4
 
     resolution = dem_record[sampler.keys.resolution_dem]
     assert len(resolution) == 2
     assert abs(resolution[0]) == pytest.approx(1.0)
     assert abs(resolution[1]) == pytest.approx(1.0)
+    assert len(sampler.field_info.resolution) == 2
+    assert abs(sampler.field_info.resolution[0]) == pytest.approx(1.0)
+    assert abs(sampler.field_info.resolution[1]) == pytest.approx(1.0)

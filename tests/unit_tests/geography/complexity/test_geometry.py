@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix.geometry import RayGeometry
+from phoibe.geography.complexity.rix.computations.geometry import RayGeometry
 
 
 @pytest.mark.parametrize(

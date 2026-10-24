@@ -4,7 +4,7 @@ import pyproj
 import pytest
 import shapely.geometry
 
-from phoibe.geography.complexity.rix.geometry import RayGeometry
+from phoibe.geography.complexity.rix.computations.geometry import RayGeometry
 
 
 @dataclasses.dataclass(frozen=True)

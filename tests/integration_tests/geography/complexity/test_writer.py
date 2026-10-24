@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 import yaml
 
-from phoibe.geography.complexity.rix.writer import RIXWriter, WriterProfile
+from phoibe.geography.complexity.rix.adapters.writer import RIXWriter, WriterProfile
 
 
 class _FakeGeoFrame:

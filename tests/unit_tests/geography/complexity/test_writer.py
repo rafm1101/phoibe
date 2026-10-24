@@ -3,7 +3,7 @@ import types
 
 import pytest
 
-from phoibe.geography.complexity.rix.writer import RIXWriter, WriterProfile, _is_datetime
+from phoibe.geography.complexity.rix.adapters.writer import RIXWriter, WriterProfile, _is_datetime
 
 
 def _make_result(

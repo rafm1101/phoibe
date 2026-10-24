@@ -3,7 +3,7 @@ import types
 import pandas as pd
 import pytest
 
-from phoibe.geography.complexity.rix.writer import RIXWriter, WriterProfile
+from phoibe.geography.complexity.rix.adapters.writer import RIXWriter, WriterProfile
 
 
 def _make_result(with_trix=False):

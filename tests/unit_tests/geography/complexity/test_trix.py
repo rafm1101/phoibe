@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from phoibe.geography.complexity.rix.trix import (
+from phoibe.geography.complexity.rix.computations.trix import (
     _ensure_1D,
     compute_trix,
     compute_trix_limit_distances,
@@ -15,10 +15,10 @@ class TestComputeTrix:
     def test_recover_given_reference_values(self):
         rix_site = [0.0, 1.0]
         elevation_site = [100.0, 200.0]
-        rix_wind = [0.5]
-        elevation_wind = [150.0]
+        rix_reference = [0.5]
+        elevation_reference = [150.0]
 
-        result = compute_trix(rix_site, elevation_site, rix_wind, elevation_wind)
+        result = compute_trix(rix_site, elevation_site, rix_reference, elevation_reference)
 
         expected_table = np.array([[27.5], [72.5]])
         assert result.shape == (2, 1)
@@ -40,10 +40,10 @@ class TestComputeTrix:
     def test_output_shape_is_outer_product_of_site_and_wind(self):
         rix_site = [0.1, 0.2, 0.3]
         elevation_site = [10.0, 20.0, 30.0]
-        rix_wind = [0.4, 0.5]
-        elevation_wind = [40.0, 50.0]
+        rix_reference = [0.4, 0.5]
+        elevation_reference = [40.0, 50.0]
 
-        result = compute_trix(rix_site, elevation_site, rix_wind, elevation_wind)
+        result = compute_trix(rix_site, elevation_site, rix_reference, elevation_reference)
         assert result.shape == (3, 2)
 
 
