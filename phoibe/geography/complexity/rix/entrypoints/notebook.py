@@ -11,6 +11,7 @@ from collections.abc import Hashable
 import numpy as np
 import pandas as pd
 
+from .. import computations
 from ..pipeline.product.specification import ProductSpecification
 from ..pipeline.results import tables
 
@@ -19,10 +20,8 @@ if typing.TYPE_CHECKING:
     import matplotlib.figure
     import matplotlib.projections.polar
 
-    from ..computations.results import RadialRuggedness
 
-
-def ray_metrics(radial: RadialRuggedness) -> pd.DataFrame:
+def ray_metrics(radial: computations.RadialRuggedness) -> pd.DataFrame:
     """Metrics of every ray of a location, one ray per row. For inspection; not an output of the product."""
     return pd.DataFrame(
         [
@@ -40,14 +39,14 @@ def ray_metrics(radial: RadialRuggedness) -> pd.DataFrame:
 
 
 def steep_segments_geodataframe(
-    spec: ProductSpecification, radial: RadialRuggedness, location_id: Hashable = "location"
+    spec: ProductSpecification, radial: computations.RadialRuggedness, location_id: Hashable = "location"
 ) -> gpd.GeoDataFrame:
     """Steep segments of one location, in the same form as the table of the product."""
     return tables.steep_segments(spec, {location_id: radial})
 
 
 def plot_polar(
-    radial: pd.Series | RadialRuggedness,
+    radial: pd.Series | computations.RadialRuggedness,
     label: typing.Any = None,
     slope_critical: float | None = None,
     ax: matplotlib.projections.PolarAxes | None = None,
@@ -69,7 +68,7 @@ def plot_polar(
     except ImportError as error:
         raise ImportError("plot_polar() requires matplotlib.") from error
 
-    if isinstance(radial, RadialRuggedness):
+    if isinstance(radial, computations.RadialRuggedness):
         angles = np.deg2rad(np.append(radial.angles, radial.angles[0]))
         values = np.append(radial.ruggednesses, radial.ruggednesses[0])
     elif isinstance(radial, (pd.Series, pd.DataFrame)):
