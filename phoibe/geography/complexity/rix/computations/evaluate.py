@@ -55,7 +55,7 @@ def slopes(profile: RayProfile) -> NDArray[np.floating]:
         Array of the slopes of each segment, shorter by 1 thatn `profile.r_m`.
     """
     if len(profile.z) < 2:
-        return np.array([np.nan], dtype=float)
+        return np.array(0, dtype=float)
     dz = np.diff(profile.z)
     dr = segment_lengths(profile=profile)
     if not np.all(dr > 0):
@@ -158,8 +158,8 @@ def steep_ray_segments(profile: RayProfile, slope_critical: float) -> list[shape
     segments = []
     ray_segments = profile.ray
     for start, stop in steep_segment_indices(profile=profile, slope_critical=slope_critical):
-        xs = ray_segments.xs[start : stop + 1]  # noqa: E203
-        ys = ray_segments.ys[start : stop + 1]  # noqa: E203
+        xs = ray_segments.xs[start : stop + 1]
+        ys = ray_segments.ys[start : stop + 1]
         if len(xs) >= 2:
             segments.append(shapely.geometry.LineString(zip(xs, ys, strict=True)))
     return segments

@@ -121,6 +121,10 @@ class RayProfile:
         -------
         RayProfile
             Immutable representation of the sampled field along `ray`.
+
+        Notes
+        -----
+        1. The NaN count refers to the intermediate regular grid as the sampling process ignores them.
         """
         ray_in_sampler_crs, message = ray.to_crs(crs=sampler.crs)
         z_regular, nan_count = sampler.sample(xs=ray_in_sampler_crs.xs, ys=ray_in_sampler_crs.ys)
@@ -132,7 +136,7 @@ class RayProfile:
             crs_ray=ray.crs,
             field_info=sampler.field.info,
             message=message,
-            n_points=z_crossings.size,
+            n_points=z_regular.size,
             nan_count=nan_count,
         )
 
@@ -156,6 +160,7 @@ def _apply_nan_policy(
     2. TRUNCATE: Cut profile at the first NaN.
     3. MASK: Keep NaNs as is.
     """
+    policy = NaNPolicy(policy)
     if not np.isnan(z).any():
         return r_m.copy(), z.copy()
 

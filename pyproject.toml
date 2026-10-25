@@ -67,6 +67,8 @@ build-backend = "hatchling.build"
 packages = ["phoibe"]
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib --strict-markers -ra"
 markers = ["rio: tests requiring rioxarray's .rio accessor shall run isolated not to break other tests."]
 
 [tool.vulture]
