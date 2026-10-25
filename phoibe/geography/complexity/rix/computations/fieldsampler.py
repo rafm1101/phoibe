@@ -119,7 +119,8 @@ class RegularGridXYSampler:
     @property
     def crs(self) -> pyproj.CRS | None:
         if hasattr(self.field.da, "rio"):
-            return self.field.da.rio.crs
+            crs = self.field.da.rio.crs
+            return None if crs is None else pyproj.CRS.from_user_input(crs)
         else:
             return None
 
