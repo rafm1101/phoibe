@@ -74,9 +74,9 @@ class RayGeometry:
         _validate_notna_finite(dr_km, "dr_km")
         _validate_positive(dr_km, "dr_km")
         if dr_km >= R_km:
-            raise ValueError("dr_km must not exceed R_km.")
+            raise ValueError("dr_km must stay below R_km.")
 
-        n_steps = int(np.floor(R_km / dr_km))
+        n_steps = int(np.floor(R_km / dr_km + 1e-9))
         r_m = np.arange(n_steps + 1, dtype=float) * dr_km * 1000
 
         remainder = R_km * 1000 - r_m[-1]

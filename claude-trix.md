@@ -1,5 +1,14 @@
 # T-RIX Assessment — Session Summary
 
+---
+type: session_summary
+id: "0001"
+title: "T-RIX project setup"
+status: superseeded
+date: 2026-10-23
+superseded_by: "0003"
+---
+
 ## Rules
 
 - Interview until 95% context is captured. Do not guess.

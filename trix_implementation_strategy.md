@@ -1,5 +1,14 @@
 # T-RIX Visualisierung — Implementierungsstrategie
 
+---
+type: plan
+id: "0002"
+title: "Visualisation"
+status: draft
+date: 2026-10-23
+superseded_by: null
+---
+
 ## Kontext-Präzisierung
 
 **TRIX ist komplexer als initial angenommen:**
