@@ -1,3 +1,5 @@
+import types
+
 import numpy as np
 import pyproj
 import pytest
@@ -48,3 +50,20 @@ def make_radial(make_ray):
         return RadialRuggedness(rays=tuple(rays))
 
     return make
+
+
+@pytest.fixture
+def make_sampler():
+    class DummySampler:
+        def __init__(self, z, crs=None, field_info=None):
+            self.z = np.asarray(z, dtype=float)
+            self.crs = crs
+            self.field = types.SimpleNamespace(info=field_info or FieldInfo(None, None, None))
+            self.calls = []
+
+        def sample(self, xs, ys):
+            self.calls.append((np.asarray(xs), np.asarray(ys)))
+            z = self.z[: len(xs)].copy()
+            return z, int(np.isnan(z).sum())
+
+    return DummySampler

@@ -160,6 +160,7 @@ def _apply_nan_policy(
     2. TRUNCATE: Cut profile at the first NaN.
     3. MASK: Keep NaNs as is.
     """
+    policy = NaNPolicy(policy)
     if not np.isnan(z).any():
         return r_m.copy(), z.copy()
 
