@@ -33,14 +33,13 @@ class RayProfileMeta:
         crs_dem_by_field: dict[FieldInfo, list[float]] = {}
         for theta, ray in runs.items():
             crs_dem_by_field.setdefault(ray.field_info, []).append(theta)
-        if len(crs_dem_by_field) == 0:
-            crs_dem, resolution = None, None
-        elif len(crs_dem_by_field) == 1:
+        crs_dem = resolution = extent = None
+        if len(crs_dem_by_field) == 1:
             field_info = next(iter(crs_dem_by_field))
             crs_dem, resolution, extent = field_info.crs, field_info.resolution, field_info.extent
 
-        crs_ray = list(set(info.crs for info in runs.values()))
-        message = list(info.message for info in runs.values())
+        crs_ray = list(dict.fromkeys(info.crs for info in runs.values()))
+        message = [info.message for info in runs.values()]
         nan_count = int(np.sum([info.nan_count for info in runs.values()], dtype=float))
         return RayProfileMeta(crs_ray, crs_dem, resolution, extent, nan_count, message)
 
@@ -137,13 +136,11 @@ class RadialRuggedness:
 
     rays: tuple[RayRuggedness, ...] = dataclasses.field(repr=False)
     """Collection of rays being evaluated."""
-    _ray_by_angle: dict[float, RayRuggedness] = dataclasses.field(init=False, repr=False, compare=False)
-    """Access ray results by their angle."""
     runs: RayProfileMeta = dataclasses.field(init=False, repr=False)
     """Run summary statistics."""
 
     def __post_init__(self):
-        """Build internal index for fast theta lookups."""
+        """Validate the rays, sort them by angle and summarise their runs."""
         if len(self.rays) == 0:
             raise ValueError("RadialRixResult requires at least one ray")
 
@@ -217,8 +214,8 @@ class RadialRuggedness:
         KeyError
             If no ray exists for this angle.
         """
-        idx = np.searchsorted(self.angles, theta)
-        if idx < len(self.rays) and np.isclose(self.angles[idx], theta, atol=atol):
+        idx = int(np.argmin(np.abs(self.angles - theta % 360)))
+        if np.isclose(self.angles[idx], theta, atol=atol):
             return self.rays[idx]
         else:
             raise KeyError(f"No ray found for theta={theta:.1f}°. Available angles: {self.angles}")
@@ -241,7 +238,3 @@ class RadialRuggedness:
             "n_rays": self.n_rays,
             "slope_critical": self.slope_critical,
         }
-
-    @property
-    def stats(self) -> RayProfileMeta:
-        return RayProfileMeta.from_runs({key: value.profile.sampling_info for key, value in self._ray_by_angle.items()})

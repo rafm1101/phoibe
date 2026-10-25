@@ -18,22 +18,6 @@ from phoibe.geography.complexity.rix.computations.checks import (
     rix_findings,
     unique_id_findings,
 )
-from phoibe.geography.complexity.rix.computations.results import RadialRuggedness, RayRuggedness
-
-
-@pytest.fixture
-def make_radial(make_profile):
-    """Radial result with rays at 0°, 10°, ...; a spec is `z` or `(z, nan_count, n_points)`."""
-
-    def make(*specs):
-        rays = []
-        for k, spec in enumerate(specs):
-            z, nan_count, n_points = spec if isinstance(spec, tuple) else (spec, 0, None)
-            profile = make_profile(np.arange(len(z)) * 100.0, z, theta=10.0 * k, nan_count=nan_count, n_points=n_points)
-            rays.append(RayRuggedness(profile, slope_critical=0.1))
-        return RadialRuggedness(rays=tuple(rays))
-
-    return make
 
 
 def test_nan_findings_returns_nothing_given_no_nan(make_radial):
