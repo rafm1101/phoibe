@@ -98,10 +98,14 @@ def centre_elevation_findings(radial: RadialRuggedness, atol: float = 1e-6) -> t
     thetas = [ray.theta for ray in radial.rays]
     z0 = np.array([ray.profile.z[0] if len(ray.profile.z) else np.nan for ray in radial.rays], dtype=float)
     finite = np.isfinite(z0)
+    missing: tuple[Finding, ...] = ()
+    if not finite.all():
+        detail = f"Elevation at the centre is missing for {int((~finite).sum())} of {z0.size} rays."
+        missing = (Finding(CENTRE_ELEVATION, detail),)
     if not finite.any():
-        return ()
+        return missing
     reference = float(np.median(z0[finite]))
-    return tuple(
+    return missing + tuple(
         Finding(
             CENTRE_ELEVATION,
             f"Elevation at the centre {z:.3f}m differs from the median {reference:.3f}m of all rays.",
