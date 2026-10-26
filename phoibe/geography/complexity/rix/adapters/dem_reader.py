@@ -14,7 +14,7 @@ import logging
 import os
 
 from ..computations.fieldsampler import Field
-from ..pipeline.errors import PortError
+from ..pipelines.errors import PortError
 
 LOGGER = logging.getLogger(__name__)
 

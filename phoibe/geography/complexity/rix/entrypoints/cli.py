@@ -20,8 +20,8 @@ import argparse
 import pathlib
 from collections.abc import Sequence
 
-from ..pipeline import errors, ports
-from ..pipeline.results.result_summary import ResultSummary
+from ..pipelines import errors, ports
+from ..pipelines.results.result_summary import ResultSummary
 
 EXIT_OK = 0
 EXIT_INPUT = 1

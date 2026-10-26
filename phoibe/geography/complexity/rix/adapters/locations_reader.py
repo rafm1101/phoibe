@@ -12,7 +12,7 @@ import os
 import geopandas as gpd
 import pyogrio
 
-from ..pipeline.errors import InputRequirementError, PortError
+from ..pipelines.errors import InputRequirementError, PortError
 
 LOGGER = logging.getLogger(__name__)
 

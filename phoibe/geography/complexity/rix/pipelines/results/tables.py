@@ -35,7 +35,7 @@ def rix_table(spec: ProductSpecification, results: Mapping[Hashable, RadialRugge
     zs = [radial_rug.z for radial_rug in radial_rugs]
     ruggedness = [radial_rug.ruggednesses for radial_rug in radial_rugs]
     quantities = {
-        "elevation": [z_mean for z_mean in zs],
+        "elevation": zs,
         "rix": [radial_rug.rix for radial_rug in radial_rugs],
         "rix_std": [float(np.std(values)) for values in ruggedness],
         "rix_min": [float(np.min(values)) for values in ruggedness],

@@ -1,1 +1,1 @@
-from . import adapters, computations, entrypoints, pipeline
+from . import adapters, computations, entrypoints, pipelines
