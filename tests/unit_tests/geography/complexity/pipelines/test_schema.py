@@ -13,7 +13,6 @@ def test_parameter_returns_the_locked_tr6_value(group, name, value):
     assert (parameter.value, parameter.locked, parameter.source) == (value, True, "TR6")
 
 
-@pytest.mark.xfail(strict=True, reason="the definition says 'truncate', ADR 0005 and the changelog say 'mask'")
 def test_parameter_returns_mask_as_the_fixed_nan_policy():
     parameter = SPEC.parameter("sampler", "nan_policy")
     assert (parameter.value, parameter.locked) == ("mask", True)

@@ -29,7 +29,6 @@ def test_run_parameters_raises_given_a_slope_that_is_not_positive(slope_critical
         run_parameters(slope_critical=slope_critical)
 
 
-@pytest.mark.xfail(strict=True, reason="`nan <= 0` is False, so NaN passes the check")
 def test_run_parameters_raises_given_a_nan_slope():
     with pytest.raises(ValueError, match="slope_critical"):
         run_parameters(slope_critical=float("nan"))

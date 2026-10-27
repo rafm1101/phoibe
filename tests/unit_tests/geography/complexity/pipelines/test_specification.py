@@ -161,13 +161,7 @@ def replace_artifact(spec, key, **changes):
             lambda s: {"layers": {**s.layers, "attrs": dataclasses.replace(s.layers["attrs"], name="geo")}},
             "layer name",
         ),
-        pytest.param(
-            lambda s: {"artifacts": replace_artifact(s, "table_b", filename="a.csv")},
-            "already used by",
-            marks=pytest.mark.xfail(
-                strict=True, reason="_problems() records a filename only inside the duplicate branch"
-            ),
-        ),
+        (lambda s: {"artifacts": replace_artifact(s, "table_b", filename="a.csv")}, "already used by"),
     ],
     ids=[
         "version",
