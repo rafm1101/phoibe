@@ -12,6 +12,11 @@ from phoibe.geography.complexity.rix.computations.results import RadialRuggednes
 
 
 @pytest.fixture
+def origin():
+    return shapely.geometry.Point(0.0, 0.0)
+
+
+@pytest.fixture
 def make_profile():
     """Profile heading to `theta` from the origin, without a sampler. `n_points` defaults to the profile length."""
 
