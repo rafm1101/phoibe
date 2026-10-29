@@ -124,6 +124,7 @@ class TRIXAnalyzer:
 
         findings = [
             *checks.input_findings(spec, sites, references, crs_config=self._parameters.crs),
+            *checks.parameter_findings(spec, values),
             *checks.locked_parameter_findings(spec, values),
         ]
         checks.raise_on_abort(findings)

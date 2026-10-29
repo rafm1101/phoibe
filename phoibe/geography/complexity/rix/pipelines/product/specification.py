@@ -243,7 +243,7 @@ class ProductSpecification:
         """References between sections and uniqueness. Every id used must be defined."""
         problems: list[str] = []
         if not _VERSION_PATTERN.fullmatch(self.version):
-            problems.append(f"version: expected dottet numbers like '1.1.1'', got {self.version!r}")
+            problems.append(f"version: expected numbers like '1.1.1'', got {self.version!r}")
         for attribute, identifier in (
             ("inputs", "name"),
             ("checks", "name"),
@@ -257,7 +257,7 @@ class ProductSpecification:
                     problems.append(f"{attribute}.{key}: key differs from {identifier} {actual!r}")
         names = [parameter.name for parameter in self.parameters]
         for name in sorted({name for name in names if names.count(name) > 1}):
-            problems.append(f"parameters: name {name!r} is used more that once, but must be unique across groups.")
+            problems.append(f"parameters: name {name!r} is used more than once, but must be unique across groups.")
         for parameter in self.parameters:
             if parameter.source is not None and parameter.source not in self.references:
                 problems.append(
@@ -275,7 +275,7 @@ class ProductSpecification:
                 problems.append(
                     f"{path}.filename: {artifact.filename!r} is already used by {seen_filenames[artifact.filename]!r}"
                 )
-                seen_filenames[artifact.filename] = key
+            seen_filenames[artifact.filename] = key
 
         seen_layers: set[tuple[str, str]] = set()
         for key, layer in self.layers.items():

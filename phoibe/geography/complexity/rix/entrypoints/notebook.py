@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 from .. import computations
-from ..pipeline.product.specification import ProductSpecification
-from ..pipeline.results import tables
+from ..pipelines.product.specification import ProductSpecification
+from ..pipelines.results import tables
 
 if typing.TYPE_CHECKING:
     import geopandas as gpd

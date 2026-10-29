@@ -25,9 +25,9 @@ from collections.abc import Mapping
 
 import yaml
 
-from .. import pipeline
-from ..pipeline.errors import ConfigurationError
-from ..pipeline.product.specification import ParameterSpecification, ProductSpecification
+from .. import pipelines
+from ..pipelines.errors import ConfigurationError
+from ..pipelines.product.specification import ParameterSpecification, ProductSpecification
 
 _TOP_LEVEL_KEYS = ("project_name", "parameters")
 
@@ -36,8 +36,8 @@ _TOP_LEVEL_KEYS = ("project_name", "parameters")
 class RunConfiguration:
     """Everything a caller configures for one run."""
 
-    parameters: pipeline.RunParameters
-    sampler_parameters: pipeline.SampleParameters
+    parameters: pipelines.RunParameters
+    sampler_parameters: pipelines.SampleParameters
     project_name: str = ""
 
 
@@ -87,7 +87,7 @@ def load_configuration(
 
     by_name = {parameter.name: parameter for parameter in spec.parameters}
     settable = [
-        field.name for cls in (pipeline.RunParameters, pipeline.SampleParameters) for field in dataclasses.fields(cls)
+        field.name for cls in (pipelines.RunParameters, pipelines.SampleParameters) for field in dataclasses.fields(cls)
     ]
 
     problems = []
@@ -103,11 +103,11 @@ def load_configuration(
         name: _checked(by_name[name], supplied[name] if name in supplied else by_name[name].value) for name in settable
     }
     try:
-        parameters = pipeline.RunParameters(
-            **{field.name: values[field.name] for field in dataclasses.fields(pipeline.RunParameters)}
+        parameters = pipelines.RunParameters(
+            **{field.name: values[field.name] for field in dataclasses.fields(pipelines.RunParameters)}
         )
-        sampler = pipeline.SampleParameters(
-            **{field.name: values[field.name] for field in dataclasses.fields(pipeline.SampleParameters)}
+        sampler = pipelines.SampleParameters(
+            **{field.name: values[field.name] for field in dataclasses.fields(pipelines.SampleParameters)}
         )
     except ValueError as error:
         raise ConfigurationError(str(error)) from error

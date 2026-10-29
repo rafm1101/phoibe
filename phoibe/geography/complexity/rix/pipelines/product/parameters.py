@@ -21,7 +21,7 @@ class RunParameters:
     def __post_init__(self):
         if not 0 < self.dr_km < self.R_km:
             raise ValueError(f"dr_km must lie within (0, R_km), got {self.dr_km}.")
-        if self.slope_critical <= 0:
+        if not self.slope_critical > 0:
             raise ValueError("slope_critical must be positive.")
 
 

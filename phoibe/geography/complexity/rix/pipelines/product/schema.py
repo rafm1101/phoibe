@@ -14,10 +14,10 @@ PRODUCT_DEFINITION_TRIX = {
             "year": "2021",
         },
         "riley99": {
-            "title": "T-RIX A new criteria to classify orographic complexity for wind energy yield assessment",
+            "title": "A Terrain Ruggedness that Quantifies Topographic Heterogeneity",
             "authors": "Riley, S.J., De Gloria, S.D., & Elliot, R.",
             "description": "Description of the ruggedness index method.",
-            "journal": "Intermountain Journal of Science 5 (1-4)",
+            "journal": "Intermountain Journal of Science 5 (1--4)",
             "year": "1999",
         },
         "fgw23": {
@@ -81,7 +81,7 @@ PRODUCT_DEFINITION_TRIX = {
             "nan_policy": {
                 "description": "Handling of NaN values encountered while sampling a ray: "
                 "keep (mask), cut ray at the first one (truncate) or fail (error).",
-                "value": "truncate",
+                "value": "mask",
                 "dtype": "str",
                 "source": "implementation",
                 "locked": True,
@@ -89,7 +89,8 @@ PRODUCT_DEFINITION_TRIX = {
         },
         "trix": {
             "decimals": {
-                "description": "Number of decimals presented in the table.",
+                "description": "Number of decimals T-RIX is rounded to and presented in the table. "
+                "Comparison after rounding.",
                 "unit": None,
                 "value": 1,
                 "source": "TR6",
@@ -135,11 +136,6 @@ PRODUCT_DEFINITION_TRIX = {
         },
     },
     "checks": {
-        "check_name": {
-            "description": "Template w/o function.",
-            "severity": "warn",
-            "parameters": {"threshold": 0, "tolerance": 0},
-        },
         "crs_site_vs_reference": {
             "description": "Coordinates of sites and references are provided in the same CRS.",
             "severity": "warn",
@@ -188,8 +184,12 @@ PRODUCT_DEFINITION_TRIX = {
         "files": {
             "manifest": {"filename": "summary.yaml"},
             "rix_table": {"filename": "rix_table.csv", "table": "rix_table", "requires_input": None},
-            "trix_table": {"filename": "trix.csv", "table": "trix_table", "requires_input": "locations_reference"},
-            "geopackage": {"filename": "rix_details.gpkg", "table": None, "requires_input": "locations_reference"},
+            "trix_table": {
+                "filename": "trix_table.csv",
+                "table": "trix_table",
+                "requires_input": "locations_reference",
+            },
+            "geopackage": {"filename": "rix_details.gpkg", "table": None, "requires_input": None},
         },
         "layers": {
             "locations_site": {
@@ -348,7 +348,7 @@ PRODUCT_DEFINITION_TRIX = {
                 "trix": {
                     "name": "trix",
                     "description": "T-RIX measure between the assessed site and the wind data base site.",
-                    "unit": "km",
+                    "unit": None,
                 },
                 "A": {
                     "name": "A",

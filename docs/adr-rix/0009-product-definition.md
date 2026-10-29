@@ -3,7 +3,7 @@
 ---
 type: ADR
 id: "0009"
-title: "Architecture and package structure"
+title: "Structure of the product definition dictionary"
 status: active
 date: 2026-10-23
 superseded_by: null

@@ -1,22 +1,14 @@
-import dataclasses
+import types
 
+import numpy as np
 import pyproj
 import pytest
 import shapely.geometry
 
+from phoibe.geography.complexity.rix.computations.fieldsampler import FieldInfo
 from phoibe.geography.complexity.rix.computations.geometry import RayGeometry
-
-
-@dataclasses.dataclass(frozen=True)
-class Location:
-    easting: float
-    northing: float
-
-
-# TODO: Migrate to shapely as soon as needed.
-@pytest.fixture
-def dummy_location():
-    return Location(easting=-2.5, northing=-7.4)
+from phoibe.geography.complexity.rix.computations.profiles import RayProfile, SamplingInfo
+from phoibe.geography.complexity.rix.computations.results import RadialRuggedness, RayRuggedness
 
 
 @pytest.fixture
@@ -25,27 +17,58 @@ def origin():
 
 
 @pytest.fixture
-def ray_north(origin):
-    ray = RayGeometry.from_compass_regular(location=origin, theta=0.0, R_km=1.0, dr_km=0.1)
-    return ray
+def make_profile():
+    """Profile heading to `theta` from the origin, without a sampler. `n_points` defaults to the profile length."""
+
+    def make(r_m, z, theta=0.0, nan_count=0, n_points=None, crs=None, field_info=None, message=""):
+        r_m = np.asarray(r_m, dtype=float)
+        ray = RayGeometry.from_compass(location=shapely.geometry.Point(0.0, 0.0), theta=theta, r_m=r_m, crs=crs)
+        info = SamplingInfo(
+            field_info=field_info or FieldInfo(None, None, None),
+            crs=None if crs is None else pyproj.CRS.from_user_input(crs).to_string(),
+            n_points=len(r_m) if n_points is None else n_points,
+            nan_count=nan_count,
+            message=message,
+        )
+        return RayProfile(ray_=ray, r_m=r_m, z=np.asarray(z, dtype=float), sampling_info=info)
+
+    return make
 
 
 @pytest.fixture
-def ray_1km_100m(dummy_location):
-    return RayGeometry.from_compass_regular(location=dummy_location, theta=0.0, R_km=1.0, dr_km=0.1)
+def make_ray(make_profile):
+    def make(z, theta=0.0, slope_critical=0.1, dr_m=100.0, **kwargs):
+        return RayRuggedness(make_profile(np.arange(len(z)) * dr_m, z, theta=theta, **kwargs), slope_critical)
+
+    return make
 
 
 @pytest.fixture
-def ray_01km(origin, request):
-    dr_km = request.param
-    return RayGeometry.from_compass_regular(location=origin, theta=0.0, R_km=0.1, dr_km=dr_km)
+def make_radial(make_ray):
+    """Radial result with rays at 0°, 10°, ...; a spec is `z` or `(z, nan_count, n_points)`."""
+
+    def make(*specs):
+        rays = []
+        for k, spec in enumerate(specs):
+            z, nan_count, n_points = spec if isinstance(spec, tuple) else (spec, 0, None)
+            rays.append(make_ray(z, theta=10.0 * k, nan_count=nan_count, n_points=n_points))
+        return RadialRuggedness(rays=tuple(rays))
+
+    return make
 
 
 @pytest.fixture
-def crs_wgs84():
-    return pyproj.CRS.from_epsg(4326)
+def make_sampler():
+    class DummySampler:
+        def __init__(self, z, crs=None, field_info=None):
+            self.z = np.asarray(z, dtype=float)
+            self.crs = crs
+            self.field = types.SimpleNamespace(info=field_info or FieldInfo(None, None, None))
+            self.calls = []
 
+        def sample(self, xs, ys):
+            self.calls.append((np.asarray(xs), np.asarray(ys)))
+            z = self.z[: len(xs)].copy()
+            return z, int(np.isnan(z).sum())
 
-@pytest.fixture
-def crs_utm33n():
-    return pyproj.CRS.from_epsg(32633)
+    return DummySampler
