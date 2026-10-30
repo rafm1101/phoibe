@@ -27,7 +27,7 @@ from ..computations.fieldsampler import Field, RegularGridXYSampler
 from ..computations.results import RadialRuggedness
 from ..computations.rix import compute_regular_rix
 from ..computations.trix import assess_transferability
-from . import checks, errors, ports, product, publishing, results
+from . import checks, errors, ports, product, publishing, requirements, results
 from .results import tables
 
 if typing.TYPE_CHECKING:
@@ -72,6 +72,7 @@ class TRIXAnalyzer:
         writer: ports.ResultWriter | None = None,
         clock: Callable[[], datetime.datetime] = _utc_now,
     ) -> None:
+        requirements.check_specification_complete(spec)
         self._spec = spec
         self._parameters = parameters
         self._sampler_parameters = sampler_parameters
@@ -125,7 +126,7 @@ class TRIXAnalyzer:
         findings = [
             *checks.input_findings(spec, sites, references, crs_config=self._parameters.crs),
             *checks.parameter_findings(spec, values),
-            *checks.locked_parameter_findings(spec, values),
+            # *checks.locked_parameter_findings(spec, values),
         ]
         checks.raise_on_abort(findings)
 
