@@ -192,7 +192,6 @@ def test_run_returns_the_references_given_a_specification_that_requires_them(
     assert result.trix_table is not None
 
 
-@pytest.mark.xfail(strict=True, reason="run() calls locked_parameter_findings, so the check n_angle never runs")
 @pytest.mark.parametrize("n_angles", [0, 361])
 def test_run_raises_given_n_angles_outside_the_range_of_the_check(
     make_analyzer, make_spec, make_field, make_locations, n_angles
@@ -260,11 +259,10 @@ def test_run_raises_given_an_input_the_specification_requires_and_the_analyzer_w
         make_analyzer(spec).run(make_field(), make_locations())
 
 
-@pytest.mark.xfail(strict=True, reason="__init__ does not call check_specification_complete")
 def test_analyzer_raises_given_a_specification_without_a_check_the_pipeline_raises(product_spec):
-    checks = {name: check for name, check in product_spec.checks.items() if name != checks.NAN_COUNT}
+    spec_checks = {name: check for name, check in product_spec.checks.items() if name != checks.NAN_COUNT}
     with pytest.raises(product.SpecificationError, match=checks.NAN_COUNT):
-        TRIXAnalyzer(dataclasses.replace(product_spec, checks=checks), None, None)
+        TRIXAnalyzer(dataclasses.replace(product_spec, checks=spec_checks), None, None)
 
 
 def run_and_publish(analyzer, field, locations, references=None, profile="summary", **run_kwargs):

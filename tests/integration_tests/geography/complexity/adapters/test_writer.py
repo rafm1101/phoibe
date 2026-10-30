@@ -58,7 +58,7 @@ def test_write_artifacts_returns_the_csv_of_the_summary_and_writes_no_manifest(w
 def test_write_artifacts_returns_the_pairs_as_one_row_each_given_references(writer, make_result, spec, tmp_path):
     result = make_result()
     written = writer.write_artifacts(result, tmp_path, "summary")
-    trix = pd.read_csv(tmp_path / "trix.csv")
+    trix = pd.read_csv(tmp_path / "trix_table.csv")
     assert (sorted(written.files), written.table_records["trix_table"], len(trix)) == (
         ["rix_table", "trix_table"],
         9,
@@ -169,7 +169,7 @@ def test_publish_returns_the_files_of_the_profile_and_the_manifest_that_lists_th
         "rix_details.gpkg",
         "rix_table.csv",
         "summary.yaml",
-        "trix.csv",
+        "trix_table.csv",
     ]
     manifest = yaml.safe_load((tmp_path / "summary.yaml").read_text())
     assert manifest["artifacts"]["files"] == {**written.files, "manifest": "summary.yaml"}
