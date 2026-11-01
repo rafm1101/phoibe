@@ -1,0 +1,338 @@
+product: T-RIX assessment
+version: 2.0.0
+description: TRIX, TR6 Rev.12
+inputs:
+  dem:
+    required: true
+    description: Digital elevation model.
+    type: xarray.DataArray
+    notes:
+    - If CRS is not exposed, all coordinates shall be in the same CRS.
+    - CRS may differ from the site's CRS.
+    conditions:
+    - coordinates 'x' and 'y' present
+    - if CRS is relevant, `rio` and `crs` must be an attribute each
+    - resolution at least 30m
+  locations_site:
+    required: true
+    description: Coordinates of the assessed sites.
+    notes:
+    - If CRS is not projected metric, results may be distorted and not interpretable.
+    conditions:
+    - projected metric CRS
+    - if CRS is relevant, `rio` and `crs` must be an attribute each
+  locations_reference:
+    required: false
+    description: Coordinates of the wind data base sites.
+    notes:
+    - If absent, TRIX and rix_details are omitted.
+    conditions:
+    - projected metric CRS
+    - if CRS is relevant, `rio` and `crs` must be an attribute each
+    - CRS must agree with the one of `locations_site`
+parameters:
+  ray:
+    n_angles:
+      description: Number of ray directions, evenly spaced over 360°, North included.
+      dtype: int
+      unit: null
+      locked: true
+      value: 72
+      source: TR6
+    R_km:
+      description: Ray radius.
+      dtype: float
+      unit: km
+      locked: true
+      value: 3.5
+      source: TR6
+    dr_km:
+      description: Sampling step size along a ray.
+      dtype: float
+      unit: km
+      locked: false
+      range:
+      - 1.0e-05
+      - 3.5
+    crs:
+      description: CRS for validation against data source CRS. To be set by the user.
+      dtype: str
+      unit: null
+      locked: false
+  slope:
+    slope_critical:
+      description: Slope threshold distinguishing steep and flat.
+      dtype: float
+      unit: m/m
+      locked: true
+      value: 0.033
+      source: TR6
+  sampler:
+    interpolation_method:
+      description: Sampling method of the site elevations from the raster DEM.
+      dtype: str
+      unit: null
+      locked: false
+    nan_policy:
+      description: 'Handling of NaN values encountered while sampling a ray: keep
+        (mask), cut ray at the first one (truncate) or fail (error).'
+      dtype: str
+      unit: null
+      locked: true
+      value: mask
+      source: implementation
+  trix:
+    decimals:
+      description: Number of decimals T-RIX is rounded to and presented in the table.
+        Comparison after rounding.
+      dtype: int
+      unit: null
+      locked: true
+      value: 1
+      source: TR6
+checks:
+- name: crs_site_vs_reference
+  description: Coordinates of sites and references are provided in the same CRS.
+  on_failure: warn
+- name: crs_vs_config
+  description: CRS of the sites agrees with configured CRS..
+  on_failure: warn
+- name: unique_ids
+  description: Provided locations are identifyable uniquely.
+  on_failure: abort
+- name: centre_elevation
+  description: When sampling rays, all rays' origin shall agree.
+  on_failure: warn
+- name: locked_parameter_changed
+  description: Check if chosen parameters comply with TR6.
+  on_failure: warn
+- name: nan_count
+  description: Number of NaN encountered during sampling.
+  on_failure: warn
+  parameters:
+    max_fraction: 0.05
+- name: rix_nan
+  description: The RIX of a site is NaN, so TRIX cannot be established.
+  on_failure: warn
+- name: n_angle
+  description: Number of angles for the assessment.
+  on_failure: abort
+  parameters:
+    range:
+    - 1
+    - 360
+outputs:
+  manifest:
+    file: summary.yaml
+    columns: []
+  rix_table:
+    file: rix_table.csv
+    columns:
+    - name: site_id
+      type: null
+      unit: null
+      description: Site identifier of the assessed site.
+    - name: elevation
+      type: null
+      unit: m
+      description: Site elevation as determined from the DEM. Mean of the origins
+        of all rays.
+    - name: rix
+      type: null
+      unit: null
+      description: Mean ruggedness index across all ray directions. Proportion of
+        the total length of all steep segments among the total length of all rays.
+    - name: rix_std
+      type: null
+      unit: null
+      description: Standard deviation of ruggedness across ray directions.
+    - name: rix_min
+      type: null
+      unit: null
+      description: Minimal ruggedness across ray directions.
+    - name: rix_max
+      type: null
+      unit: null
+      description: Maximal ruggedness across ray directions.
+    - name: n_rays
+      type: null
+      unit: null
+      description: Number of rays directions evaluated.
+    - name: slope_critical
+      type: null
+      unit: m/m
+      description: Slope threshold distinguishing steep and flat
+  trix_table:
+    file: trix_table.csv
+    columns:
+    - name: site_id
+      type: null
+      unit: null
+      description: Site identifier of the assessed site.
+    - name: reference_id
+      type: null
+      unit: null
+      description: Site identifier of the wind data base site.
+    - name: transferability
+      type: int
+      unit: null
+      description: Representability of the wind measurement at the wind date base
+        site. for the assessed site.
+      values:
+        0: Not representable.
+        1: Conditionally representable with additional uncertainty.
+        2: Representable.
+    - name: distance
+      type: null
+      unit: km
+      description: Distance between the assessed site and the wind data base site.
+    - name: trix
+      type: null
+      unit: null
+      description: T-RIX measure between the assessed site and the wind data base
+        site.
+    - name: A
+      type: null
+      unit: km
+      description: Distance threshold for full representability at the given T-RIX
+        value.
+    - name: B
+      type: null
+      unit: km
+      description: Distance threshold for conditional representability at the given
+        T-RIX value.
+    requires_input: locations_reference
+  geopackage:
+    file: rix_details.gpkg
+    columns: []
+    layers:
+      locations_site:
+        name: locations_site
+        geometry_type: Point
+        columns:
+        - name: site_id
+          type: null
+          unit: null
+          description: Site identifier of the assessed site.
+        - name: geometry
+          type: null
+          unit: null
+          description: Coordinates of the assessed sites. CRS as presented by the
+            user.
+      locations_reference:
+        name: locations_reference
+        geometry_type: Point
+        columns:
+        - name: site_id
+          type: null
+          unit: null
+          description: Site identifier of the wind data base site.
+        - name: geometry
+          type: null
+          unit: null
+          description: Coordinates of the wind data base sites. CRS as presented by
+            the user.
+        requires_input: locations_reference
+      ruggedness:
+        name: ruggedness
+        geometry_type: LineString
+        columns:
+        - name: site_id
+          type: null
+          unit: null
+          description: Site identifier of the assessed site.
+        - name: theta
+          type: float
+          unit: °
+          description: Direction of the ray.
+          range:
+          - 0
+          - 360
+        - name: segment_id
+          type: null
+          unit: null
+          description: Identifier of the steep segment on the given ray of the given
+            site.
+        - name: geometry
+          type: null
+          unit: null
+          description: Coordinates of segments start/end. CRS as presented by the
+            user.
+      trix_table:
+        name: trix_table
+        geometry_type: null
+        columns:
+        - name: site_id
+          type: null
+          unit: null
+          description: Site identifier of the assessed site.
+        - name: reference_id
+          type: null
+          unit: null
+          description: Site identifier of the wind data base site.
+        - name: transferability
+          type: int
+          unit: null
+          description: Representability of the wind measurement at the wind date base
+            site. for the assessed site.
+          values:
+            0: Not representable.
+            1: Conditionally representable with additional uncertainty.
+            2: Representable.
+        - name: distance
+          type: null
+          unit: km
+          description: Distance between the assessed site and the wind data base site.
+        - name: trix
+          type: null
+          unit: null
+          description: T-RIX measure between the assessed site and the wind data base
+            site.
+        - name: A
+          type: null
+          unit: km
+          description: Distance threshold for full representability at the given T-RIX
+            value.
+        - name: B
+          type: null
+          unit: km
+          description: Distance threshold for conditional representability at the
+            given T-RIX value.
+        requires_input: locations_reference
+profiles:
+  summary:
+  - rix_table
+  - trix_table
+  - manifest
+  full:
+  - rix_table
+  - trix_table
+  - manifest
+  - geopackage
+references:
+  TR6:
+    title: 'Technische Richtlinien für Windenergieanlagen, Teil 6: Bestimmung von
+      Windpotenzial und Energieerträgen'
+    author: FGW e.V.
+    description: Technische Richtlinie 6. Defines locked parameters `slope_critical`
+      and `R_km`.
+    year: '2021'
+  riley99:
+    title: A Terrain Ruggedness that Quantifies Topographic Heterogeneity
+    authors: Riley, S.J., De Gloria, S.D., & Elliot, R.
+    description: Description of the ruggedness index method.
+    journal: Intermountain Journal of Science 5 (1--4)
+    year: '1999'
+  fgw23:
+    title: T-RIX A new criteria to classify orographic complexity for wind energy
+      yield assessment
+    authors: FGW e.V., Adler, D., Albrecht, C., Cordes, J., Gaupp, T., & Richter-Rose,
+      M.
+    description: Comparison of various methods and summary of TR6 conform configuration.
+    meeting: 31. Windenergietage
+    publisher: Zenodo
+    year: '2023'
+  implementation:
+    title: T-RIX assessment, implementation.
+    description: Choices of this implementation that fix the meaning of numbers, but
+      are not prescribed by other sources.

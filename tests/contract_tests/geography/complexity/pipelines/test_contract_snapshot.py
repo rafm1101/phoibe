@@ -13,7 +13,7 @@ import yaml
 
 from phoibe.geography.complexity.rix.pipelines.publishing.contract import render_contract
 
-SNAPSHOTS = pathlib.Path(__file__).parent / "snapshots"
+SNAPSHOTS = pathlib.Path(__file__).parent.parent / "snapshots"
 ORDER = {"none": 0, "patch": 1, "minor": 2, "major": 3}
 
 
