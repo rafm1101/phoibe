@@ -69,7 +69,13 @@ packages = ["phoibe"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--import-mode=importlib --strict-markers -ra"
-markers = ["rio: tests requiring rioxarray's .rio accessor shall run isolated not to break other tests."]
+markers = [
+    "rio: tests requiring rioxarray's .rio accessor shall run isolated not to break other tests.",
+    "unit: pure functions and value objects, no I/O.",
+    "integration: use case with doubles, adapters with temporary files.",
+    "contract: specification, manifest and written files agree; port suites.",
+    "e2e: command line with real files."
+]
 
 [tool.vulture]
 min_confidence = 80
