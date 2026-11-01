@@ -1,19 +1,36 @@
 import dataclasses
+import datetime
 
+import geopandas as gpd
 import numpy as np
 import pytest
-import shapely
+import shapely.geometry
+import xarray
 
-from phoibe.geography.complexity.rix.computations.fieldsampler import FieldInfo
-from phoibe.geography.complexity.rix.computations.geometry import RayGeometry
-from phoibe.geography.complexity.rix.computations.profiles import NaNPolicy, RayProfile
-from phoibe.geography.complexity.rix.computations.results import RadialRuggedness, RayRuggedness
+from phoibe.geography.complexity.rix.adapters.writer import FileResultWriter
+from phoibe.geography.complexity.rix.computations.fieldsampler import Field
+from phoibe.geography.complexity.rix.pipelines.analyzer import TRIXAnalyzer
+from phoibe.geography.complexity.rix.pipelines.ports import WrittenArtifacts
+from phoibe.geography.complexity.rix.pipelines.product import RunParameters, SampleParameters
+from phoibe.geography.complexity.rix.pipelines.product.schema import PRODUCT_SPECIFICATION
+
+REFERENCES = {"ids": ("r1", "r2", "r3"), "xs": (500, -500, 0), "ys": (500, -500, 500)}
 
 
-@dataclasses.dataclass(frozen=True)
-class Location:
-    easting: float
-    northing: float
+@pytest.fixture
+def references(make_locations):
+    return make_locations(**REFERENCES)
+
+
+@pytest.fixture
+def analyzer(product_spec, make_analyzer):
+    """The analyzer with the real writer: what ends up on disk is what the contract is about."""
+    return make_analyzer(product_spec, writer=FileResultWriter(product_spec))
+
+
+@pytest.fixture
+def result(analyzer, make_field, make_locations, references):
+    return analyzer.run(make_field(), make_locations(), references, dem_metadata={"name": "demo"})
 
 
 @pytest.fixture
@@ -21,70 +38,107 @@ def origin():
     return shapely.geometry.Point(0.0, 0.0)
 
 
-class DummySampler:
-    def __init__(self, z):
-        self._z = np.asarray(z, dtype=float)
-        self.crs = None
-        self.meta = {}
-        self.field_info = FieldInfo(crs=None, extent=None, resolution=None)
-
-    def sample(self, xs, ys):
-        return self._z.copy(), np.isnan(self._z).sum()
+@pytest.fixture
+def product_spec():
+    return PRODUCT_SPECIFICATION
 
 
 @pytest.fixture
-def flat_sampler():
-    """Sampler producing flat terrain (constant elevation)."""
-    return DummySampler(z=[5.0] * 11)
+def make_spec():
+    """The product specification with other severities or parameters of its checks."""
+
+    def make(severities=None, check_parameters=None):
+        checks = dict(PRODUCT_SPECIFICATION.checks)
+        for name, severity in (severities or {}).items():
+            checks[name] = dataclasses.replace(checks[name], severity=severity)
+        for name, parameters in (check_parameters or {}).items():
+            checks[name] = dataclasses.replace(checks[name], parameters=parameters)
+        return dataclasses.replace(PRODUCT_SPECIFICATION, checks=checks)
+
+    return make
+
+
+NOW = datetime.datetime(2026, 10, 24, 12, 0, tzinfo=datetime.UTC)
 
 
 @pytest.fixture
-def linear_sampler():
-    """Sampler producing linear slope."""
-    return DummySampler(z=np.linspace(0, 10, 11))
+def make_field():
+    """Field of the plane z = a x + b y on a 50 m grid from -half to +half, without georeferencing."""
+
+    def make(a=1.0, b=0.0, half=2000, step=50):
+        x = np.arange(-half, half + 1, step, dtype=float)
+        da = xarray.DataArray(a * x[None, :] + b * x[:, None], coords={"x": x, "y": x}, dims=("y", "x"), name="dem")
+        assert not hasattr(da, "rio"), "rioxarray was imported in this process: run with -m 'not rio'"
+        return Field.from_array(da)
+
+    return make
 
 
 @pytest.fixture
-def steep_sampler():
-    """Sampler producing very steep terrain."""
-    return DummySampler(z=[0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500])
+def make_locations():
+    def make(ids=("a", "b", "c"), xs=(0, 100, -100), ys=(0, 0, 100), crs=None, index_name=None):
+        points = [shapely.geometry.Point(x, y) for x, y in zip(xs, ys, strict=True)]
+        if ids is None:
+            frame = gpd.GeoDataFrame(geometry=points, crs=crs)
+            return frame if index_name is None else frame.rename_axis(index_name)
+        return gpd.GeoDataFrame({"site_id": list(ids)}, geometry=points, crs=crs)
+
+    return make
+
+
+class InMemoryWriter:
+    """Implements `ResultWriter` without files. Reports what a correct writer would, and remembers the calls.
+
+    `tamper` changes what is reported, `fail` is raised instead of writing.
+    """
+
+    def __init__(self, spec, tamper=None, fail=None):
+        self.spec, self.tamper, self.fail = spec, tamper, fail
+        self.calls, self.manifest = [], None
+
+    def write_artifacts(self, result, target, profile):
+        self.calls.append(("artifacts", profile))
+        if self.fail is not None:
+            raise self.fail
+        present = result.record.present_inputs
+        files, table_columns, table_records = {}, {}, {}
+        layer_columns, layer_geometry_types, layer_records = {}, {}, {}
+        for artifact in self.spec.artifacts_for(profile, present):
+            if artifact.key == "manifest":
+                continue
+            files[artifact.key] = artifact.filename
+            if artifact.table is not None:
+                frame = result.tables[artifact.table].reset_index()
+                table_columns[artifact.key], table_records[artifact.key] = tuple(frame.columns), len(frame)
+            for layer in self.spec.layers_for(artifact.key, present):
+                frame = result.tables[layer.table].reset_index()
+                layer_columns[layer.key] = tuple(
+                    c for c in frame.columns if layer.geometry_type is None or c != "geometry"
+                )
+                layer_geometry_types[layer.key], layer_records[layer.key] = layer.geometry_type, len(frame)
+        written = WrittenArtifacts(
+            profile, files, table_columns, table_records, layer_columns, layer_geometry_types, layer_records
+        )
+        return self.tamper(written) if self.tamper is not None else written
+
+    def write_manifest(self, manifest, target):
+        self.calls.append(("manifest",))
+        self.manifest = manifest
 
 
 @pytest.fixture
-def ray_north(origin):
-    """Ray pointing North with 1km length, 0.1km spacing."""
-    return RayGeometry.from_compass_regular(location=origin, theta=0.0, R_km=1.0, dr_km=0.1)
+def make_writer(product_spec):
+    return lambda **kwargs: InMemoryWriter(product_spec, **kwargs)
 
 
 @pytest.fixture
-def make_ray_result(ray_north):
-    """Factory for creating RayResult instances."""
+def make_analyzer(product_spec):
+    """Analyzer with small parameters (4 rays of 0.5 km, steps of 50 m). Other values via `parameters`."""
 
-    def _make(sampler, slope_critical=0.3, nan_policy=NaNPolicy.ERROR):
-        profile = RayProfile.create_regular(ray=ray_north, sampler=sampler, nan_policy=nan_policy)
-        return RayRuggedness(profile=profile, slope_critical=slope_critical)
+    def make(spec=None, writer=None, method="linear", **parameters):
+        values = {"n_angles": 4, "R_km": 0.5, "dr_km": 0.05, "slope_critical": 0.1, "crs": None} | parameters
+        return TRIXAnalyzer(
+            spec or product_spec, RunParameters(**values), SampleParameters(method), writer, clock=lambda: NOW
+        )
 
-    return _make
-
-
-@pytest.fixture
-def make_radial_result(origin):
-    """Factory for creating RadialRixResult instances."""
-
-    def _make(n_angles=8, slope_critical=0.3, sampler_factory=None):
-        if sampler_factory is None:
-
-            def sampler_factory():
-                return DummySampler(z=np.linspace(0, 10, 11))
-
-        angles = np.linspace(0, 360, n_angles, endpoint=False)
-        ray_results = []
-
-        for theta in angles:
-            ray = RayGeometry.from_compass_regular(location=origin, theta=theta, R_km=1.0, dr_km=0.1)
-            profile = RayProfile.create_regular(ray=ray, sampler=sampler_factory(), nan_policy=NaNPolicy.ERROR)
-            ray_results.append(RayRuggedness(profile=profile, slope_critical=slope_critical))
-
-        return RadialRuggedness(rays=tuple(ray_results))
-
-    return _make
+    return make

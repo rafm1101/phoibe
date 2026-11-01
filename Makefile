@@ -15,3 +15,6 @@ test:
 
 update-precommits:
 	uv run pre-commit autoupdate
+
+update-trix-contract-snapshot:
+	UPDATE_SNAPESHOTS=1 uv run pytest tests/contract_tests/geography/complexity/pipelines/test_contract_snapshot.py
