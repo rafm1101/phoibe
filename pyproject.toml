@@ -124,52 +124,52 @@ known-first-party = ["trix"]
 quote-style = "double"
 
 [tool.importlinter]
-root_package = "trix"
+root_package = "phoibe"
 include_external_packages = true          # needed for the contracts on third-party libraries
 exclude_type_checking_imports = true      # imports only for type checking do not count
  
 [[tool.importlinter.contracts]]
 name = "Layers: entrypoints and adapters above pipelines above computations"
 type = "layers"
-layers = ["trix.entrypoints | trix.adapters", "trix.pipelines", "trix.computations"]
+layers = ["phoibe.geography.complexity.rix.entrypoints | phoibe.geography.complexity.rix.adapters", "phoibe.geography.complexity.rix.pipelines", "phoibe.geography.complexity.rix.computations"]
  
 [[tool.importlinter.contracts]]
 name = "Layers inside pipelines"
 type = "layers"
 layers = [
-    "trix.pipelines.analyzer",
-    "trix.pipelines.publishing | trix.pipelines.requirements",
-    "trix.pipelines.ports",
-    "trix.pipelines.results",
-    "trix.pipelines.checks",
-    "trix.pipelines.product | trix.pipelines.errors",
+    "phoibe.geography.complexity.rix.pipelines.analyzer",
+    "phoibe.geography.complexity.rix.pipelines.publishing | phoibe.geography.complexity.rix.pipelines.requirements",
+    "phoibe.geography.complexity.rix.pipelines.ports",
+    "phoibe.geography.complexity.rix.pipelines.results",
+    "phoibe.geography.complexity.rix.pipelines.checks",
+    "phoibe.geography.complexity.rix.pipelines.product | phoibe.geography.complexity.rix.pipelines.errors",
 ]
  
 [[tool.importlinter.contracts]]
 name = "Domain uses no I/O, file format or presentation libraries"
 type = "forbidden"
-source_modules = ["trix.computations"]
+source_modules = ["phoibe.geography.complexity.rix.computations"]
 forbidden_modules = ["pandas", "geopandas", "yaml", "matplotlib", "rioxarray", "rasterio", "pyogrio", "requests"]
  
 [[tool.importlinter.contracts]]
 name = "Pipelines use no I/O, file format or presentation libraries"
 type = "forbidden"
-source_modules = ["trix.pipelines"]
+source_modules = ["phoibe.geography.complexity.rix.pipelines"]
 forbidden_modules = ["yaml", "matplotlib", "rioxarray", "rasterio", "pyogrio", "requests"]
  
 [[tool.importlinter.contracts]]
 name = "Only the composition root connects adapters"
 type = "forbidden"
-source_modules = ["trix.computations", "trix.pipelines", "trix.entrypoints"]
-forbidden_modules = ["trix.adapters"]
+source_modules = ["phoibe.geography.complexity.rix.computations", "phoibe.geography.complexity.rix.pipelines", "phoibe.geography.complexity.rix.entrypoints"]
+forbidden_modules = ["phoibe.geography.complexity.rix.adapters"]
  
 [[tool.importlinter.contracts]]
 name = "Nothing imports the composition root"
 type = "forbidden"
-source_modules = ["trix.computations", "trix.pipelines", "trix.entrypoints", "trix.adapters"]
-forbidden_modules = ["trix.main"]
+source_modules = ["phoibe.geography.complexity.rix.computations", "phoibe.geography.complexity.rix.pipelines", "phoibe.geography.complexity.rix.entrypoints", "phoibe.geography.complexity.rix.adapters"]
+forbidden_modules = ["phoibe.geography.complexity.rix.main"]
  
 [[tool.importlinter.contracts]]
 name = "Adapters are independent of each other"
 type = "independence"
-modules = ["trix.adapters.dem_reader", "trix.adapters.locations_reader", "trix.adapters.writer"]
+modules = ["phoibe.geography.complexity.rix.adapters.dem_reader", "phoibe.geography.complexity.rix.adapters.locations_reader", "phoibe.geography.complexity.rix.adapters.writer"]
