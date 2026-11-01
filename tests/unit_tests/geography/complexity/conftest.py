@@ -9,6 +9,12 @@ from phoibe.geography.complexity.rix.computations.fieldsampler import FieldInfo
 from phoibe.geography.complexity.rix.computations.geometry import RayGeometry
 from phoibe.geography.complexity.rix.computations.profiles import RayProfile, SamplingInfo
 from phoibe.geography.complexity.rix.computations.results import RadialRuggedness, RayRuggedness
+from phoibe.geography.complexity.rix.pipelines.product.schema import PRODUCT_SPECIFICATION
+
+
+@pytest.fixture
+def product_spec():
+    return PRODUCT_SPECIFICATION
 
 
 @pytest.fixture
