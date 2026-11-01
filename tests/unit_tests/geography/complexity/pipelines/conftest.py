@@ -8,11 +8,6 @@ from phoibe.geography.complexity.rix.pipelines.product.specification import Prod
 
 
 @pytest.fixture
-def product_spec():
-    return PRODUCT_SPECIFICATION
-
-
-@pytest.fixture
 def make_spec():
     """The product specification with other severities or parameters of its checks."""
 
