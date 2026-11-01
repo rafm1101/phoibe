@@ -73,7 +73,7 @@ def plot_polar(
         values = np.append(radial.ruggednesses, radial.ruggednesses[0])
     elif isinstance(radial, (pd.Series, pd.DataFrame)):
         angles = np.deg2rad(np.append(radial.index, radial.index[0]))
-        values = np.append(radial, radial[0])
+        values = np.append(radial, radial.iloc[0])
     else:
         raise ValueError(
             f"`plot_polar` requires `radial` to be either `RadialRuggedness` or `pd.Series`. Found {type(radial)}."
@@ -83,9 +83,11 @@ def plot_polar(
         figure, ax = plt.subplots(subplot_kw={"projection": "polar"})
     else:
         figure = ax.figure
+    if slope_critical is None and isinstance(radial, computations.RadialRuggedness):
+        slope_critical = radial.slope_critical
     ax.plot(angles, values, label=label, linewidth=0.7)
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
-    ax.set_title(f"Directional RIX (threshold={slope_critical:.3f})")
+    ax.set_title("Directional RIX" + ("" if slope_critical is None else f" (threshold={slope_critical:.3f})"))
     ax.set_ylabel("RIX")
     return figure, ax
