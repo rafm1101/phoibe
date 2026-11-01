@@ -108,7 +108,7 @@ def test_main_returns_zero_and_writes_every_file_of_the_full_profile_given_refer
         "rix_details.gpkg",
         "rix_table.csv",
         "summary.yaml",
-        "trix.csv",
+        "trix_table.csv",
     ]
     content = manifest(output)
     assert (content["run"]["n_sites"], content["run"]["n_references"], content["run"]["project_name"]) == (2, 3, "demo")
