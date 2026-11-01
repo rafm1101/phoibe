@@ -84,13 +84,11 @@ def test_plot_polar_returns_the_values_of_a_series_over_its_angles():
     np.testing.assert_allclose(ax.lines[0].get_ydata(), [0.1, 0.2, 0.3, 0.1])
 
 
-@pytest.mark.xfail(strict=True, raises=KeyError, reason="radial[0] looks up the label 0, not the first value")
 def test_plot_polar_returns_the_circle_closed_given_a_series_whose_index_does_not_contain_zero():
     _, ax = notebook.plot_polar(pd.Series([0.1, 0.2, 0.3], index=[10.0, 20.0, 30.0]), slope_critical=0.1)
     np.testing.assert_allclose(ax.lines[0].get_ydata(), [0.1, 0.2, 0.3, 0.1])
 
 
-@pytest.mark.xfail(strict=True, raises=TypeError, reason="the title formats slope_critical, which defaults to None")
 def test_plot_polar_returns_a_figure_given_no_slope_critical(make_radial):
     figure, ax = notebook.plot_polar(make_radial(STEEP, FLAT))
     assert figure is ax.figure
