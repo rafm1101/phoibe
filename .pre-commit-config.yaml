@@ -3,13 +3,13 @@ default_language_version:
 
 repos:
   - repo: https://github.com/psf/black
-    rev: 26.5.1
+    rev: 26.10.1
     hooks:
       - id: black
         files: (phoibe|tests)
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.21
+    rev: v0.17.3
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -33,7 +33,7 @@ repos:
       - id: vulture
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.2.0
+    rev: v2.4.1
     hooks:
       - id: mypy
         args: ["phoibe"]
@@ -47,7 +47,16 @@ repos:
         args: ["--maxkb=775"]
 
   - repo: https://github.com/jshwi/docsig
-    rev: v0.89.0
+    rev: v0.97.0
     hooks:
       - id: docsig
-        files: "pho/"
+        files: "phoibe/"
+
+  - repo: https://github.com/seddonym/import-linter
+    rev: v2.15
+    hooks:
+      - id: import-linter
+        name: "Lint imports"
+        # entry: "lint-imports"
+        language: python
+        pass_filenames: false
