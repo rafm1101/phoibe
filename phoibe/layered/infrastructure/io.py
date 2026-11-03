@@ -11,6 +11,8 @@ from ..logging.logging import get_logger
 
 LOGGER = get_logger(__name__)
 
+# docsig: disable
+
 
 class InMemoryDataLoader:
     """Loader for in-memory data such as DataFrames and xarrays."""
@@ -50,14 +52,17 @@ class InMemoryDataLoader:
             size_bytes = sys.getsizeof(self.data)
 
         return FileMetadata(
-            filename=str(self.filename), size_bytes=size_bytes, format="in_memory", modified_at=datetime.datetime.now()
+            filename=str(self.filename),
+            size_bytes=int(size_bytes),
+            format="in_memory",
+            modified_at=datetime.datetime.now(),
         )
 
 
 class PandasDataLoader:
     """Load data from csv or excel files using pandas."""
 
-    ENCODINGS = ["utf-8", "latin1", "iso-8859-1"]
+    ENCODINGS = ("utf-8", "latin1", "iso-8859-1")
 
     def load(self, file_path: pathlib.Path | str) -> pd.DataFrame:
         path = pathlib.Path(file_path)

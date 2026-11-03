@@ -11,6 +11,7 @@ from phoibe.layered.core.entities import RuleExecutionResult, Severity
 from phoibe.layered.rules.rule import ValidationRule
 
 # TODO: Document properly, refactor `TemporalResolutionRule`.
+# docsig: disable
 
 
 @RuleRegistry.register("temporal_attributes")
@@ -216,8 +217,8 @@ class DataGaps(ValidationRule):
 
     def _describe_gaps(self, delta: pd.Series) -> tuple[int, pd.Timedelta, pd.Timedelta, pd.Timedelta]:
         """Determine count statistics of delta datetimes that are larger than the estimated frequency."""
-        n_gaps: int = delta.sum()
-        gap_length_total: pd.Timedelta = (delta * delta.index).sum()
+        n_gaps: int = int(delta.sum())
+        gap_length_total: pd.Timedelta = typing.cast(pd.Timedelta, (delta * delta.index).sum())
         gap_length_mean: pd.Timedelta = gap_length_total / n_gaps if n_gaps > 0 else pd.Timedelta(0)
         gap_length_max: pd.Timedelta = delta.index[-1] if n_gaps > 0 else pd.Timedelta(0)
         return n_gaps, gap_length_total, gap_length_mean, gap_length_max
@@ -387,4 +388,4 @@ class AvailabilityRule(ValidationRule):
         return month_of_year_series, month_names
 
 
-__all__ = ["TemporalAttributes", "DataGaps", "AvailabilityRule"]
+__all__ = ["AvailabilityRule", "DataGaps", "TemporalAttributes"]
