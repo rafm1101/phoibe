@@ -8,7 +8,10 @@ requires-python = ">=3.13, <3.14"
 dependencies = [
     "ergaleiothiki>=0.3.0",
     "geopandas>=1.1.2",
+    "numpy>=2.5.4",
     "openpyxl>=3.1.5",
+    "pandas>=3.1.0",
+    "pyyaml>=6.0.3",
     "rasterio>=1.5.0",
     "rioxarray>=0.20.0",
     "scipy>=1.17.0",
@@ -91,9 +94,6 @@ target-version = ["py313"]
 [tool.mypy]
 python_version = "3.13"
 #strict = true
-ignore_missing_imports = true
-
-[mypy-yaml]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
