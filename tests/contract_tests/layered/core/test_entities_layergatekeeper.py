@@ -1,5 +1,7 @@
 import datetime
 
+import pytest
+
 from phoibe.layered.core.entities import (
     FileMetadata,
     LayerGateFailureError,
@@ -67,12 +69,13 @@ class TestLayerGateKeeper:
         for key, value in gate_decision.statistics.items():
             assert value >= 0, f"Negative value for {key}: {value}"
 
-    def test_gate_passes_with_no_results(self):
+    @pytest.mark.characterization
+    @pytest.mark.xfail(strict=True, reason="defect 4: gate fails open on an empty rule list")
+    def test_gate_fails_with_no_results(self):
         report = self._create_report([])
         gate_decision = LayerGateKeeper.from_report(report)
 
-        assert gate_decision.passed is True
-        assert gate_decision.failed_critical_rules == []
+        assert gate_decision.passed is False
 
     def test_gate_passes_with_all_passed(self):
         results = [

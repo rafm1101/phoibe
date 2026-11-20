@@ -37,12 +37,15 @@ class TestRangeRule:
 
         assert result.details["n_out_of_range"]["power_kw"] == 1
 
+    @pytest.mark.characterization
+    @pytest.mark.xfail(strict=True, reason="defect 2: ranges never fails")
     def test_counts_violations_above_max(self, rule, context_with_variables):
+        # Flipped: this test asserted PASSED with a violation present (defect 2).
         df = pd.DataFrame({"Leistung": [1000, 1500, 2000], "ws_gondel": [5, 50, 15], "Temp_Gondel": [10, 15, 20]})
         result = rule.execute(df, context_with_variables)
 
         assert result.details["n_out_of_range"]["wind_speed"] == 1
-        assert result.status == Status.PASSED
+        assert result.status == Status.FAILED
 
     def test_counts_multiple_violations_same_variable(self, rule, context_with_variables):
         df = pd.DataFrame({"Leistung": [-100, 3500, 2000], "ws_gondel": [5, 10, 15], "Temp_Gondel": [10, 15, 20]})
@@ -83,7 +86,7 @@ class TestRangeRule:
 
         assert "wind_speed" in result.details["skipped"]
         assert "temperature" in result.details["skipped"]
-        assert "power_kw" in result.details["n_out_of_range"].keys()
+        assert "power_kw" in result.details["n_out_of_range"]
         assert len(result.details["n_out_of_range"]) == 1
 
     def test_warning_when_some_variables_skipped(self, rule):
