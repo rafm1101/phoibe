@@ -20,13 +20,18 @@ class MissingRunsMeasure:
     Metrics per signal: `n_missing`, `share_missing`, `n_runs` and `longest_run_steps`.
     """
 
-    ID: typing.ClassVar[str] = "missing_runs"
     ASPECT: typing.ClassVar[str] = "completeness"
+    METRICS: typing.ClassVar[tuple[str, ...]] = ("n_missing", "share_missing", "n_runs", "longest_run_steps")
+
+    signals: tuple[str, ...] | None = None
+    """Signals to measure; `None` for all."""
+    measure_id: str = "missing_runs"
+    """Identifier of this measure in a profile; the contract key when built from a contract."""
 
     @property
     def id(self) -> str:
         """Identifier of the measure."""
-        return self.ID
+        return self.measure_id
 
     @property
     def aspect(self) -> str:
@@ -47,6 +52,13 @@ class MissingRunsMeasure:
             Metrics and `missing` findings; not evaluable if there is no signal or no row with a valid timestamp.
 
         """
+        absent = [name for name in (self.signals or ()) if name not in dataset.signal_names]
+        if absent:
+            return core.NotEvaluable(
+                measure_id=self.id,
+                reason=core.NotEvaluableReason.MISSING_SIGNAL,
+                detail=f"signals not in the dataset: {', '.join(absent)}",
+            )
         if not dataset.signal_names:
             return core.NotEvaluable(
                 measure_id=self.id, reason=core.NotEvaluableReason.MISSING_SIGNAL, detail="the dataset has no signal"
@@ -63,6 +75,8 @@ class MissingRunsMeasure:
         metrics: list[core.Metric] = []
         findings: list[core.Finding] = []
         for position, name in enumerate(dataset.signal_names):
+            if self.signals is not None and name not in self.signals:
+                continue
             mask = frame.iloc[:, position].isna().to_numpy(dtype=bool)
             runs = _runs.find_runs(mask)
             lengths = [end - start for start, end in runs]

@@ -59,7 +59,29 @@ EXPECTED = {
         "resolve_limit",
         "validate_subject_references",
     },
-    "phoibe.dokimasia.rules": {"GapMeasure", "MissingRunsMeasure"},
+    "phoibe.dokimasia.rules": {"GapMeasure", "MissingRunsMeasure", "RangesMeasure", "RequiredSignalsMeasure"},
+    "phoibe.dokimasia.compose": {
+        "Builder",
+        "ParamKind",
+        "ParamSpec",
+        "Registry",
+        "Rule",
+        "SignalUse",
+        "Validation",
+        "build_measures",
+        "create_default_registry",
+        "list_generic_rules",
+        "profile_layer",
+        "validate_layer",
+        "validate_layer_rules",
+    },
+    "phoibe.dokimasia.adapters": {
+        "contract_to_data",
+        "dump_contract_yaml",
+        "load_contract",
+        "parse_contract_yaml",
+        "save_contract",
+    },
 }
 
 
