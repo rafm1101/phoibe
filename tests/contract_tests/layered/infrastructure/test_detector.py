@@ -20,7 +20,7 @@ class VariableDetectorContract:
     def test_detect_returns_valid_dictionary(self, detector, sample_dataframe):
         result = detector.detect(sample_dataframe)
         assert isinstance(result, dict)
-        assert all(isinstance(key, str) for key in result.keys())
+        assert all(isinstance(key, str) for key in result)
         assert all(isinstance(value, str) or value is None for value in result.values())
 
     def test_detect_is_idempotent(self, detector, sample_dataframe):
@@ -37,9 +37,9 @@ class VariableDetectorContract:
         result = detector.detect(sample_dataframe)
         for variable_name, column_key in result.items():
             if column_key is not None:
-                assert (
-                    column_key in sample_dataframe.columns
-                ), f"Signal '{variable_name}' matched to '{column_key}' but column does not exist in DataFrame"
+                assert column_key in sample_dataframe.columns, (
+                    f"Signal '{variable_name}' matched to '{column_key}' but column does not exist in DataFrame"
+                )
 
 
 class TestRegexVariableDetectorContract(VariableDetectorContract):

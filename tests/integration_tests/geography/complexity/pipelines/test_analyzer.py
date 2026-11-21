@@ -218,8 +218,9 @@ def test_run_returns_or_raises_given_another_crs_of_sites_and_references_by_the_
     make_analyzer, make_spec, make_field, make_locations, severity, aborts
 ):
     analyzer = make_analyzer(make_spec(severities={checks.CRS_SITE_VS_REFERENCE: severity}))
-    sites, references = make_locations(crs="EPSG:32633"), make_locations(
-        ids=("r1",), xs=(500,), ys=(500,), crs="EPSG:4326"
+    sites, references = (
+        make_locations(crs="EPSG:32633"),
+        make_locations(ids=("r1",), xs=(500,), ys=(500,), crs="EPSG:4326"),
     )
     if aborts:
         with pytest.raises(errors.CheckAborted, match=checks.CRS_SITE_VS_REFERENCE):

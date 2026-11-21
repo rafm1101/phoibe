@@ -169,7 +169,7 @@ class LayerValidator:
                         actual=None,
                         points_max=getattr(rule, "points", 0),
                         points_achieved=0,
-                        message=f"Rule execution failed: {str(exception)}",
+                        message=f"Rule execution failed: {exception!s}",
                     )
                     results.append(error_result)
 
