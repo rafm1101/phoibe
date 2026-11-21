@@ -52,10 +52,10 @@ ergaleiothiki = { git = "https://github.com/rafm1101/ergaleiothiki.git", tag = "
 # ergaleiothiki = { git = "git@github.com:rafm1101/ergaleiothiki.git", tag = "0.3.0" }
 # ergaleiothiki = { index = "nemea-index" }
 
-[[tool.uv.index]]
-name = "nemea-index"
-url = "http://localhost:8080/simple/"
-priority = "primary"
+# [[tool.uv.index]]
+# name = "nemea-index"
+# url = "http://localhost:8080/simple/"
+# priority = "primary"
 
 [[tool.uv.index]]
 name = "PyPI"
@@ -83,47 +83,61 @@ markers = [
 
 [tool.vulture]
 min_confidence = 80
-paths = ['phoibe']
+paths = ['phoibe', 'scripts/vulture_whitelist.py', 'scripts/vulture_whitelist_public_api.py']
 exclude = ['**/cachedir/*', '**/.venv/*']
 sort_by_size = true
 verbose = false
 
 [tool.mypy]
 python_version = "3.13"
-#strict = true
+# strict = true
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "phoibe.synthetic_data"
-disallow_untyped_calls = false
+module = ['phoibe.synthetic_data.*', 'phoibe.layered.*']
+check_untyped_defs = false
 disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disallow_any_generics = false
+warn_return_any = false
+warn_unused_ignores = false
+no_implicit_reexport = false
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
 
 [tool.ruff]
 line-length = 120
 target-version = "py313"
-exclude = [".venv/*", "__pycache__", "build/*", "dist/*"]
+exclude = [".venv/*", "__pycache__", "build/*", "dist/*", "vulture_whitelist*.py"]
 
 [tool.ruff.lint]
-#select = ["E", "F", "I", "B", "UP"]
-select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "NPY", "RUF"]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "NPY", "RUF", "N", "PTH", "BLE", "PERF", "C90", "D", "G", "FBT"]
 ignore = []
 allowed-confusables = ["×"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["trix"]
+known-first-party = ["trix", "phoibe"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*.py" = ["ANN", "B905", "B011"]
+"tests/**/*.py" = ["ANN", "B905", "B011", "D", "FBT"]
 "*.ipynb" = ["B006", "B008", "B018", "B905", "E402", "F821"]
+"phoibe/layered/**/*.py" = ["D", "G", "PTH", "BLE", "FBT", "N", "C90", "RUF", "SIM"]
+"tests/contract_tests/**/*.py" = ["PTH", "SIM", "RUF"]
+"tests/unit_tests/layered/**/*.py" = ["PTH", "NPY", "C4", "SIM", "RUF", "PERF"]
+"phoibe/synthetic_data/**/*.py" = ["D", "G", "PTH", "BLE", "FBT", "N", "C90", "SIM", "RUF"]
 
 [tool.ruff.format]
 quote-style = "double"
 
 [tool.importlinter]
 root_package = "phoibe"
-include_external_packages = true          # needed for the contracts on third-party libraries
-exclude_type_checking_imports = true      # imports only for type checking do not count
+include_external_packages = true
+exclude_type_checking_imports = true
  
 [[tool.importlinter.contracts]]
 name = "Layers: entrypoints and adapters above pipelines above computations"
