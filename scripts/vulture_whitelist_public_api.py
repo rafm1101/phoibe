@@ -24,3 +24,13 @@ _.build_summary_table
 _.build_findings_table
 _.messlabel_to_frame
 _.messlabel_mask
+_.parent_attestation_id
+_.output_fingerprint
+_.subject_id
+_.policy
+_.clause
+_.notes
+_.raise_if_failed
+_.count_by_severity
+_.compute_score
+_.get_layer

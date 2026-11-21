@@ -3,8 +3,19 @@
 The core imports nothing of ours and does no file I/O. Public names are those without a leading underscore.
 """
 
+from phoibe.dokimasia.core.attestation import Attestation, ProvenanceRecord, TransformDescription, build_attestation
 from phoibe.dokimasia.core.dataset import FINGERPRINT_ALGORITHM, Dataset, Fingerprint, compute_fingerprint
 from phoibe.dokimasia.core.finding import Finding, build_finding_mask
+from phoibe.dokimasia.core.gate import (
+    Effect,
+    GateFailedError,
+    GateOutcome,
+    GatePolicy,
+    GateReason,
+    GateResult,
+    WorstEffectPolicy,
+    get_effect,
+)
 from phoibe.dokimasia.core.measurement import (
     Measure,
     Measured,
@@ -18,13 +29,22 @@ from phoibe.dokimasia.core.measurement import (
 from phoibe.dokimasia.core.profile import Profile, profile_dataset
 from phoibe.dokimasia.core.signal import Catalog, Signal, Statistic
 from phoibe.dokimasia.core.subject import Subject
+from phoibe.dokimasia.core.verdict import CriterionVerdict, Severity, Verdict
 
 __all__ = [
     "FINGERPRINT_ALGORITHM",
+    "Attestation",
     "Catalog",
+    "CriterionVerdict",
     "Dataset",
+    "Effect",
     "Finding",
     "Fingerprint",
+    "GateFailedError",
+    "GateOutcome",
+    "GatePolicy",
+    "GateReason",
+    "GateResult",
     "Measure",
     "Measured",
     "MeasurementError",
@@ -33,11 +53,18 @@ __all__ = [
     "NotEvaluableReason",
     "Outcome",
     "Profile",
+    "ProvenanceRecord",
+    "Severity",
     "Signal",
     "Statistic",
     "Subject",
+    "TransformDescription",
+    "Verdict",
+    "WorstEffectPolicy",
+    "build_attestation",
     "build_finding_mask",
     "compute_fingerprint",
+    "get_effect",
     "profile_dataset",
     "run_measure",
 ]
