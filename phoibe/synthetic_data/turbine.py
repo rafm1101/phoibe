@@ -1,3 +1,5 @@
+import dataclasses
+
 import numpy as np
 import pandas as pd
 
@@ -5,6 +7,7 @@ from ._turbine_noise import (
     CurtailmentNight,
     CurtailmentToZero,
     DeleteEntries,
+    MessLabel,
     Freeze,
     GeometricSegments,
     RowDrop,
@@ -25,7 +28,12 @@ DEFAULT_TIME = Time(start="2026-02-14T04:00:00", freq="10min", periods=576)
 
 
 def generate_wtg_scada(
-    A=10, k=2, time: Time = DEFAULT_TIME, wtg_type: WtgType = DEFAULT_WTG, latent_freq: str | None = None
+    A=10,
+    k=2,
+    time: Time = DEFAULT_TIME,
+    wtg_type: WtgType = DEFAULT_WTG,
+    latent_freq: str | None = None,
+    seed: int | None = None,
 ):
     """Generate a timeseries of WTG Scada data for the given `Time` period, a given `WtgType` configuration.
 
@@ -42,6 +50,8 @@ def generate_wtg_scada(
     latent_freq
         If not `None`, a finer sampling frequency from which the output average, minimum and maximum are determnined.
         `time.freq` must be a multiple of `latent_freq`. Ignored if `None`.
+    seed
+        Seed of the wind speed process. The data is reproducible if given and differs from call to call if `None`.
 
     Returns
     -------
@@ -60,7 +70,9 @@ def generate_wtg_scada(
         latent_index = pd.date_range(start=time.start, freq=latent_freq, periods=time.periods * factor, name="datetime")
         delta_t = pd.to_timedelta(latent_freq).seconds
 
-    wind_speed = _generate_weibull_timeseries(A=A, k=k, n_steps=len(latent_index), delta_t=delta_t, theta=1 / 7200)
+    wind_speed = _generate_weibull_timeseries(
+        A=A, k=k, n_steps=len(latent_index), delta_t=delta_t, theta=1 / 7200, random_state=seed
+    )
     latent_df = pd.DataFrame(data={"wind_speed": wind_speed}, index=latent_index)
 
     power = _wind_speed_to_power(wind_speeds=latent_df["wind_speed"].to_numpy(), wtg_type=wtg_type)
@@ -94,6 +106,67 @@ class MessUpPipeline:
         for step in self.steps:
             df = step.apply(df, self.rng)
         return df
+
+    def apply_labelled(self, df: pd.DataFrame) -> tuple[pd.DataFrame, list[MessLabel]]:
+        """Apply the steps and return the messed-up data together with the ground truth of the injected faults.
+
+        The data is identical to what `apply` returns for the same seed. A step without `apply_labelled`, such as
+        a custom one, is applied as before and contributes no labels.
+        """
+        labels: list[MessLabel] = []
+        for index, step in enumerate(self.steps):
+            if hasattr(step, "apply_labelled"):
+                df, step_labels = step.apply_labelled(df, self.rng)
+                labels.extend(dataclasses.replace(label, step=index) for label in step_labels)
+            else:
+                df = step.apply(df, self.rng)
+        return df, labels
+
+
+def messlabel_to_frame(labels: list[MessLabel]) -> pd.DataFrame:
+    """Tabulate fault labels, one row per injected segment."""
+    columns = ["step", "kind", "columns", "start", "end", "n_rows", "n_changed", "detail"]
+    return pd.DataFrame([{key: getattr(label, key) for key in columns} for label in labels], columns=columns)
+
+
+def messlabel_mask(
+    labels: list[MessLabel],
+    index: pd.Index,
+    *,
+    kind: str | None = None,
+    column: str | None = None,
+    effective_only: bool = True,
+) -> pd.Series:
+    """Mark the timestamps of `index` that lie in labelled fault segments.
+
+    Parameters
+    ----------
+    labels
+        Ground truth as returned by `MessUpPipeline.apply_labelled`.
+    index
+        Timestamps to mark, usually the index of the messed-up data. Dropped rows are not part of it.
+    kind
+        Restrict to faults of this step class, e.g. `"Freeze"`.
+    column
+        Restrict to faults addressing this column.
+    effective_only
+        Skip segments that did not alter any value, e.g. a freeze of an already constant signal.
+
+    Returns
+    -------
+    pd.Series
+        Boolean series on `index`.
+    """
+    mask = pd.Series(False, index=index)
+    for label in labels:
+        if kind is not None and label.kind != kind:
+            continue
+        if column is not None and column not in label.columns:
+            continue
+        if effective_only and label.n_changed == 0:
+            continue
+        mask |= (index >= label.start) & (index <= label.end)
+    return mask
 
 
 pipeline = MessUpPipeline(seed=23)
