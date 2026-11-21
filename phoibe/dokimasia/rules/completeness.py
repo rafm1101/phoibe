@@ -1,0 +1,83 @@
+"""Generic measures of completeness."""
+
+import dataclasses
+import typing
+
+import numpy as np
+
+from phoibe.dokimasia import core
+from phoibe.dokimasia.rules import _runs
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class MissingRunsMeasure:
+    """Find the runs of missing values (NaN, None, NaT) in each signal.
+
+    Rows are taken in time order; rows without a valid timestamp are left out. A run is one finding of kind
+    `missing` with the signal and the first and last timestamp. Infinite values and text are not missing; other
+    measures look at them.
+
+    Metrics per signal: `n_missing`, `share_missing`, `n_runs` and `longest_run_steps`.
+    """
+
+    ID: typing.ClassVar[str] = "missing_runs"
+    ASPECT: typing.ClassVar[str] = "completeness"
+
+    @property
+    def id(self) -> str:
+        """Identifier of the measure."""
+        return self.ID
+
+    @property
+    def aspect(self) -> str:
+        """Aspect of data quality."""
+        return self.ASPECT
+
+    def measure(self, dataset: core.Dataset) -> core.Measured | core.NotEvaluable:
+        """Measure the missing values of every signal.
+
+        Parameters
+        ----------
+        dataset
+            The data.
+
+        Returns
+        -------
+        Measured | NotEvaluable
+            Metrics and `missing` findings; not evaluable if there is no signal or no row with a valid timestamp.
+
+        """
+        if not dataset.signal_names:
+            return core.NotEvaluable(
+                measure_id=self.id, reason=core.NotEvaluableReason.MISSING_SIGNAL, detail="the dataset has no signal"
+            )
+        frame = dataset.frame[dataset.time_axis.notna()].sort_index(kind="stable")
+        if frame.empty:
+            return core.NotEvaluable(
+                measure_id=self.id,
+                reason=core.NotEvaluableReason.INSUFFICIENT_DATA,
+                detail="no row with a valid timestamp",
+            )
+
+        index = frame.index
+        metrics: list[core.Metric] = []
+        findings: list[core.Finding] = []
+        for position, name in enumerate(dataset.signal_names):
+            mask = frame.iloc[:, position].isna().to_numpy(dtype=bool)
+            runs = _runs.find_runs(mask)
+            lengths = [end - start for start, end in runs]
+            metrics.extend(
+                [
+                    core.Metric("n_missing", float(np.count_nonzero(mask)), signal=name),
+                    core.Metric("share_missing", float(np.count_nonzero(mask)) / len(mask), signal=name),
+                    core.Metric("n_runs", float(len(runs)), signal=name),
+                    core.Metric("longest_run_steps", float(max(lengths, default=0)), signal=name),
+                ]
+            )
+            findings.extend(
+                core.Finding(
+                    kind="missing", signals=(name,), start=index[start], end=index[end - 1], n_steps=end - start
+                )
+                for start, end in runs
+            )
+        return core.Measured(measure_id=self.id, metrics=tuple(metrics), findings=tuple(findings))
