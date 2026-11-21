@@ -88,10 +88,6 @@ exclude = ['**/cachedir/*', '**/.venv/*']
 sort_by_size = true
 verbose = false
 
-[tool.black]
-line-length = 120
-target-version = ["py313"]
-
 [tool.mypy]
 python_version = "3.13"
 #strict = true
