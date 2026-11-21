@@ -2,35 +2,23 @@ default_language_version:
     python: python3.13
 
 repos:
-  - repo: https://github.com/psf/black
-    rev: 26.10.1
-    hooks:
-      - id: black
-        files: (phoibe|tests)
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.17.3
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: ["--fix"]
+      - id: ruff-format
 
   - repo: https://github.com/kynan/nbstripout
     rev: 0.9.1
     hooks:
       - id: nbstripout
 
-  - repo:  https://github.com/nbQA-dev/nbQA
-    rev: 1.9.1
-    hooks:
-      - id: nbqa-ruff
-        files: \.ipynb$
-        args: ["--fix", "--config=pyproject.toml", "--show-files"]
-      - id: nbqa-black
-
   - repo: https://github.com/jendrikseipp/vulture
     rev: v2.16
     hooks:
       - id: vulture
+        pass_filenames: false
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v2.4.1
@@ -57,6 +45,5 @@ repos:
     hooks:
       - id: import-linter
         name: "Lint imports"
-        # entry: "lint-imports"
         language: python
         pass_filenames: false

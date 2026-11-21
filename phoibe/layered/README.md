@@ -94,7 +94,6 @@ A validation rule should provide a `name` property and an `execute` method that 
 ```python
 @RuleRegistry.register("curtailments_power")
 class CurtailmentRule(ValidationRule):
-
     def __init__(
         self,
         wind_speed_threshold: float = 14.0,

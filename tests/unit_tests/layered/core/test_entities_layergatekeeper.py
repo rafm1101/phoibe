@@ -1,5 +1,7 @@
 import datetime
 
+import pytest
+
 from phoibe.layered.core.entities import (
     FileMetadata,
     LayerGateFailureError,
@@ -12,12 +14,14 @@ from phoibe.layered.core.entities import (
 
 
 class TestLayerGateKeeper:
-    def test_empty_report_passes_gate(self):
+    @pytest.mark.characterization
+    @pytest.mark.xfail(strict=True, reason="defect 4: gate fails open on an empty report")
+    def test_empty_report_fails_gate(self):
         report = self._create_report([])
         decision = LayerGateKeeper.from_report(report)
 
-        assert decision.passed is True
-        assert decision.failed_critical_rules == []
+        assert decision.passed is False
+        assert decision.failed_critical_rules["total_checks"] == 0
         assert decision.statistics["total_checks"] == 0
 
     def test_all_passed_passes_gate(self):
@@ -105,14 +109,16 @@ class TestLayerGateKeeper:
 
         assert decision.passed is True
 
-    def test_critical_not_checked_does_not_block(self):
+    @pytest.mark.characterization
+    @pytest.mark.xfail(strict=True, reason="defect 4: gate fails open on a CRITICAL rule that is NOT_CHECKED")
+    def test_critical_not_checked_blocks_gate(self):
         results = [
             self._result("crit_skip", Status.NOT_CHECKED, Severity.CRITICAL),
         ]
         report = self._create_report(results)
         decision = LayerGateKeeper.from_report(report)
 
-        assert decision.passed is True
+        assert decision.passed is False
 
     def test_multiple_critical_failed_all_block(self):
         results = [
@@ -192,6 +198,8 @@ class TestLayerGateKeeper:
 
         assert decision.passed is True
 
+    @pytest.mark.characterization
+    @pytest.mark.xfail(strict=True, reason="defect 4: gate fails open when everything is NOT_CHECKED")
     def test_all_not_checked(self):
         results = [
             self._result("skip1", Status.NOT_CHECKED, Severity.CRITICAL),
@@ -200,7 +208,7 @@ class TestLayerGateKeeper:
         report = self._create_report(results)
         decision = LayerGateKeeper.from_report(report)
 
-        assert decision.passed is True
+        assert decision.passed is False
         assert decision.statistics["not_checked"] == 2
 
     def test_statistics_total_checks_correct(self):

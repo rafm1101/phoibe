@@ -97,9 +97,9 @@ def test_each_version_raises_its_number_at_least_as_much_as_its_contract_require
     loaded = [yaml.safe_load(path.read_text(encoding="utf-8")) for path in snapshots]
     for old, new in itertools.pairwise(loaded):
         needed, actual = required_bump(old, new), bump_between(old["version"], new["version"])
-        assert (
-            ORDER[actual] >= ORDER[needed]
-        ), f"{old['version']} -> {new['version']} is a {actual} bump, the change needs {needed}"
+        assert ORDER[actual] >= ORDER[needed], (
+            f"{old['version']} -> {new['version']} is a {actual} bump, the change needs {needed}"
+        )
 
 
 def test_bump_between_names_the_first_part_that_differs():

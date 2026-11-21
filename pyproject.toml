@@ -8,7 +8,10 @@ requires-python = ">=3.13, <3.14"
 dependencies = [
     "ergaleiothiki>=0.3.0",
     "geopandas>=1.1.2",
+    "numpy>=2.5.4",
     "openpyxl>=3.1.5",
+    "pandas>=3.1.0",
+    "pyyaml>=6.0.3",
     "rasterio>=1.5.0",
     "rioxarray>=0.20.0",
     "scipy>=1.17.0",
@@ -74,7 +77,8 @@ markers = [
     "unit: pure functions and value objects, no I/O.",
     "integration: use case with doubles, adapters with temporary files.",
     "contract: specification, manifest and written files agree; port suites.",
-    "e2e: command line with real files."
+    "e2e: command line with real files.",
+    "characterization: temporary scaffold; desired behaviour that current code violates (xfail, strict), remove with the fix."
 ]
 
 [tool.vulture]
@@ -84,16 +88,9 @@ exclude = ['**/cachedir/*', '**/.venv/*']
 sort_by_size = true
 verbose = false
 
-[tool.black]
-line-length = 120
-target-version = ["py313"]
-
 [tool.mypy]
 python_version = "3.13"
 #strict = true
-ignore_missing_imports = true
-
-[mypy-yaml]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

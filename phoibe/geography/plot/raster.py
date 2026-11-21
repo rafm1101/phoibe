@@ -52,7 +52,7 @@ def plot_raster(
 
     X, Y = np.meshgrid(da.x.values, da.y.values)
 
-    kwargs_pcolormesh = dict(cmap=cmap, shading="auto", norm=cnorm)
+    kwargs_pcolormesh = {"cmap": cmap, "shading": "auto", "norm": cnorm}
     if plot_crs is not None:
         kwargs_pcolormesh["transform"] = plot_crs
 

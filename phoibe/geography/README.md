@@ -33,8 +33,8 @@ import shapely
 from phoibe.geography.complexity.rix import analyzer
 from phoibe.geography.complexity.rix.config import ANALYZER_DEFAULTS
 
-sites = gpd.GeoDataFrame(data={"location_id":["WTG1"], "geometry":[shapely.Point(0,0)]}, geometry="geometry")
-references = gpd.GeoDataFrame(data={"location_id":["WDB"], "geometry":[shapely.Point(5,3)]}, geometry="geometry")
+sites = gpd.GeoDataFrame(data={"location_id": ["WTG1"], "geometry": [shapely.Point(0, 0)]}, geometry="geometry")
+references = gpd.GeoDataFrame(data={"location_id": ["WDB"], "geometry": [shapely.Point(5, 3)]}, geometry="geometry")
 
 rix_analyzer = analyzer.TRIXAnalyzer(config=ANALYZER_DEFAULTS)
 results = rix_analyzer.run(dem=elevation_map, locations_site=sites, locations_reference=references)
@@ -82,6 +82,7 @@ _Note: `geopandas` and `matplotlib` are not default dependencies in this package
 <!--
 ```python
 from phoibe.geography.plot import plot_raster
+
 result.plot_polar()
 
 _, ax = plot_raster(da=elevation_map)
@@ -96,7 +97,7 @@ result.steep_segments_geodataframe().plot(ax=ax, color="r", linewidth=1, label="
 from phoibe.geography.complexity.rix import writer
 
 writer.RIXWriter(result=results, profile=writer.WriterProfile.FULL).write(
-   directory="trix_assessment", project_name="WP Planar I"
+    directory="trix_assessment", project_name="WP Planar I"
 )
 ```
 -->

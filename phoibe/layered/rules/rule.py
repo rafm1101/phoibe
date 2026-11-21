@@ -179,7 +179,7 @@ class RuleExecutionResultBuilder:
         """
         full_message = message
         if exception:
-            full_message = f"{message}: {str(exception)}"
+            full_message = f"{message}: {exception!s}"
 
         return RuleExecutionResult(
             rule_name=self.rule_name,
@@ -255,4 +255,4 @@ class ValidationRule(abc.ABC):
         pass
 
 
-__all__ = ["ValidationRule", "RuleExecutionResultBuilder"]
+__all__ = ["RuleExecutionResultBuilder", "ValidationRule"]

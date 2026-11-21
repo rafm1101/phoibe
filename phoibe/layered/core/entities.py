@@ -311,4 +311,4 @@ class LayerGateFailureError(Exception):
         logger.error(f"GateFailureError raised: {count} blocking failures, statistics={decision.statistics}")
 
 
-__all__ = ["LayerGateKeeper", "LayerGateFailureError"]
+__all__ = ["LayerGateFailureError", "LayerGateKeeper"]

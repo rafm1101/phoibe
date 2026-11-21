@@ -112,13 +112,18 @@ class TestDataGaps:
         assert result.details["gap_count"] > 0
         assert "00:10:00" in result.details["gap_length_mean"]
 
-    def test_always_passes_with_gaps(self, rule, context_with_datetime):
+    @pytest.mark.characterization
+    @pytest.mark.xfail(strict=True, reason="defect 8: data_gaps ignores good_threshold and acceptable_threshold")
+    def test_fails_when_gaps_exceed_acceptable_threshold(self, rule, context_with_datetime):
+        # Flipped from test_always_passes_with_gaps. Gaps total 110 of 160 minutes (~69 %), far above the
+        # acceptable threshold of 10 %. Semantics mirror AvailabilityRule: good -> PASSED, acceptable -> WARNING,
+        # beyond -> FAILED.
         timestamps = list(pd.date_range("2024-01-01 00:00", periods=5, freq="10min"))
         timestamps.extend(pd.date_range("2024-01-01 02:00", periods=5, freq="10min"))
         df = pd.DataFrame({"Zeitstempel": timestamps})
         result = rule.execute(df, context_with_datetime)
 
-        assert result.status == Status.PASSED
+        assert result.status == Status.FAILED
 
     def test_always_passes_without_gaps(self, rule, context_with_datetime):
         df = pd.DataFrame({"Zeitstempel": pd.date_range("2024-01-01", periods=144, freq="10min")})
@@ -232,7 +237,7 @@ class TestDataGaps:
     def test_describe_gaps_handles_zero_gaps(self, rule):
         delta = pd.Series([], dtype=int)
         delta.index = pd.TimedeltaIndex([])
-        n_gaps, total, mean, max_gap = rule._describe_gaps(delta)
+        n_gaps, _total, mean, _max_gap = rule._describe_gaps(delta)
 
         assert n_gaps == 0
         assert mean == pd.Timedelta(0)

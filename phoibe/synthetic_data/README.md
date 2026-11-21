@@ -52,7 +52,9 @@ Sample sites in a given bounding box at random.
 
 ```python
 # Generate 7 sites within on the given map w/ 0.2 degrees empty space at the boundary.
-sites = phoibe.synthetic_data.sites.make_sites(sites=7, bounds=eggbox.rio.bounds(), buffer=0.2, seed=23, crs=eggbox.rio.crs)
+sites = phoibe.synthetic_data.sites.make_sites(
+    sites=7, bounds=eggbox.rio.bounds(), buffer=0.2, seed=23, crs=eggbox.rio.crs
+)
 ```
 
 ### Wind turbine generator data

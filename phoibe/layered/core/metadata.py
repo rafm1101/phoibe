@@ -327,10 +327,10 @@ class DataLineage:
 
 
 __all__ = [
-    "SiteMetadata",
-    "DeviceSpecification",
-    "VariableMetadata",
-    "TemporalSpecification",
-    "LineageNode",
     "DataLineage",
+    "DeviceSpecification",
+    "LineageNode",
+    "SiteMetadata",
+    "TemporalSpecification",
+    "VariableMetadata",
 ]
