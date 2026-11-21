@@ -6,7 +6,7 @@ contract and offers profile and validate.
 
 from phoibe.dokimasia.compose.registry import Builder, ParamKind, ParamSpec, Registry, Rule, SignalUse
 from phoibe.dokimasia.compose.rules_generic import list_generic_rules
-from phoibe.dokimasia.compose.run import Validation, build_measures, profile_layer, validate_layer
+from phoibe.dokimasia.compose.run import Validation, attest_validation, build_measures, profile_layer, validate_layer
 from phoibe.dokimasia.compose.validation import validate_layer_rules
 
 
@@ -29,6 +29,7 @@ __all__ = [
     "Rule",
     "SignalUse",
     "Validation",
+    "attest_validation",
     "build_measures",
     "create_default_registry",
     "list_generic_rules",

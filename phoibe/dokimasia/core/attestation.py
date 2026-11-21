@@ -12,36 +12,6 @@ from phoibe.dokimasia.core import subject as subject_module
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class TransformDescription:
-    """What a transform is: its name, parameters and the software that ran it (ADR-11)."""
-
-    name: str
-    """Name of the transform, for example `rename_to_catalog`."""
-    parameters: Mapping[str, object]
-    """Parameters it ran with. A read-only copy."""
-    software_version: str
-    """Version of the software that applied it."""
-    rule: str | None = None
-    """A rule applied where the data left a choice, such as how a repeated hour was resolved."""
-
-    def __post_init__(self) -> None:
-        """Replace the parameters by a read-only copy."""
-        object.__setattr__(self, "parameters", types.MappingProxyType(dict(self.parameters)))
-
-
-@dataclasses.dataclass(frozen=True, slots=True)
-class ProvenanceRecord:
-    """Where a dataset came from when it moved to the next layer."""
-
-    parent_attestation_id: str
-    """Attestation of the layer the data left."""
-    transform: TransformDescription | None
-    """The transform that was applied on the way, if any."""
-    output_fingerprint: dataset_module.Fingerprint
-    """Fingerprint of the data that the next layer receives."""
-
-
-@dataclasses.dataclass(frozen=True, slots=True)
 class Attestation:
     """The record that a dataset version passed the gate of a layer, conditionally or not."""
 

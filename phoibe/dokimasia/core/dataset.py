@@ -2,6 +2,8 @@
 
 import dataclasses
 import hashlib
+import types
+from collections.abc import Mapping
 
 import pandas as pd
 
@@ -16,6 +18,36 @@ class Fingerprint:
     """How the digest was computed."""
     digest: str
     """Hexadecimal digest of the index, the values and the column names."""
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class TransformDescription:
+    """What a transform is: its name, parameters and the software that ran it (ADR-11)."""
+
+    name: str
+    """Name of the transform, for example `rename_to_catalog`."""
+    parameters: Mapping[str, object]
+    """Parameters it ran with. A read-only copy."""
+    software_version: str
+    """Version of the software that applied it."""
+    rule: str | None = None
+    """A rule applied where the data left a choice, such as how a repeated hour was resolved."""
+
+    def __post_init__(self) -> None:
+        """Replace the parameters by a read-only copy."""
+        object.__setattr__(self, "parameters", types.MappingProxyType(dict(self.parameters)))
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class ProvenanceRecord:
+    """Where a dataset came from when it moved to the next layer."""
+
+    parent_attestation_id: str
+    """Attestation of the layer the data left."""
+    transform: TransformDescription | None
+    """The transform that was applied on the way, if any."""
+    output_fingerprint: Fingerprint
+    """Fingerprint of the data that the next layer receives."""
 
 
 def _hash_values(values: pd.Series | pd.Index) -> bytes:
@@ -64,15 +96,19 @@ class Dataset:
     """The data. Index: time axis. Columns: signals, by catalog name after standardizing."""
     fingerprint: Fingerprint
     """Fingerprint of `frame`."""
+    provenance: "ProvenanceRecord | None" = None
+    """Where the data came from, if it reached this layer through `advance_dataset`."""
 
     @classmethod
-    def from_frame(cls, frame: pd.DataFrame) -> "Dataset":
+    def from_frame(cls, frame: pd.DataFrame, *, provenance: "ProvenanceRecord | None" = None) -> "Dataset":
         """Create a dataset from a frame with a datetime index.
 
         Parameters
         ----------
         frame
             Data indexed by time. The frame is copied, so later changes to it do not reach the dataset.
+        provenance
+            Where the data came from, if it is known.
 
         Returns
         -------
@@ -88,7 +124,25 @@ class Dataset:
         if not isinstance(frame.index, pd.DatetimeIndex):
             raise TypeError(f"the time axis must be a DatetimeIndex, got {type(frame.index).__name__}")
         copied = frame.copy(deep=True)
-        return cls(frame=copied, fingerprint=compute_fingerprint(copied))
+        return cls(frame=copied, fingerprint=compute_fingerprint(copied), provenance=provenance)
+
+    def with_frame(self, frame: pd.DataFrame) -> "Dataset":
+        """Create the next version of this dataset after the data was edited by hand.
+
+        The provenance is kept, so that the lineage shows where the data came from. Its output fingerprint no longer
+        matches, which a profile reports.
+
+        Parameters
+        ----------
+        frame
+            The edited data, indexed by time.
+
+        Returns
+        -------
+        Dataset
+            A new dataset with its own fingerprint and the provenance of this one.
+        """
+        return Dataset.from_frame(frame, provenance=self.provenance)
 
     @property
     def time_axis(self) -> pd.DatetimeIndex:

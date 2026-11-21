@@ -1,6 +1,7 @@
 """Compose profile and judge from a contract: the only place that knows both (ADR-07)."""
 
 import dataclasses
+import datetime
 
 from phoibe.dokimasia import contract, core
 from phoibe.dokimasia.compose import registry as registry_module
@@ -143,3 +144,41 @@ def validate_layer(
     profile = profile_layer(dataset, subject, layer, registry)
     result = contract.judge_layer(profile, layer, policy=policy)
     return Validation(contract_.id, contract_.version, layer_name, profile, result)
+
+
+def attest_validation(
+    validation: Validation, *, created_at: datetime.datetime, software_version: str
+) -> core.Attestation:
+    """Attest a passed gate. The parent is the attestation of the layer the data came from, if it advanced.
+
+    Parameters
+    ----------
+    validation
+        The profile and judgment. The gate must not have failed.
+    created_at
+        Time of the attestation, timezone-aware UTC.
+    software_version
+        Version of the software that judged.
+
+    Returns
+    -------
+    Attestation
+        The attestation, bound to the fingerprint of the data that was measured.
+
+    Raises
+    ------
+    ValueError
+        If the gate failed or `created_at` is not UTC.
+    """
+    profile = validation.profile
+    return core.build_attestation(
+        subject=profile.subject,
+        layer=validation.layer,
+        fingerprint=profile.fingerprint,
+        contract_id=validation.contract_id,
+        contract_version=validation.contract_version,
+        result=validation.result,
+        created_at=created_at,
+        software_version=software_version,
+        parent_id=profile.provenance.parent_attestation_id,
+    )

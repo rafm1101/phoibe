@@ -13,6 +13,54 @@ from phoibe.dokimasia.core import subject as subject_module
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
+class ProvenanceReport:
+    """What a profile says about where its input came from (ADR-06). By default this is information."""
+
+    has_provenance: bool
+    """Whether the input reached this layer through `advance_dataset`."""
+    fingerprint_matches: bool | None
+    """Whether the data still has the fingerprint that was recorded when it advanced; `None` without provenance."""
+    parent_attestation_id: str | None
+    """Attestation of the layer the data came from."""
+    transform: dataset_module.TransformDescription | None
+    """The transform applied on the way, if any."""
+
+
+_NO_PROVENANCE = ProvenanceReport(
+    has_provenance=False, fingerprint_matches=None, parent_attestation_id=None, transform=None
+)
+
+
+class ProvenanceMismatchError(Exception):
+    """Raised by `profile_dataset` in strict mode when the data changed after it advanced."""
+
+
+def report_provenance(dataset: dataset_module.Dataset) -> ProvenanceReport:
+    """Report where a dataset came from and whether it is still what advanced.
+
+    Parameters
+    ----------
+    dataset
+        The dataset.
+
+    Returns
+    -------
+    ProvenanceReport
+        The report. A dataset edited by hand after it advanced reports a fingerprint that does not match.
+    """
+    record = dataset.provenance
+    if record is None:
+        return _NO_PROVENANCE
+    matches = dataset_module.compute_fingerprint(dataset.frame) == record.output_fingerprint
+    return ProvenanceReport(
+        has_provenance=True,
+        fingerprint_matches=matches,
+        parent_attestation_id=record.parent_attestation_id,
+        transform=record.transform,
+    )
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
 class Profile:
     """Summaries and findings per aspect for one subject, layer and dataset version. It holds no verdicts.
 
@@ -27,6 +75,8 @@ class Profile:
     """Fingerprint of the dataset version that was measured."""
     aspects: Mapping[str, tuple[measurement_module.Outcome, ...]]
     """Outcomes per aspect, in the order the measures ran. A read-only copy."""
+    provenance: ProvenanceReport = _NO_PROVENANCE
+    """Where the input came from; the default is an input without provenance."""
 
     def __post_init__(self) -> None:
         """Replace the aspects by a read-only copy."""
@@ -158,6 +208,8 @@ def profile_dataset(
     subject: subject_module.Subject,
     layer: str,
     measures: Iterable[measurement_module.Measure],
+    *,
+    strict_provenance: bool = False,
 ) -> Profile:
     """Run the measures on a dataset and collect the outcomes per aspect. No verdicts are made.
 
@@ -171,6 +223,8 @@ def profile_dataset(
         Identifier of the layer.
     measures
         The measures to run, already configured. One failing measure does not stop the others.
+    strict_provenance
+        If true, data that carries provenance but no longer has the recorded fingerprint is refused.
 
     Returns
     -------
@@ -181,8 +235,12 @@ def profile_dataset(
     ------
     ValueError
         If two measures have the same id.
-
+    ProvenanceMismatchError
+        In strict mode, if the data changed after it advanced.
     """
+    provenance = report_provenance(dataset)
+    if strict_provenance and provenance.fingerprint_matches is False:
+        raise ProvenanceMismatchError("the data changed after it advanced; its fingerprint no longer matches")
     measure_list = list(measures)
     ids = [measure.id for measure in measure_list]
     duplicates = sorted({measure_id for measure_id in ids if ids.count(measure_id) > 1})
@@ -198,4 +256,5 @@ def profile_dataset(
         layer=layer,
         fingerprint=dataset.fingerprint,
         aspects={aspect: tuple(outcomes) for aspect, outcomes in aspects.items()},
+        provenance=provenance,
     )

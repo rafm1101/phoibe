@@ -34,3 +34,6 @@ _.raise_if_failed
 _.count_by_severity
 _.compute_score
 _.get_layer
+_.has_provenance
+_.with_frame
+_.from_subject

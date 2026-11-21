@@ -3,8 +3,15 @@
 The core imports nothing of ours and does no file I/O. Public names are those without a leading underscore.
 """
 
-from phoibe.dokimasia.core.attestation import Attestation, ProvenanceRecord, TransformDescription, build_attestation
-from phoibe.dokimasia.core.dataset import FINGERPRINT_ALGORITHM, Dataset, Fingerprint, compute_fingerprint
+from phoibe.dokimasia.core.attestation import Attestation, build_attestation
+from phoibe.dokimasia.core.dataset import (
+    FINGERPRINT_ALGORITHM,
+    Dataset,
+    Fingerprint,
+    ProvenanceRecord,
+    TransformDescription,
+    compute_fingerprint,
+)
 from phoibe.dokimasia.core.finding import Finding, build_finding_mask
 from phoibe.dokimasia.core.gate import (
     Effect,
@@ -26,9 +33,22 @@ from phoibe.dokimasia.core.measurement import (
     Outcome,
     run_measure,
 )
-from phoibe.dokimasia.core.profile import Profile, profile_dataset
+from phoibe.dokimasia.core.profile import (
+    Profile,
+    ProvenanceMismatchError,
+    ProvenanceReport,
+    profile_dataset,
+    report_provenance,
+)
 from phoibe.dokimasia.core.signal import Catalog, Signal, Statistic
 from phoibe.dokimasia.core.subject import Subject
+from phoibe.dokimasia.core.transform import (
+    Transform,
+    Transformed,
+    TransformRefused,
+    TransformRefusedError,
+    advance_dataset,
+)
 from phoibe.dokimasia.core.verdict import CriterionVerdict, Severity, Verdict
 
 __all__ = [
@@ -53,18 +73,26 @@ __all__ = [
     "NotEvaluableReason",
     "Outcome",
     "Profile",
+    "ProvenanceMismatchError",
     "ProvenanceRecord",
+    "ProvenanceReport",
     "Severity",
     "Signal",
     "Statistic",
     "Subject",
+    "Transform",
     "TransformDescription",
+    "TransformRefused",
+    "TransformRefusedError",
+    "Transformed",
     "Verdict",
     "WorstEffectPolicy",
+    "advance_dataset",
     "build_attestation",
     "build_finding_mask",
     "compute_fingerprint",
     "get_effect",
     "profile_dataset",
+    "report_provenance",
     "run_measure",
 ]
