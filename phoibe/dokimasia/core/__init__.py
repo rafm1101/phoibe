@@ -49,7 +49,7 @@ from phoibe.dokimasia.core.transform import (
     TransformRefusedError,
     advance_dataset,
 )
-from phoibe.dokimasia.core.verdict import CriterionVerdict, Severity, Verdict
+from phoibe.dokimasia.core.verdict import CriterionVerdict, Severity, Verdict, build_verdict_table
 
 __all__ = [
     "FINGERPRINT_ALGORITHM",
@@ -90,6 +90,7 @@ __all__ = [
     "advance_dataset",
     "build_attestation",
     "build_finding_mask",
+    "build_verdict_table",
     "compute_fingerprint",
     "get_effect",
     "profile_dataset",

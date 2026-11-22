@@ -11,7 +11,7 @@ from phoibe.dokimasia.core import gate as gate_module
 from phoibe.dokimasia.core import subject as subject_module
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
+@dataclasses.dataclass(frozen=True, slots=True, repr=False)
 class Attestation:
     """The record that a dataset version passed the gate of a layer, conditionally or not."""
 
@@ -43,6 +43,15 @@ class Attestation:
     def __post_init__(self) -> None:
         """Replace the verdict counts by a read-only copy."""
         object.__setattr__(self, "verdict_counts", types.MappingProxyType(dict(self.verdict_counts)))
+
+    def __repr__(self) -> str:
+        """Summarize the attestation in one line."""
+        parent = "none" if self.parent_id is None else self.parent_id[:8]
+        return (
+            f"Attestation({self.subject_id}/{self.layer}: {self.outcome.value}, id={self.id[:8]}, "
+            f"fingerprint={self.fingerprint.digest[:8]}, parent={parent}, "
+            f"{len(self.conditions)} conditions, {self.created_at.isoformat()})"
+        )
 
 
 def build_attestation(

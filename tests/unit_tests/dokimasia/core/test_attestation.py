@@ -83,3 +83,15 @@ def test_transform_description_parameters_are_a_read_only_copy():
     assert transform.parameters["mapping"] == "power->power_kw"
     with pytest.raises(TypeError):
         transform.parameters["x"] = 1  # type: ignore[index]
+
+
+def test_attestation_repr_is_one_line_with_the_facts():
+    attestation = _build(_result((core.Verdict.ACCEPTABLE, core.Severity.CRITICAL)), parent_id="f" * 64)
+
+    text = repr(attestation)
+
+    assert "\n" not in text
+    assert text.startswith("Attestation(t1/raw: conditional, id=")
+    assert "parent=ffffffff" in text
+    assert "1 conditions" in text
+    assert "parent=none" in repr(_build(_result((core.Verdict.GOOD, core.Severity.CRITICAL))))

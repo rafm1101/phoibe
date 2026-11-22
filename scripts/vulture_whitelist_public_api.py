@@ -37,3 +37,5 @@ _.get_layer
 _.has_provenance
 _.with_frame
 _.from_subject
+_.to_frame
+_.compute_duration_s

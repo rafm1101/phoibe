@@ -3,6 +3,7 @@
 import dataclasses
 import enum
 import logging
+import time
 import typing
 
 from phoibe.dokimasia.core import dataset as dataset_module
@@ -44,6 +45,8 @@ class Measured:
     """Summaries."""
     findings: tuple[finding_module.Finding, ...] = ()
     """Located findings."""
+    duration_s: float = dataclasses.field(default=0.0, compare=False)
+    """Seconds the measurement took, set by `run_measure`. It does not take part in equality."""
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -56,6 +59,8 @@ class NotEvaluable:
     """Why."""
     detail: str = ""
     """Facts for a person, for example what was missing."""
+    duration_s: float = dataclasses.field(default=0.0, compare=False)
+    """Seconds the measurement took, set by `run_measure`. It does not take part in equality."""
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -68,6 +73,8 @@ class MeasurementError:
     """Class name of the exception, or of the invalid result."""
     message: str
     """Message of the exception."""
+    duration_s: float = dataclasses.field(default=0.0, compare=False)
+    """Seconds the measurement took, set by `run_measure`. It does not take part in equality."""
 
 
 type Outcome = Measured | NotEvaluable | MeasurementError
@@ -111,18 +118,28 @@ def run_measure(measure: Measure, dataset: dataset_module.Dataset) -> Outcome:
     -------
     Measured | NotEvaluable | MeasurementError
         The measure's own outcome, or an error outcome carrying the measure id and the exception type and message.
-        A result that is none of the outcome types is an error too.
-
+        A result that is none of the outcome types is an error too. Every outcome carries the duration.
     """
+    started = time.perf_counter()
+
     try:
         result = measure.measure(dataset)
     # The single containment point of ADR-12. Ruff accepts it because the failure is logged with its traceback.
     except Exception as error:
         logger.warning("measure %s failed with %s: %s", measure.id, type(error).__name__, error, exc_info=True)
-        return MeasurementError(measure_id=measure.id, exception_type=type(error).__name__, message=str(error))
+        return MeasurementError(
+            measure_id=measure.id,
+            exception_type=type(error).__name__,
+            message=str(error),
+            duration_s=time.perf_counter() - started,
+        )
+    duration_s = time.perf_counter() - started
     if not isinstance(result, Measured | NotEvaluable):
         logger.warning("measure %s returned %s, not an outcome", measure.id, type(result).__name__)
         return MeasurementError(
-            measure_id=measure.id, exception_type=type(result).__name__, message="the measure returned no outcome"
+            measure_id=measure.id,
+            exception_type=type(result).__name__,
+            message="the measure returned no outcome",
+            duration_s=duration_s,
         )
-    return result
+    return dataclasses.replace(result, duration_s=duration_s)

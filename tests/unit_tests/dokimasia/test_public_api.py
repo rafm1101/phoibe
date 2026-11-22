@@ -24,6 +24,7 @@ EXPECTED = {
         "Statistic",
         "Subject",
         "build_finding_mask",
+        "build_verdict_table",
         "compute_fingerprint",
         "profile_dataset",
         "run_measure",

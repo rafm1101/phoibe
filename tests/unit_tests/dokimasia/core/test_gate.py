@@ -119,3 +119,32 @@ class TestGateResult:
             failed.raise_if_failed()
 
         assert [reason.check_id for reason in raised.value.failures] == ["a"]
+
+    def test_to_frame_has_a_row_per_verdict_in_order(self):
+        frame = self.result.to_frame()
+
+        assert frame["check_id"].tolist() == ["a", "b", "c", "d"]
+        assert frame["verdict"].tolist() == ["good", "acceptable", "bad", "error"]
+        assert frame["severity"].tolist() == ["critical", "critical", "warning", "info"]
+
+    def test_repr_is_one_line_with_outcome_and_counts(self):
+        text = repr(self.result)
+
+        assert "\n" not in text
+        assert text.startswith("GateResult(conditional by worst_effect: 0 failures, 2 conditions, 1 notes")
+        assert "1 good, 1 acceptable, 1 bad, 1 error" in text
+
+
+def test_build_verdict_table_given_no_verdicts_is_empty_with_its_columns():
+    table = core.build_verdict_table([])
+
+    assert table.empty
+    assert list(table.columns)[:2] == ["check_id", "measure_id"]
+
+
+def test_criterion_verdict_repr_names_check_verdict_severity_and_value():
+    verdict = core.CriterionVerdict("gaps", "m", core.Severity.CRITICAL, core.Verdict.BAD, value=0.25)
+    unread = core.CriterionVerdict("gaps", "m", core.Severity.INFO, core.Verdict.ERROR)
+
+    assert repr(verdict) == "CriterionVerdict(gaps: bad at critical, value=0.25)"
+    assert repr(unread) == "CriterionVerdict(gaps: error at info, no value)"

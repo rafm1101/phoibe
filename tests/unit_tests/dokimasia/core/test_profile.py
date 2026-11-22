@@ -112,3 +112,50 @@ class TestProfile:
         assert table["status"].tolist() == ["measured", "not_evaluable", "error"]
         assert "missing_signal" in table["detail"].iloc[1]
         assert "ValueError: bad" in table["detail"].iloc[2]
+
+    def test_status_table_holds_the_duration_of_each_measure(self, profile):
+        table = profile.build_status_table()
+
+        assert (table["duration_s"] >= 0).all()
+        assert table["duration_s"].sum() == pytest.approx(profile.compute_duration_s())
+
+    def test_counts_by_status_include_zeros(self, profile):
+        assert profile.count_by_status() == {"measured": 1, "not_evaluable": 1, "error": 1}
+        empty = core.Profile(SUBJECT, "raw", profile.fingerprint, {})
+        assert empty.count_by_status() == {"measured": 0, "not_evaluable": 0, "error": 0}
+
+    def test_to_frame_has_a_row_per_metric_and_a_row_per_measure_without_metrics(self, profile):
+        frame = profile.to_frame()
+
+        assert frame["measure_id"].tolist() == ["m1", "m2", "m3"]
+        assert frame["status"].tolist() == ["measured", "not_evaluable", "error"]
+        assert frame.loc[0, "key"] == "n"
+        assert frame.loc[0, "value"] == 2.0
+        assert frame["key"].iloc[1:].isna().all()
+        assert list(frame.columns) == [
+            "aspect",
+            "measure_id",
+            "status",
+            "key",
+            "signal",
+            "value",
+            "unit",
+            "duration_s",
+        ]
+
+    def test_to_frame_of_an_empty_profile_is_empty_with_its_columns(self, dataset):
+        profile = core.profile_dataset(dataset, SUBJECT, "raw", [])
+
+        assert profile.to_frame().empty
+        assert "duration_s" in profile.to_frame().columns
+
+    def test_repr_is_one_line_with_the_facts(self, profile):
+        text = repr(profile)
+
+        assert "\n" not in text
+        assert text.startswith("Profile(subject='t1', layer='raw', fingerprint=")
+        assert "3 measures: 1 measured, 1 not_evaluable, 1 error" in text
+        assert "2 findings" in text
+
+    def test_repr_of_an_empty_profile(self, dataset):
+        assert "0 measures: none, 0 findings" in repr(core.profile_dataset(dataset, SUBJECT, "raw", []))

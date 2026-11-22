@@ -6,6 +6,8 @@ import enum
 import typing
 from collections.abc import Mapping, Sequence
 
+import pandas as pd
+
 from phoibe.dokimasia.core import verdict as verdict_module
 
 Verdict = verdict_module.Verdict
@@ -99,7 +101,7 @@ class GateFailedError(Exception):
         super().__init__("gate failed: " + "; ".join(reason.text for reason in failures))
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
+@dataclasses.dataclass(frozen=True, slots=True, repr=False)
 class GateResult:
     """The decision of a gate over the verdicts of one layer, with its reasons. It is returned, never hidden."""
 
@@ -111,6 +113,25 @@ class GateResult:
     """All verdicts the decision rests on."""
     policy: str
     """Name of the policy that decided."""
+
+    def __repr__(self) -> str:
+        """Summarize the decision in one line: outcome, policy, and the number of criteria per effect."""
+        counts = self.count_by_verdict()
+        verdicts = ", ".join(f"{count} {name}" for name, count in counts.items() if count)
+        return (
+            f"GateResult({self.outcome.value} by {self.policy}: {len(self.failures)} failures, "
+            f"{len(self.conditions)} conditions, {len(self.notes)} notes; criteria: {verdicts})"
+        )
+
+    def to_frame(self) -> pd.DataFrame:
+        """Build the verdicts the decision rests on as a table.
+
+        Returns
+        -------
+        pandas.DataFrame
+            See `build_verdict_table`.
+        """
+        return verdict_module.build_verdict_table(self.verdicts)
 
     @property
     def conditions(self) -> tuple[GateReason, ...]:
