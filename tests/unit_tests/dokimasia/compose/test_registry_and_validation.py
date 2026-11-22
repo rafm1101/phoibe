@@ -28,6 +28,7 @@ class TestRegistry:
 
         assert first is not second
         assert first.names == (
+            "essential_range",
             "frozen_runs",
             "missing_runs",
             "night_limit",
@@ -36,6 +37,7 @@ class TestRegistry:
             "required_signals",
             "statistic_order",
             "time_gaps",
+            "time_span",
         )
         assert first.find_rule("nope") is None
 
@@ -49,6 +51,8 @@ class TestRegistry:
             "frozen_runs": rules.FrozenRunsMeasure.METRICS,
             "power_levels": wind.PowerLevelsMeasure.METRICS,
             "night_limit": wind.NightLimitMeasure.METRICS,
+            "time_span": rules.TimeSpanMeasure.METRICS,
+            "essential_range": rules.EssentialRangeMeasure.METRICS,
         }
         registry = compose.create_default_registry()
 
