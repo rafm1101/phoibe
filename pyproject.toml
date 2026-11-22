@@ -119,6 +119,12 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "NPY", "RUF", "N", "PTH", 
 ignore = []
 allowed-confusables = ["×"]
 
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+
 [tool.ruff.lint.isort]
 known-first-party = ["trix", "phoibe"]
 

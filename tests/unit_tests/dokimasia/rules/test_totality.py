@@ -10,7 +10,12 @@ import pytest
 
 from phoibe.dokimasia import core, rules
 
-MEASURES = [rules.GapMeasure(), rules.MissingRunsMeasure()]
+MEASURES = [
+    rules.GapMeasure(),
+    rules.MissingRunsMeasure(),
+    rules.RangesMeasure("a", min=0, max=10),
+    rules.RequiredSignalsMeasure(("a", "b")),
+]
 GRID = pd.date_range("2026-01-01", periods=12, freq="10min", name="datetime")
 
 
@@ -52,6 +57,11 @@ MUST_NOT_BE_EVALUATED = {
     ("all_missing_timestamps", "time_gaps"),
     ("all_missing_timestamps", "missing_runs"),
     ("constant_timestamps", "time_gaps"),
+    ("empty_frame", "ranges"),
+    ("no_columns", "ranges"),
+    ("all_missing_values", "ranges"),
+    ("duplicate_column_names", "ranges"),
+    ("large_frame", "ranges"),
 }
 
 

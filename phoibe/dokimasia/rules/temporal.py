@@ -22,11 +22,22 @@ class GapMeasure:
     `n_missing_timestamps`, `n_duplicate_timestamps` and `n_decreasing_steps`.
     """
 
-    ID: typing.ClassVar[str] = "time_gaps"
     ASPECT: typing.ClassVar[str] = "temporal"
+    METRICS: typing.ClassVar[tuple[str, ...]] = (
+        "step_s",
+        "n_gaps",
+        "n_missing_steps",
+        "longest_gap_steps",
+        "share_missing_steps",
+        "n_missing_timestamps",
+        "n_duplicate_timestamps",
+        "n_decreasing_steps",
+    )
 
     expected_step: pd.Timedelta | None = None
     """Length of one time step. If `None`, the median difference of the data is used and reported as `step_s`."""
+    measure_id: str = "time_gaps"
+    """Identifier of this measure in a profile; the contract key when built from a contract."""
 
     def __post_init__(self) -> None:
         """Reject a step that is not positive."""
@@ -36,7 +47,7 @@ class GapMeasure:
     @property
     def id(self) -> str:
         """Identifier of the measure."""
-        return self.ID
+        return self.measure_id
 
     @property
     def aspect(self) -> str:
