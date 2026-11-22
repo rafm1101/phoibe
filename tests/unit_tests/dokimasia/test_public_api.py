@@ -117,7 +117,11 @@ EXPECTED = {
         "validate_layer_rules",
     },
     "phoibe.dokimasia.adapters": {
+        "ODCS_API_VERSION",
         "SCHEMA_VERSION",
+        "export_odcs",
+        "format_odcs",
+        "save_odcs",
         "ArtifactError",
         "FlatStore",
         "Run",
