@@ -4,37 +4,10 @@ import dataclasses
 import typing
 
 import numpy as np
-import pandas as pd
 
 from phoibe.dokimasia import core
 from phoibe.dokimasia.rules import _runs
-
-
-def _find_unique_positions(
-    dataset: core.Dataset, names: tuple[str, ...], measure_id: str
-) -> list[int] | core.NotEvaluable:
-    """Find the column of each name, or say why a name cannot be used."""
-    absent = [name for name in names if name not in dataset.signal_names]
-    if absent:
-        return core.NotEvaluable(
-            measure_id, core.NotEvaluableReason.MISSING_SIGNAL, f"signals not in the dataset: {', '.join(absent)}"
-        )
-    repeated = [name for name in names if dataset.signal_names.count(name) > 1]
-    if repeated:
-        return core.NotEvaluable(
-            measure_id,
-            core.NotEvaluableReason.MISSING_STRUCTURE,
-            f"signals with duplicate columns: {', '.join(repeated)}",
-        )
-    return [dataset.signal_names.index(name) for name in names]
-
-
-def _read_ordered_numbers(dataset: core.Dataset, positions: list[int]) -> pd.DataFrame:
-    """Read the columns as numbers, in time order; rows without a valid timestamp are left out."""
-    numbers = dataset.frame.iloc[:, positions].apply(pd.to_numeric, errors="coerce").astype(float)
-    numbers.index = dataset.time_axis
-    ordered: pd.DataFrame = numbers[numbers.index.notna()].sort_index(kind="stable")
-    return ordered
+from phoibe.dokimasia.rules import signals as signals_module
 
 
 def list_statistic_triples(catalog: core.Catalog) -> tuple[tuple[str, str, str], ...]:
@@ -120,10 +93,9 @@ class StatisticOrderMeasure:
             Metrics and `statistic_order` findings; not evaluable if a signal is missing or ambiguous or no row has
             all three values.
         """
-        positions = _find_unique_positions(dataset, (self.lower, self.middle, self.upper), self.id)
-        if isinstance(positions, core.NotEvaluable):
-            return positions
-        numbers = _read_ordered_numbers(dataset, positions)
+        numbers = signals_module.read_numeric_signals(dataset, (self.lower, self.middle, self.upper), self.id)
+        if isinstance(numbers, core.NotEvaluable):
+            return numbers
         low, mid, high = (numbers.iloc[:, i].to_numpy() for i in range(3))
         checked = ~(np.isnan(low) | np.isnan(mid) | np.isnan(high))
         n_checked = int(checked.sum())
@@ -217,10 +189,9 @@ class FrozenRunsMeasure:
             Metrics and `frozen` findings; not evaluable if a signal is missing or ambiguous or fewer than two rows
             have a valid timestamp.
         """
-        positions = _find_unique_positions(dataset, self.signals, self.id)
-        if isinstance(positions, core.NotEvaluable):
-            return positions
-        numbers = _read_ordered_numbers(dataset, positions)
+        numbers = signals_module.read_numeric_signals(dataset, self.signals, self.id)
+        if isinstance(numbers, core.NotEvaluable):
+            return numbers
         if len(numbers) < 2:
             return core.NotEvaluable(
                 self.id, core.NotEvaluableReason.INSUFFICIENT_DATA, "fewer than two rows with a valid timestamp"

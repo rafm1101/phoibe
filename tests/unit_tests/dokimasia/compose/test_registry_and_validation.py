@@ -1,6 +1,6 @@
 import pytest
 
-from phoibe.dokimasia import compose, contract, core, rules
+from phoibe.dokimasia import compose, contract, core, rules, wind
 
 
 def _layer(measures: dict, checks: dict | None = None) -> contract.LayerSpec:
@@ -30,6 +30,8 @@ class TestRegistry:
         assert first.names == (
             "frozen_runs",
             "missing_runs",
+            "night_limit",
+            "power_levels",
             "ranges",
             "required_signals",
             "statistic_order",
@@ -45,6 +47,8 @@ class TestRegistry:
             "required_signals": rules.RequiredSignalsMeasure.METRICS,
             "statistic_order": rules.StatisticOrderMeasure.METRICS,
             "frozen_runs": rules.FrozenRunsMeasure.METRICS,
+            "power_levels": wind.PowerLevelsMeasure.METRICS,
+            "night_limit": wind.NightLimitMeasure.METRICS,
         }
         registry = compose.create_default_registry()
 
