@@ -37,3 +37,11 @@ _.get_layer
 _.has_provenance
 _.with_frame
 _.from_subject
+_.to_frame
+_.compute_duration_s
+_.save_run
+_.list_runs
+_.load_run
+_.is_clear
+_.raise_if_ambiguous
+_.build_table

@@ -60,7 +60,7 @@ def report_provenance(dataset: dataset_module.Dataset) -> ProvenanceReport:
     )
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
+@dataclasses.dataclass(frozen=True, slots=True, repr=False)
 class Profile:
     """Summaries and findings per aspect for one subject, layer and dataset version. It holds no verdicts.
 
@@ -81,6 +81,39 @@ class Profile:
     def __post_init__(self) -> None:
         """Replace the aspects by a read-only copy."""
         object.__setattr__(self, "aspects", types.MappingProxyType(dict(self.aspects)))
+
+    def __repr__(self) -> str:
+        """Summarize the profile in one line: subject, layer, fingerprint, and what became of the measures."""
+        counts = self.count_by_status()
+        statuses = ", ".join(f"{count} {status}" for status, count in counts.items() if count)
+        return (
+            f"Profile(subject={self.subject.id!r}, layer={self.layer!r}, fingerprint={self.fingerprint.digest[:8]}, "
+            f"{len(self.aspects)} aspects, {sum(counts.values())} measures: {statuses or 'none'}, "
+            f"{len(self.list_findings())} findings)"
+        )
+
+    def count_by_status(self) -> dict[str, int]:
+        """Count the outcomes by what became of them. Every status appears, also with zero.
+
+        Returns
+        -------
+        dict
+            `measured`, `not_evaluable` and `error` to their counts.
+        """
+        counts = {"measured": 0, "not_evaluable": 0, "error": 0}
+        for outcome in self.list_outcomes():
+            counts[_get_status(outcome)] += 1
+        return counts
+
+    def compute_duration_s(self) -> float:
+        """Add up the durations of all measurements.
+
+        Returns
+        -------
+        float
+            Seconds spent in the measures.
+        """
+        return sum(outcome.duration_s for outcome in self.list_outcomes())
 
     def list_outcomes(self) -> tuple[measurement_module.Outcome, ...]:
         """List all outcomes, aspect by aspect.
@@ -187,20 +220,79 @@ class Profile:
         Returns
         -------
         pandas.DataFrame
-            The columns `aspect`, `measure_id`, `status` (`measured`, `not_evaluable` or `error`) and `detail`.
-
+            The columns `aspect`, `measure_id`, `status` (`measured`, `not_evaluable` or `error`),
+            `detail` and `duration_s`.
         """
-        rows = []
+        rows = [
+            {
+                "aspect": aspect,
+                "measure_id": outcome.measure_id,
+                "status": _get_status(outcome),
+                "detail": _get_detail(outcome),
+                "duration_s": outcome.duration_s,
+            }
+            for aspect, outcomes in self.aspects.items()
+            for outcome in outcomes
+        ]
+        return pd.DataFrame(rows, columns=["aspect", "measure_id", "status", "detail", "duration_s"])
+
+    def to_frame(self) -> pd.DataFrame:
+        """Build the whole profile as one table: every metric, and every measure that produced none.
+
+        Returns
+        -------
+        pandas.DataFrame
+            One row per metric and one row per measure that was not measured. The columns are `aspect`,
+            `measure_id`, `status`, `key`, `signal`, `value`, `unit` and `duration_s`; the metric columns are
+            empty for a measure that was not measured.
+        """
+        rows: list[dict[str, object]] = []
         for aspect, outcomes in self.aspects.items():
             for outcome in outcomes:
-                if isinstance(outcome, measurement_module.Measured):
-                    status, detail = "measured", ""
-                elif isinstance(outcome, measurement_module.NotEvaluable):
-                    status, detail = "not_evaluable", f"{outcome.reason}: {outcome.detail}"
+                base = {"aspect": aspect, "measure_id": outcome.measure_id, "status": _get_status(outcome)}
+                if isinstance(outcome, measurement_module.Measured) and outcome.metrics:
+                    rows.extend(
+                        {
+                            **base,
+                            "key": metric.key,
+                            "signal": metric.signal,
+                            "value": metric.value,
+                            "unit": metric.unit,
+                            "duration_s": outcome.duration_s,
+                        }
+                        for metric in outcome.metrics
+                    )
                 else:
-                    status, detail = "error", f"{outcome.exception_type}: {outcome.message}"
-                rows.append({"aspect": aspect, "measure_id": outcome.measure_id, "status": status, "detail": detail})
-        return pd.DataFrame(rows, columns=["aspect", "measure_id", "status", "detail"])
+                    rows.append(
+                        {
+                            **base,
+                            "key": None,
+                            "signal": None,
+                            "value": None,
+                            "unit": None,
+                            "duration_s": outcome.duration_s,
+                        }
+                    )
+        columns = ["aspect", "measure_id", "status", "key", "signal", "value", "unit", "duration_s"]
+        return pd.DataFrame(rows, columns=columns)
+
+
+def _get_status(outcome: measurement_module.Outcome) -> str:
+    """Name what became of an outcome."""
+    if isinstance(outcome, measurement_module.Measured):
+        return "measured"
+    if isinstance(outcome, measurement_module.NotEvaluable):
+        return "not_evaluable"
+    return "error"
+
+
+def _get_detail(outcome: measurement_module.Outcome) -> str:
+    """Give the facts a person needs about an outcome that was not measured."""
+    if isinstance(outcome, measurement_module.NotEvaluable):
+        return f"{outcome.reason}: {outcome.detail}"
+    if isinstance(outcome, measurement_module.MeasurementError):
+        return f"{outcome.exception_type}: {outcome.message}"
+    return ""
 
 
 def profile_dataset(

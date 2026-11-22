@@ -2,10 +2,11 @@
 
 import dataclasses
 import hashlib
-import types
 from collections.abc import Mapping
 
 import pandas as pd
+
+from phoibe.dokimasia.core import _freeze
 
 FINGERPRINT_ALGORITHM = "sha256-pandas-row-hash"
 
@@ -35,7 +36,7 @@ class TransformDescription:
 
     def __post_init__(self) -> None:
         """Replace the parameters by a read-only copy."""
-        object.__setattr__(self, "parameters", types.MappingProxyType(dict(self.parameters)))
+        object.__setattr__(self, "parameters", _freeze.freeze(self.parameters))
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

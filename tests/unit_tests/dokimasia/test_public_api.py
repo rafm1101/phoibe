@@ -6,6 +6,24 @@ import types
 import pytest
 
 EXPECTED = {
+    "phoibe.dokimasia": {
+        "adapters",
+        "compose",
+        "contract",
+        "core",
+        "rules",
+        "standardize",
+        "wind",
+        "Dataset",
+        "FlatStore",
+        "Subject",
+        "advance_dataset",
+        "attest_validation",
+        "build_run",
+        "load_contract",
+        "profile_layer",
+        "validate_layer",
+    },
     "phoibe.dokimasia.core": {
         "Catalog",
         "Dataset",
@@ -24,6 +42,7 @@ EXPECTED = {
         "Statistic",
         "Subject",
         "build_finding_mask",
+        "build_verdict_table",
         "compute_fingerprint",
         "profile_dataset",
         "run_measure",
@@ -68,7 +87,18 @@ EXPECTED = {
         "validate_subject_references",
     },
     "phoibe.dokimasia.standardize": {"Chain", "LocalizeTimeToUtc", "RenameToCatalog"},
-    "phoibe.dokimasia.rules": {"GapMeasure", "MissingRunsMeasure", "RangesMeasure", "RequiredSignalsMeasure"},
+    "phoibe.dokimasia.rules": {
+        "Ambiguity",
+        "Detection",
+        "DetectionError",
+        "GapMeasure",
+        "MissingRunsMeasure",
+        "RangesMeasure",
+        "RequiredSignalsMeasure",
+        "SignalPattern",
+        "detect_signals",
+    },
+    "phoibe.dokimasia.wind": {"PATTERNS", "create_catalog", "detect_wind_signals"},
     "phoibe.dokimasia.compose": {
         "Builder",
         "ParamKind",
@@ -78,6 +108,7 @@ EXPECTED = {
         "SignalUse",
         "Validation",
         "attest_validation",
+        "build_run",
         "build_measures",
         "create_default_registry",
         "list_generic_rules",
@@ -86,6 +117,28 @@ EXPECTED = {
         "validate_layer_rules",
     },
     "phoibe.dokimasia.adapters": {
+        "ODCS_API_VERSION",
+        "SCHEMA_VERSION",
+        "export_odcs",
+        "format_odcs",
+        "save_odcs",
+        "ArtifactError",
+        "FlatStore",
+        "Run",
+        "RunEntry",
+        "Store",
+        "StoreError",
+        "build_run_table",
+        "find_entries",
+        "VerdictsRecord",
+        "attestation_from_data",
+        "attestation_to_data",
+        "format_artifact",
+        "parse_artifact",
+        "profile_from_data",
+        "profile_to_data",
+        "verdicts_from_data",
+        "verdicts_to_data",
         "contract_to_data",
         "dump_contract_yaml",
         "load_contract",
@@ -112,4 +165,5 @@ def test_public_api_given_attribute_access_exposes_no_other_public_symbol(packag
         if not name.startswith("_") and not isinstance(value, types.ModuleType)
     }
 
-    assert exposed == EXPECTED[package]
+    expected = {name for name in EXPECTED[package] if not isinstance(getattr(module, name), types.ModuleType)}
+    assert exposed == expected
