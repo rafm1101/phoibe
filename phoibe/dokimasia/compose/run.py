@@ -3,7 +3,7 @@
 import dataclasses
 import datetime
 
-from phoibe.dokimasia import contract, core
+from phoibe.dokimasia import adapters, contract, core
 from phoibe.dokimasia.compose import registry as registry_module
 from phoibe.dokimasia.compose import validation
 
@@ -182,3 +182,35 @@ def attest_validation(
         software_version=software_version,
         parent_id=profile.provenance.parent_attestation_id,
     )
+
+
+def build_run(validation: Validation, attestation: core.Attestation | None = None) -> adapters.Run:
+    """Collect profile, verdicts and attestation of one validation as a run, ready for a store.
+
+    Parameters
+    ----------
+    validation
+        The profile and judgment.
+    attestation
+        The attestation of the passed gate, if there is one.
+
+    Returns
+    -------
+    Run
+        The run.
+
+    Raises
+    ------
+    ValueError
+        If the artifacts do not belong together, for example an attestation of another dataset version.
+    """
+    profile = validation.profile
+    verdicts = adapters.VerdictsRecord(
+        subject_id=profile.subject.id,
+        layer=validation.layer,
+        fingerprint=profile.fingerprint,
+        contract_id=validation.contract_id,
+        contract_version=validation.contract_version,
+        result=validation.result,
+    )
+    return adapters.Run(profile, verdicts, attestation)
