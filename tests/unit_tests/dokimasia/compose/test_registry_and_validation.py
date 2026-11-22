@@ -27,7 +27,14 @@ class TestRegistry:
         first, second = compose.create_default_registry(), compose.create_default_registry()
 
         assert first is not second
-        assert first.names == ("missing_runs", "ranges", "required_signals", "time_gaps")
+        assert first.names == (
+            "frozen_runs",
+            "missing_runs",
+            "ranges",
+            "required_signals",
+            "statistic_order",
+            "time_gaps",
+        )
         assert first.find_rule("nope") is None
 
     def test_the_metrics_of_every_rule_are_the_ones_its_measure_declares(self):
@@ -36,6 +43,8 @@ class TestRegistry:
             "missing_runs": rules.MissingRunsMeasure.METRICS,
             "ranges": rules.RangesMeasure.METRICS,
             "required_signals": rules.RequiredSignalsMeasure.METRICS,
+            "statistic_order": rules.StatisticOrderMeasure.METRICS,
+            "frozen_runs": rules.FrozenRunsMeasure.METRICS,
         }
         registry = compose.create_default_registry()
 
