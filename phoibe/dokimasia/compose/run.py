@@ -4,8 +4,8 @@ import dataclasses
 import datetime
 
 from phoibe.dokimasia import adapters, contract, core
+from phoibe.dokimasia.compose import defaults, validation
 from phoibe.dokimasia.compose import registry as registry_module
-from phoibe.dokimasia.compose import validation
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -107,7 +107,7 @@ def validate_layer(
     subject: core.Subject,
     contract_: contract.Contract,
     layer_name: str,
-    registry: registry_module.Registry,
+    registry: registry_module.Registry | None = None,
     *,
     policy: core.GatePolicy | None = None,
 ) -> Validation:
@@ -124,7 +124,7 @@ def validate_layer(
     layer_name
         Name of the layer to apply.
     registry
-        The rules that are known.
+        The rules that are known; the generic rules if `None`.
     policy
         Gate policy; the worst effect decides if `None`.
 
@@ -141,7 +141,9 @@ def validate_layer(
         As `build_measures`.
     """
     layer = contract_.get_layer(layer_name)
-    profile = profile_layer(dataset, subject, layer, registry)
+    profile = profile_layer(
+        dataset, subject, layer, defaults.create_default_registry() if registry is None else registry
+    )
     result = contract.judge_layer(profile, layer, policy=policy)
     return Validation(contract_.id, contract_.version, layer_name, profile, result)
 

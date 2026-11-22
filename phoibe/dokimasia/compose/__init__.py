@@ -4,6 +4,7 @@ It builds the registry from an explicit list of rules, checks rule parameters ag
 contract and offers profile and validate.
 """
 
+from phoibe.dokimasia.compose.defaults import create_default_registry
 from phoibe.dokimasia.compose.registry import Builder, ParamKind, ParamSpec, Registry, Rule, SignalUse
 from phoibe.dokimasia.compose.rules_generic import list_generic_rules
 from phoibe.dokimasia.compose.run import (
@@ -15,18 +16,6 @@ from phoibe.dokimasia.compose.run import (
     validate_layer,
 )
 from phoibe.dokimasia.compose.validation import validate_layer_rules
-
-
-def create_default_registry() -> Registry:
-    """Create the registry with the generic rules.
-
-    Returns
-    -------
-    Registry
-        A new registry; there is no shared state between calls.
-    """
-    return Registry(list_generic_rules())
-
 
 __all__ = [
     "Builder",

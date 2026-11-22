@@ -129,7 +129,7 @@ max-complexity = 12
 known-first-party = ["trix", "phoibe"]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["F401", "D400"]
 "tests/**/*.py" = ["ANN", "B905", "B011", "D", "FBT"]
 "*.ipynb" = ["B006", "B008", "B018", "B905", "E402", "F821"]
 "phoibe/layered/**/*.py" = ["D", "G", "PTH", "BLE", "FBT", "N", "C90", "RUF", "SIM"]

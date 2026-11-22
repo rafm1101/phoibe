@@ -6,6 +6,24 @@ import types
 import pytest
 
 EXPECTED = {
+    "phoibe.dokimasia": {
+        "adapters",
+        "compose",
+        "contract",
+        "core",
+        "rules",
+        "standardize",
+        "wind",
+        "Dataset",
+        "FlatStore",
+        "Subject",
+        "advance_dataset",
+        "attest_validation",
+        "build_run",
+        "load_contract",
+        "profile_layer",
+        "validate_layer",
+    },
     "phoibe.dokimasia.core": {
         "Catalog",
         "Dataset",
@@ -143,4 +161,5 @@ def test_public_api_given_attribute_access_exposes_no_other_public_symbol(packag
         if not name.startswith("_") and not isinstance(value, types.ModuleType)
     }
 
-    assert exposed == EXPECTED[package]
+    expected = {name for name in EXPECTED[package] if not isinstance(getattr(module, name), types.ModuleType)}
+    assert exposed == expected
