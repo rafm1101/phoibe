@@ -1,0 +1,235 @@
+# DRAFT for review. Every severity and band below is a proposal, not an agreement: they come from the measured
+# behavior on generator data (tests/unit_tests/dokimasia/test_bronze_contract.py) and from nothing else.
+#
+# Severity, what a violation does to the gate:
+#   critical: bad fails the gate, acceptable makes the pass conditional.
+#   warning:  bad makes the pass conditional, acceptable is noted.
+#   info:     bad is noted; the gate passes.
+# A check that cannot be evaluated (a signal is missing, too few rows) is treated like bad at its severity.
+#
+# Subject attributes that this contract reads: rated_power_kw, rated_wind_speed_mps.
+# Open before this is an agreement (see the design document, "Project close"):
+#   - placeholders until the TR numbers exist: the bands of availability, completeness, order and frozen state
+#   - frozen_runs: which signals and how many steps (waits for the TR check)
+#   - ranges of wind speed and power: to be verified with the TR
+#   - power_levels: count or kde; the high-wind threshold. full_load_reaches_rated_power depends on the method.
+#   - spikes and the zeroing of the turbine have no rule yet
+# Decided: rotor speed and pitch angle have no range conditions. The night is 22 to 6 local time, which is the
+# night of a site in Germany, kept at those hours across daylight saving time by the time zone of night_limit.
+id: wind-scada-10min
+version: 0.1.0
+domain: wind
+layers:
+  raw:
+    measures:
+      required_signals:
+        params: {signals: [power, wind_speed]}
+      time_gaps:
+        params: {expected_step_s: 600}
+    checks:
+      signals_present:
+        measure: required_signals
+        value: n_missing_signals
+        severity: critical
+        good: {max: 0}
+      availability:
+        measure: time_gaps
+        value: share_missing_steps
+        severity: critical
+        good: {max: 0.001}
+        acceptable: {max: 0.10}
+  bronze:
+    measures:
+      # Time axis
+      time_gaps:
+        params: {expected_step_s: 600}
+      time_span:
+        params: {expected_step_s: 600}
+      # Completeness of the mean signals
+      missing:
+        rule: missing_runs
+      # Validity
+      wind_speed_limits:  # limits to be verified with the TR
+        rule: ranges
+        signal: wind_speed
+        params: {min: 0, max: 60}
+      power_limits:  # limits to be verified with the TR; -5 % is an assumption
+        rule: ranges
+        signal: power_kw
+        params:
+          min: {subject: rated_power_kw, factor: -0.05}
+          max: {subject: rated_power_kw, factor: 1.05}
+      frozen_state:
+        rule: frozen_runs
+        params: {signals: [power_kw, wind_speed, rotor_speed, pitch_angle], min_steps: 2}
+      # Consistency of mean, minimum and maximum
+      order_power:
+        rule: statistic_order
+        signal: power_kw
+        params: {lower: power_kw_min, upper: power_kw_max}
+      order_wind_speed:
+        rule: statistic_order
+        signal: wind_speed
+        params: {lower: wind_speed_min, upper: wind_speed_max}
+      order_rotor_speed:
+        rule: statistic_order
+        signal: rotor_speed
+        params: {lower: rotor_speed_min, upper: rotor_speed_max}
+      order_pitch_angle:
+        rule: statistic_order
+        signal: pitch_angle
+        params: {lower: pitch_angle_min, upper: pitch_angle_max}
+      # Curtailment (operation, not a data error)
+      levels:
+        rule: power_levels
+        signal: power_kw
+        params:
+          wind_speed: wind_speed
+          rated_power_kw: {subject: rated_power_kw}
+          min_wind_speed: {subject: rated_wind_speed_mps}
+      night:
+        rule: night_limit
+        signal: power_kw
+        params:
+          wind_speed: wind_speed
+          min_wind_speed: {subject: rated_wind_speed_mps}
+          night_start_hour: 22
+          night_end_hour: 6
+          time_zone: Europe/Berlin
+      # Distribution
+      spread_power:
+        rule: essential_range
+        signal: power_kw
+      spread_wind_speed:
+        rule: essential_range
+        signal: wind_speed
+    checks:
+      no_duplicate_timestamps:
+        measure: time_gaps
+        value: n_duplicate_timestamps
+        severity: critical
+        good: {max: 0}
+      time_in_order:
+        measure: time_gaps
+        value: n_decreasing_steps
+        severity: critical
+        good: {max: 0}
+      availability:
+        measure: time_gaps
+        value: share_missing_steps
+        severity: critical
+        good: {max: 0.001}
+        acceptable: {max: 0.10}
+      time_axis_in_utc:
+        measure: time_span
+        value: is_timezone_aware
+        severity: critical
+        good: {min: 1}
+      single_utc_offset:
+        measure: time_span
+        value: n_utc_offsets
+        severity: critical
+        good: {max: 1}
+      no_oversampled_steps:
+        measure: time_span
+        value: n_short_steps
+        severity: warning
+        good: {max: 0}
+      power_complete:
+        measure: missing
+        signal: power_kw
+        value: share_missing
+        severity: critical
+        good: {max: 0.001}
+        acceptable: {max: 0.02}
+      wind_speed_complete:
+        measure: missing
+        signal: wind_speed
+        value: share_missing
+        severity: critical
+        good: {max: 0.001}
+        acceptable: {max: 0.02}
+      rotor_speed_complete:
+        measure: missing
+        signal: rotor_speed
+        value: share_missing
+        severity: warning
+        good: {max: 0.001}
+        acceptable: {max: 0.02}
+      pitch_angle_complete:
+        measure: missing
+        signal: pitch_angle
+        value: share_missing
+        severity: warning
+        good: {max: 0.001}
+        acceptable: {max: 0.02}
+      no_wind_speed_outliers:  # a share, so that the band does not depend on the length of the data; band is a placeholder
+        measure: wind_speed_limits
+        value: share_out_of_range
+        severity: critical
+        good: {max: 0}
+        acceptable: {max: 0.001}
+      power_within_rating:
+        measure: power_limits
+        value: share_out_of_range
+        severity: warning
+        good: {max: 0}
+        acceptable: {max: 0.001}
+      no_frozen_state:
+        measure: frozen_state
+        value: share_frozen_steps
+        severity: warning
+        good: {max: 0}
+        acceptable: {max: 0.005}
+      power_order:
+        measure: order_power
+        value: share_violations
+        severity: critical
+        good: {max: 0}
+        acceptable: {max: 0.005}
+      wind_speed_order:
+        measure: order_wind_speed
+        value: share_violations
+        severity: critical
+        good: {max: 0}
+        acceptable: {max: 0.005}
+      rotor_speed_order:
+        measure: order_rotor_speed
+        value: share_violations
+        severity: warning
+        good: {max: 0}
+        acceptable: {max: 0.005}
+      pitch_angle_order:
+        measure: order_pitch_angle
+        value: share_violations
+        severity: warning
+        good: {max: 0}
+        acceptable: {max: 0.005}
+      # Needs a level at rated power. With the method count, real power that scatters by tens of kW has no value that
+      # 5 rows share, and the check is bad on healthy data; kde does not have this problem. Decide the method first.
+      full_load_reaches_rated_power:
+        measure: levels
+        value: highest_level_kw
+        severity: warning
+        good: {min: {subject: rated_power_kw, factor: 0.99}}
+      share_of_curtailed_rows:
+        measure: levels
+        value: share_curtailed_rows
+        severity: info
+        good: {max: 0.02}
+        acceptable: {max: 0.20}
+      no_night_limit:
+        measure: night
+        value: n_limited_rows
+        severity: info
+        good: {max: 0}
+      power_not_constant:
+        measure: spread_power
+        value: essential_width
+        severity: warning
+        good: {min: {subject: rated_power_kw, factor: 0.1}}
+      wind_speed_not_constant:
+        measure: spread_wind_speed
+        value: essential_width
+        severity: warning
+        good: {min: 1}

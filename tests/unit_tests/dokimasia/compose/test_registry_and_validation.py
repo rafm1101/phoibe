@@ -1,6 +1,6 @@
 import pytest
 
-from phoibe.dokimasia import compose, contract, core, rules
+from phoibe.dokimasia import compose, contract, core, rules, wind
 
 
 def _layer(measures: dict, checks: dict | None = None) -> contract.LayerSpec:
@@ -27,7 +27,18 @@ class TestRegistry:
         first, second = compose.create_default_registry(), compose.create_default_registry()
 
         assert first is not second
-        assert first.names == ("missing_runs", "ranges", "required_signals", "time_gaps")
+        assert first.names == (
+            "essential_range",
+            "frozen_runs",
+            "missing_runs",
+            "night_limit",
+            "power_levels",
+            "ranges",
+            "required_signals",
+            "statistic_order",
+            "time_gaps",
+            "time_span",
+        )
         assert first.find_rule("nope") is None
 
     def test_the_metrics_of_every_rule_are_the_ones_its_measure_declares(self):
@@ -36,6 +47,12 @@ class TestRegistry:
             "missing_runs": rules.MissingRunsMeasure.METRICS,
             "ranges": rules.RangesMeasure.METRICS,
             "required_signals": rules.RequiredSignalsMeasure.METRICS,
+            "statistic_order": rules.StatisticOrderMeasure.METRICS,
+            "frozen_runs": rules.FrozenRunsMeasure.METRICS,
+            "power_levels": wind.PowerLevelsMeasure.METRICS,
+            "night_limit": wind.NightLimitMeasure.METRICS,
+            "time_span": rules.TimeSpanMeasure.METRICS,
+            "essential_range": rules.EssentialRangeMeasure.METRICS,
         }
         registry = compose.create_default_registry()
 

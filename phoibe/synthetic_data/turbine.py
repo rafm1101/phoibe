@@ -87,7 +87,7 @@ def generate_wtg_scada(
     else:
         resampler = latent_df.resample(rule=time.freq)
         min_df, mean_df, max_df = resampler.min(), resampler.mean(), resampler.max()
-        df = pd.concat([mean_df, min_df.add_suffix("_min"), max_df.add_suffix("_max")], axis="columns")
+        df = pd.concat([mean_df, min_df.add_suffix("_min"), max_df.add_suffix("_max")], axis="columns", sort=False)
         columns = [key + suffix for key in column_order for suffix in ["", "_min", "_max"]]
         df = df.loc[:, columns]
 

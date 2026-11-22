@@ -19,6 +19,20 @@ def _build_time_gaps(measure_id: str, signal: str | None, params: Mapping[str, o
     return rules.GapMeasure(expected_step=step, measure_id=measure_id)
 
 
+def _build_time_span(measure_id: str, signal: str | None, params: Mapping[str, object]) -> core.Measure:
+    step_s = _number(params, "expected_step_s")
+    step = None if step_s is None else pd.Timedelta(seconds=step_s)
+    return rules.TimeSpanMeasure(expected_step=step, measure_id=measure_id)
+
+
+def _build_essential_range(measure_id: str, signal: str | None, params: Mapping[str, object]) -> core.Measure:
+    assert signal is not None
+    proportion = _number(params, "proportion")
+    return rules.EssentialRangeMeasure(
+        signal=signal, proportion=0.995 if proportion is None else proportion, measure_id=measure_id
+    )
+
+
 def _build_missing_runs(measure_id: str, signal: str | None, params: Mapping[str, object]) -> core.Measure:
     return rules.MissingRunsMeasure(signals=None if signal is None else (signal,), measure_id=measure_id)
 
@@ -36,13 +50,41 @@ def _build_required_signals(measure_id: str, signal: str | None, params: Mapping
     return rules.RequiredSignalsMeasure(signals=tuple(str(name) for name in names), measure_id=measure_id)
 
 
+def _text(params: Mapping[str, object], name: str) -> str:
+    return str(params[name])
+
+
+def _build_statistic_order(measure_id: str, signal: str | None, params: Mapping[str, object]) -> core.Measure:
+    assert signal is not None
+    return rules.StatisticOrderMeasure(
+        lower=_text(params, "lower"),
+        middle=signal,
+        upper=_text(params, "upper"),
+        tolerance=_number(params, "tolerance") or 0.0,
+        measure_id=measure_id,
+    )
+
+
+def _build_frozen_runs(measure_id: str, signal: str | None, params: Mapping[str, object]) -> core.Measure:
+    names = params["signals"]
+    assert isinstance(names, list | tuple)
+    min_steps = _number(params, "min_steps")
+    assert min_steps is not None
+    if min_steps != int(min_steps):
+        raise ValueError(f"min_steps must be a whole number, got {min_steps:g}")
+    return rules.FrozenRunsMeasure(
+        signals=tuple(str(name) for name in names), min_steps=int(min_steps), measure_id=measure_id
+    )
+
+
 def list_generic_rules() -> tuple[registry.Rule, ...]:
     """List the generic rules.
 
     Returns
     -------
     tuple
-        The rules `time_gaps`, `missing_runs`, `ranges` and `required_signals`.
+        The rules `time_gaps`, `missing_runs`, `ranges`, `required_signals`, `statistic_order`, `frozen_runs`,
+        `time_span` and `essential_range`.
     """
     kind = registry.ParamKind
     use = registry.SignalUse
@@ -67,5 +109,38 @@ def list_generic_rules() -> tuple[registry.Rule, ...]:
             _build_required_signals,
             rules.RequiredSignalsMeasure.METRICS,
             {"signals": registry.ParamSpec(kind.TEXT_LIST, required=True)},
+        ),
+        registry.Rule(
+            "statistic_order",
+            _build_statistic_order,
+            rules.StatisticOrderMeasure.METRICS,
+            {
+                "lower": registry.ParamSpec(kind.TEXT, required=True),
+                "upper": registry.ParamSpec(kind.TEXT, required=True),
+                "tolerance": registry.ParamSpec(kind.NUMBER),
+            },
+            signal=use.REQUIRED,
+        ),
+        registry.Rule(
+            "frozen_runs",
+            _build_frozen_runs,
+            rules.FrozenRunsMeasure.METRICS,
+            {
+                "signals": registry.ParamSpec(kind.TEXT_LIST, required=True),
+                "min_steps": registry.ParamSpec(kind.NUMBER, required=True),
+            },
+        ),
+        registry.Rule(
+            "time_span",
+            _build_time_span,
+            rules.TimeSpanMeasure.METRICS,
+            {"expected_step_s": registry.ParamSpec(kind.NUMBER)},
+        ),
+        registry.Rule(
+            "essential_range",
+            _build_essential_range,
+            rules.EssentialRangeMeasure.METRICS,
+            {"proportion": registry.ParamSpec(kind.NUMBER)},
+            signal=use.REQUIRED,
         ),
     )
