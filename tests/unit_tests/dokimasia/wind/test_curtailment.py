@@ -287,6 +287,36 @@ class TestNightLimitMeasure:
         assert plain.findings == ()
         assert _metrics(plain)["night_level_kw"] == RATED_KW
 
+    def test_the_night_in_a_time_zone_stays_at_local_hours_across_daylight_saving_time(self):
+        local = pd.date_range(
+            "2026-03-27", periods=6 * 24 * 7, freq="10min", tz="Europe/Berlin"
+        )  # DST starts on 29 March
+        index = local.tz_convert("UTC")
+        night = (local.hour >= 22) | (local.hour < 6)
+        power = np.where(night, 3200.0, RATED_KW)
+        data = _dataset(power, np.full(len(index), 15.0), index=index)
+
+        zoned = wind.NightLimitMeasure("power_kw", "wind_speed", RATED_WIND, 22, 6, time_zone="Europe/Berlin")
+        in_utc = wind.NightLimitMeasure("power_kw", "wind_speed", RATED_WIND, 22, 6)
+
+        zoned_mask = core.build_finding_mask(zoned.measure(data).findings, index)
+        utc_mask = core.build_finding_mask(in_utc.measure(data).findings, index)
+        assert (zoned_mask == night).all()
+        assert (utc_mask != night).any()
+
+    def test_a_time_zone_needs_an_axis_with_a_zone(self):
+        measure = wind.NightLimitMeasure("power_kw", "wind_speed", RATED_WIND, 22, 6, time_zone="Europe/Berlin")
+
+        outcome = measure.measure(_dataset(np.full(STEPS, RATED_KW), _windy()))
+
+        assert isinstance(outcome, core.NotEvaluable)
+        assert outcome.reason is core.NotEvaluableReason.MISSING_STRUCTURE
+        assert "no time zone" in outcome.detail
+
+    def test_an_unknown_time_zone_is_refused(self):
+        with pytest.raises(ValueError, match="unknown time zone 'Mars/Olympus'"):
+            wind.NightLimitMeasure("power_kw", "wind_speed", RATED_WIND, 22, 6, time_zone="Mars/Olympus")
+
     def test_a_night_level_that_few_rows_share_is_no_limit(self):
         night = self._night()
         rng = np.random.default_rng(0)
@@ -372,6 +402,7 @@ class TestWindRulesInAContract:
                         "min_wind_speed": {"subject": "rated_wind_speed_mps"},
                         "night_start_hour": 22,
                         "night_end_hour": 6,
+                        "time_zone": "Europe/Berlin",
                     },
                 },
             },
@@ -433,3 +464,12 @@ class TestWindRulesInAContract:
 
         with pytest.raises(ValueError, match="fft"):
             rule.build("levels", "power_kw", params)
+
+    def test_the_rule_builds_the_night_with_its_time_zone(self):
+        rule = compose.create_default_registry().find_rule("night_limit")
+        params = {"wind_speed": "wind_speed", "min_wind_speed": 13.0, "night_start_hour": 22, "night_end_hour": 6}
+
+        zoned = rule.build("night", "power_kw", {**params, "time_zone": "Europe/Berlin"})
+        plain = rule.build("night", "power_kw", params)
+
+        assert (zoned.time_zone, plain.time_zone) == ("Europe/Berlin", None)

@@ -9,11 +9,13 @@
 #
 # Subject attributes that this contract reads: rated_power_kw, rated_wind_speed_mps.
 # Open before this is an agreement (see the design document, "Project close"):
+#   - placeholders until the TR numbers exist: the bands of availability, completeness, order and frozen state
 #   - frozen_runs: which signals and how many steps (waits for the TR check)
-#   - night_limit: the night hours and their time zone
-#   - power_levels: count or kde; the high-wind threshold
-#   - ranges of rotor speed and pitch angle (no subject attribute yet)
+#   - ranges of wind speed and power: to be verified with the TR
+#   - power_levels: count or kde; the high-wind threshold. full_load_reaches_rated_power depends on the method.
 #   - spikes and the zeroing of the turbine have no rule yet
+# Decided: rotor speed and pitch angle have no range conditions. The night is 22 to 6 local time, which is the
+# night of a site in Germany, kept at those hours across daylight saving time by the time zone of night_limit.
 id: wind-scada-10min
 version: 0.1.0
 domain: wind
@@ -47,11 +49,11 @@ layers:
       missing:
         rule: missing_runs
       # Validity
-      wind_speed_limits:
+      wind_speed_limits:  # limits to be verified with the TR
         rule: ranges
         signal: wind_speed
         params: {min: 0, max: 60}
-      power_limits:
+      power_limits:  # limits to be verified with the TR; -5 % is an assumption
         rule: ranges
         signal: power_kw
         params:
@@ -93,6 +95,7 @@ layers:
           min_wind_speed: {subject: rated_wind_speed_mps}
           night_start_hour: 22
           night_end_hour: 6
+          time_zone: Europe/Berlin
       # Distribution
       spread_power:
         rule: essential_range
@@ -160,12 +163,12 @@ layers:
         severity: warning
         good: {max: 0.001}
         acceptable: {max: 0.02}
-      no_wind_speed_outliers:
+      no_wind_speed_outliers:  # a share, so that the band does not depend on the length of the data; band is a placeholder
         measure: wind_speed_limits
-        value: n_out_of_range
+        value: share_out_of_range
         severity: critical
         good: {max: 0}
-        acceptable: {max: 10}
+        acceptable: {max: 0.001}
       power_within_rating:
         measure: power_limits
         value: share_out_of_range
@@ -202,6 +205,8 @@ layers:
         severity: warning
         good: {max: 0}
         acceptable: {max: 0.005}
+      # Needs a level at rated power. With the method count, real power that scatters by tens of kW has no value that
+      # 5 rows share, and the check is bad on healthy data; kde does not have this problem. Decide the method first.
       full_load_reaches_rated_power:
         measure: levels
         value: highest_level_kw

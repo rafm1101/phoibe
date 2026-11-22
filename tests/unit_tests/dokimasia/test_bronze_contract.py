@@ -30,11 +30,11 @@ def _create_clean(seed: int, *, extended: bool = True) -> pd.DataFrame:
 
 
 def _to_bronze(frame: pd.DataFrame, *, utc: bool = True) -> pd.DataFrame:
-    """Stand in for the standardizing: catalog names and a time axis in UTC."""
+    """Stand in for the standardizing: catalog names, and local (Berlin) generator times as UTC."""
     bronze = frame.copy()
     bronze.columns = [f"power_kw{name.removeprefix('power')}" if name.startswith("power") else name for name in frame]
     if utc:
-        bronze.index = bronze.index.tz_localize("UTC")
+        bronze.index = bronze.index.tz_localize("Europe/Berlin").tz_convert("UTC")
     return bronze
 
 

@@ -3,6 +3,7 @@
 import dataclasses
 import enum
 import typing
+import zoneinfo
 
 import numpy as np
 import numpy.typing as npt
@@ -200,8 +201,10 @@ class NightLimitMeasure:
     day value and at least `min_share` of the high wind rows at night sit on it, there is a night limit. Then every
     night row on the night value, at any wind speed, is a finding of kind `night_limit`.
 
-    The hours are those of the time axis as given: a time axis in UTC needs the night in UTC. Night runs from
-    `night_start_hour` (inclusive) to `night_end_hour` (exclusive) and wraps over midnight if the start is later.
+    Night runs from `night_start_hour` (inclusive) to `night_end_hour` (exclusive) and wraps over midnight if the start
+    is later. The hours are those of the time axis as given, unless `time_zone` is set: then the time axis, which must
+    have a time zone, is converted to it first, so that the night stays at the same local hours when daylight saving
+    time shifts the offset from UTC.
 
     Metrics, on the power signal: `n_night_high_wind_rows`, `n_day_high_wind_rows`, `night_level_kw`, `day_level_kw`,
     `share_night_at_level`, `night_limit_depth_kw` (day level less night level; zero or less means no limit) and
@@ -229,6 +232,8 @@ class NightLimitMeasure:
     """First hour of the night, 0 to 23."""
     night_end_hour: int
     """First hour after the night, 0 to 23."""
+    time_zone: str | None = None
+    """Time zone of the night hours, for example `Europe/Berlin`; `None` for the hours of the time axis as given."""
     resolution_kw: float = 10.0
     """Grid that power is rounded to."""
     min_rows: int = 10
@@ -244,6 +249,11 @@ class NightLimitMeasure:
         for hour in (self.night_start_hour, self.night_end_hour):
             if not 0 <= hour <= 23:
                 raise ValueError(f"night hours must be from 0 to 23, got {hour}")
+        if self.time_zone is not None:
+            try:
+                zoneinfo.ZoneInfo(self.time_zone)
+            except (zoneinfo.ZoneInfoNotFoundError, ValueError) as error:
+                raise ValueError(f"unknown time zone '{self.time_zone}'") from error
         if self.night_start_hour == self.night_end_hour:
             raise ValueError(f"the night needs different start and end hours, got {self.night_start_hour} twice")
         if self.min_rows < 1 or not 0.0 < self.min_share <= 1.0:
@@ -279,7 +289,16 @@ class NightLimitMeasure:
         if isinstance(numbers, core.NotEvaluable):
             return numbers
         power, wind = numbers.iloc[:, 0].to_numpy(), numbers.iloc[:, 1].to_numpy()
-        hours = pd.DatetimeIndex(numbers.index).hour.to_numpy()
+        axis = pd.DatetimeIndex(numbers.index)
+        if self.time_zone is not None:
+            if axis.tz is None:
+                return core.NotEvaluable(
+                    self.id,
+                    core.NotEvaluableReason.MISSING_STRUCTURE,
+                    f"the time axis has no time zone, which the night hours in '{self.time_zone}' need",
+                )
+            axis = axis.tz_convert(self.time_zone)
+        hours = axis.hour.to_numpy()
         if self.night_start_hour < self.night_end_hour:
             night = (hours >= self.night_start_hour) & (hours < self.night_end_hour)
         else:
