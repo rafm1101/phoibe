@@ -45,3 +45,6 @@ _.load_run
 _.is_clear
 _.raise_if_ambiguous
 _.build_table
+_.recall
+_.precision
+_.n_false_alarms

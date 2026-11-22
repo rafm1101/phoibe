@@ -40,6 +40,7 @@ from phoibe.dokimasia.core.profile import (
     profile_dataset,
     report_provenance,
 )
+from phoibe.dokimasia.core.scoring import Score, compute_score, score_findings
 from phoibe.dokimasia.core.signal import Catalog, Signal, Statistic
 from phoibe.dokimasia.core.subject import Subject
 from phoibe.dokimasia.core.transform import (
@@ -76,6 +77,7 @@ __all__ = [
     "ProvenanceMismatchError",
     "ProvenanceRecord",
     "ProvenanceReport",
+    "Score",
     "Severity",
     "Signal",
     "Statistic",
@@ -92,8 +94,10 @@ __all__ = [
     "build_finding_mask",
     "build_verdict_table",
     "compute_fingerprint",
+    "compute_score",
     "get_effect",
     "profile_dataset",
     "report_provenance",
     "run_measure",
+    "score_findings",
 ]
