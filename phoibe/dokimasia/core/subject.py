@@ -1,8 +1,9 @@
 """The subject of a run (ADR-01)."""
 
 import dataclasses
-import types
 from collections.abc import Mapping
+
+from phoibe.dokimasia.core import _freeze
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -22,4 +23,4 @@ class Subject:
 
     def __post_init__(self) -> None:
         """Replace the specification by a read-only copy."""
-        object.__setattr__(self, "specification", types.MappingProxyType(dict(self.specification)))
+        object.__setattr__(self, "specification", _freeze.freeze(self.specification))

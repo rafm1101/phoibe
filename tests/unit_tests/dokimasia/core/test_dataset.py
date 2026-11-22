@@ -71,3 +71,11 @@ class TestComputeFingerprint:
 
         assert core.compute_fingerprint(duplicated) != core.compute_fingerprint(frame)
         assert len(core.compute_fingerprint(empty).digest) == 64
+
+
+def test_transform_description_parameters_are_frozen_deeply():
+    description = core.TransformDescription("t", {"steps": [{"name": "a", "parameters": {"k": [1]}}]}, "1")
+
+    assert description.parameters["steps"][0]["parameters"]["k"] == (1,)
+    with pytest.raises(TypeError):
+        description.parameters["steps"][0]["name"] = "b"  # type: ignore[index]

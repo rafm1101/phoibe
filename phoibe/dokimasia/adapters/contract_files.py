@@ -5,19 +5,7 @@ import pathlib
 import yaml
 
 from phoibe.dokimasia import contract
-
-
-class _UniqueKeyLoader(yaml.SafeLoader):
-    """A safe YAML loader that refuses a key that appears twice, instead of silently keeping the last."""
-
-    def construct_mapping(self, node: yaml.MappingNode, deep: bool = False) -> dict[object, object]:  # noqa: FBT001, FBT002
-        seen: set[object] = set()
-        for key_node, _ in node.value:
-            key = self.construct_object(key_node, deep=deep)
-            if key in seen:
-                raise yaml.constructor.ConstructorError(None, None, f"duplicate key {key!r}", key_node.start_mark)
-            seen.add(key)
-        return super().construct_mapping(node, deep=deep)
+from phoibe.dokimasia.adapters import _text
 
 
 def parse_contract_yaml(text: str) -> contract.Contract:
@@ -39,7 +27,7 @@ def parse_contract_yaml(text: str) -> contract.Contract:
         If the text is not valid YAML or the contract is invalid; all contract problems are listed.
     """
     try:
-        data = yaml.load(text, Loader=_UniqueKeyLoader)
+        data = _text.load_yaml(text)
     except yaml.YAMLError as error:
         raise contract.ContractError((f"yaml: {error!s}",)) from error
     return contract.build_contract(data)
