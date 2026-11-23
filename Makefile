@@ -18,3 +18,6 @@ update-precommits:
 
 update-trix-contract-snapshot:
 	UPDATE_SNAPESHOTS=1 uv run pytest tests/contract_tests/geography/complexity/pipelines/test_contract_snapshot.py
+
+show-dokimasia-coverage:
+	PYTHONPATH=. uv run python tests/unit_tests/dokimasia/rules/test_coverage.py
