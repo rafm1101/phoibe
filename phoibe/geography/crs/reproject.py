@@ -85,7 +85,6 @@ def reproject_rasterdata(
     2. Supports north-up destination crs. For the other case, implement `ys` flip on `destination_transform.e<0` only.
     3. Supports a single band. For multiple bands, extend functionality beforehand.
     """
-
     crs_to = pyproj.CRS.from_user_input(crs_to)
     crs_from = _get_crs(da=da, crs=crs_from)
     if crs_from is None:
