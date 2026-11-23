@@ -1,10 +1,11 @@
 import numpy as np
-from ergaleiothiki.tididi.validate_numerics import (
+from numpy.typing import NDArray
+
+from phoibe.ergaleiothiki.tididi.validate_numerics import (
     _validate_broadcastable,
     _validate_non_negative,
     _validate_notna_finite,
 )
-from numpy.typing import NDArray
 
 
 def compass_polar_to_cartesian(
