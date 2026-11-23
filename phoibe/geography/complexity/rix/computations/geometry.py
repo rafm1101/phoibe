@@ -3,12 +3,17 @@ from __future__ import annotations
 import dataclasses
 import logging
 
-import ergaleiothiki.kiklos.circle
 import numpy as np
 import pyproj
 import shapely.geometry
-from ergaleiothiki.tididi.validate_numerics import _validate_non_negative, _validate_notna_finite, _validate_positive
 from numpy.typing import NDArray
+
+import phoibe.ergaleiothiki.kiklos.circle
+from phoibe.ergaleiothiki.tididi.validate_numerics import (
+    _validate_non_negative,
+    _validate_notna_finite,
+    _validate_positive,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -114,7 +119,7 @@ class RayGeometry:
         _validate_positive(np.diff(r_m), "dr_m")
         crs = None if crs is None else pyproj.CRS.from_user_input(crs)
 
-        dx, dy = ergaleiothiki.kiklos.circle.compass_polar_to_cartesian(theta, r_m)
+        dx, dy = phoibe.ergaleiothiki.kiklos.circle.compass_polar_to_cartesian(theta, r_m)
         xs = location.x + dx
         ys = location.y + dy
         return cls(location=location, theta=theta, r_m=r_m, xs=xs, ys=ys, crs=crs)

@@ -267,15 +267,6 @@ wheels = [
 ]
 
 [[package]]
-name = "ergaleiothiki"
-version = "0.3.0"
-source = { git = "https://github.com/rafm1101/ergaleiothiki.git?tag=0.3.0#407030fc7132bc3c666c703c884418d3ba51e4a2" }
-dependencies = [
-    { name = "numpy" },
-    { name = "python-dotenv" },
-]
-
-[[package]]
 name = "et-xmlfile"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple/" }
@@ -836,7 +827,6 @@ name = "phoibe"
 version = "0.7.0"
 source = { editable = "." }
 dependencies = [
-    { name = "ergaleiothiki" },
     { name = "geopandas" },
     { name = "numpy" },
     { name = "openpyxl" },
@@ -879,7 +869,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cartopy", marker = "extra == 'docs'", specifier = ">=0.25.0" },
-    { name = "ergaleiothiki", git = "https://github.com/rafm1101/ergaleiothiki.git?tag=0.3.0" },
     { name = "geopandas", specifier = ">=1.1.2" },
     { name = "geopandas", marker = "extra == 'rix'", specifier = ">=1.1.2" },
     { name = "ipykernel", marker = "extra == 'docs'", specifier = ">=6.31" },

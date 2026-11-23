@@ -6,7 +6,6 @@ authors = [{ name = "MR", email = "raffmatth@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.13, <3.14"
 dependencies = [
-    "ergaleiothiki>=0.3.0",
     "geopandas>=1.1.2",
     "numpy>=2.5.4",
     "openpyxl>=3.1.5",
@@ -47,8 +46,8 @@ rix = [
     "geopandas>=1.1.2",
 ]
 
-[tool.uv.sources]
-ergaleiothiki = { git = "https://github.com/rafm1101/ergaleiothiki.git", tag = "0.3.0" }
+# [tool.uv.sources]
+# ergaleiothiki = { git = "https://github.com/rafm1101/ergaleiothiki.git", tag = "0.3.0" }
 # ergaleiothiki = { git = "git@github.com:rafm1101/ergaleiothiki.git", tag = "0.3.0" }
 # ergaleiothiki = { index = "nemea-index" }
 

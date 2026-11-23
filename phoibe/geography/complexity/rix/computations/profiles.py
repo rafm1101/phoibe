@@ -3,8 +3,9 @@ import enum
 import logging
 
 import numpy as np
-from ergaleiothiki.tididi.validate_numerics import _validate_positive
 from numpy.typing import NDArray
+
+from phoibe.ergaleiothiki.tididi.validate_numerics import _validate_positive
 
 from .fieldsampler import FieldInfo, FieldSampler
 from .geometry import RayGeometry

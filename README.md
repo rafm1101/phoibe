@@ -16,11 +16,13 @@ Phoibe was one of the Titans and as such sister of Themis. Her name means _pure_
 
 | Package | Subpackage | Purpose |
 |---------|------------|---------|
+| `dokimasia` |   | Profile and validate data in layers. Refined prototype. |
+| `ergaleiothiki` |   | Tool that were previously separate. Moved here for self-containtness. |
 | `geography` |  |  |
 |  | `complexity` | Assess terrain complexity and wind transferability. |
 |  | `crs` | Reproject raster data. |
 |  | `plot` | Visualise. |
-| `layered` |   | Profile and validate data in layers. Prototype. |
+| `[legacy]layered` |   | Profile and validate data in layers. Prototype. |
 | `synthetic_data` |  | Generate 2D-fields and wtg scada data timeseries (including data mess) for demonstration. |
 
 ---
